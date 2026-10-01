@@ -39,8 +39,11 @@ button { font: inherit; border: 0; background: none; color: inherit; cursor: poi
   align-items: center;
   gap: 14px;
   box-shadow: 10px 0 34px rgba(24, 53, 45, .16);
-  animation: rail-in .6s cubic-bezier(.22, 1.3, .4, 1) both;
+  /* hidden until the dashboard opens */
+  transform: translateX(-100%);
+  transition: transform .5s cubic-bezier(.22, 1.2, .36, 1);
 }
+.sidebar.is-open { transform: translateX(0); }
 .sidebar-brand {
   position: relative;
   width: 30px;
@@ -80,6 +83,9 @@ button { font: inherit; border: 0; background: none; color: inherit; cursor: poi
   color: rgba(255, 255, 255, .72);
   background: rgba(255, 255, 255, .07);
   transition: background .25s, color .25s, transform .18s cubic-bezier(.3, 1.6, .5, 1);
+  opacity: 0;
+}
+.sidebar.is-open .rail-item {
   animation: item-pop .52s cubic-bezier(.2, 1.45, .4, 1) var(--pop-delay, 0s) both;
 }
 .rail-item:hover { background: rgba(201, 232, 109, .18); color: #fff; transform: translateY(-2px) scale(1.06); }
@@ -140,7 +146,8 @@ button { font: inherit; border: 0; background: none; color: inherit; cursor: poi
 
 /* ------------------------------------------------------------ view slides */
 
-.viewport { position: relative; margin-left: var(--rail); }
+.viewport { position: relative; margin-left: 0; transition: margin-left .5s cubic-bezier(.22, 1.2, .36, 1); }
+.viewport.has-rail { margin-left: var(--rail); }
 .view { position: relative; background: #d9ece2; }
 .view.is-leaving {
   position: absolute;
@@ -291,43 +298,50 @@ h1 em, h2 em { font-family: 'Playfair Display', serif; font-weight: 600; color: 
 .cart-svg {
   position: absolute;
   inset: 0;
+  z-index: 2;
   width: 100%;
   height: 100%;
   overflow: visible;
   animation: cart-roll 4.6s ease-in-out infinite;
 }
 .cart-svg .wheel { animation: wheel-squash 4.6s ease-in-out infinite; }
-.cart-svg .wheel-spokes { animation: wheel-spin 4.6s ease-in-out infinite; }
+.cart-svg .wheel-spin { animation: wheel-spin 4.6s ease-in-out infinite; }
 .cart-svg .wheel-front { animation-delay: -.25s; }
 
-/* groceries floating around the cart */
-.orbit { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; z-index: 4; }
-.orbit-item {
+/* groceries launching up out of the basket */
+.orbit { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; z-index: 1; }
+.fly {
   position: absolute;
+  left: 57%;
+  top: 29%;
   width: 15%;
   max-width: 86px;
   aspect-ratio: 1;
-  filter: drop-shadow(0 10px 14px rgba(24, 53, 45, .18));
+  animation: fly-x var(--dur) linear infinite var(--delay);
 }
-.orbit-spin { display: block; width: 100%; height: 100%; animation: tilt 6s ease-in-out infinite; }
-.orbit-item svg { width: 100%; height: 100%; display: block; }
+/* the arc wrapper carries the vertical throw, so x and y can ease apart */
+.fly-arc {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: fly-y var(--dur) cubic-bezier(.16, .74, .4, 1) infinite var(--delay);
+}
+.fly svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 8px 12px rgba(24, 53, 45, .16));
+  animation: fly-pop var(--dur) ease-out infinite var(--delay);
+}
 
-/* slots sit around the cart's silhouette, clear of the handle grip and wheels */
-.orbit-1 { left: 0;    top: 63%;   animation: float-a 7.2s ease-in-out infinite; }
-.orbit-2 { left: 24%;  top: -4%;   animation: float-b 8.4s ease-in-out infinite; }
-.orbit-3 { left: 52%;  top: -2%;   animation: float-c 6.6s ease-in-out infinite; }
-.orbit-4 { right: 3%;  top: 5%;    animation: float-b 7.8s ease-in-out infinite reverse; }
-.orbit-5 { right: -3%; top: 40%;   animation: float-a 8.8s ease-in-out infinite; }
-.orbit-6 { right: 0;   bottom: 16%; animation: float-c 7.4s ease-in-out infinite reverse; }
-.orbit-7 { left: 21%;  bottom: 0;  animation: float-b 6.9s ease-in-out infinite; }
-.orbit-8 { left: -2%;  top: 30%;   animation: float-c 8.2s ease-in-out infinite; }
-.orbit-2 .orbit-spin { animation-delay: -1.4s; }
-.orbit-3 .orbit-spin { animation-delay: -2.6s; }
-.orbit-4 .orbit-spin { animation-delay: -3.3s; }
-.orbit-5 .orbit-spin { animation-delay: -4.1s; }
-.orbit-6 .orbit-spin { animation-delay: -1.9s; }
-.orbit-7 .orbit-spin { animation-delay: -5s; }
-.orbit-8 .orbit-spin { animation-delay: -2.2s; }
+.fly-1 { --dur: 4.6s; --delay: 0s;    --dx: -150%; --peak: -170%; --dy:  -95%; --rot: -38deg; }
+.fly-2 { --dur: 5.2s; --delay: -.6s;  --dx:  -70%; --peak: -235%; --dy: -180%; --rot:  26deg; }
+.fly-3 { --dur: 4.9s; --delay: -1.2s; --dx:   25%; --peak: -268%; --dy: -215%; --rot: -20deg; }
+.fly-4 { --dur: 5.6s; --delay: -1.8s; --dx:  125%; --peak: -248%; --dy: -160%; --rot:  32deg; }
+.fly-5 { --dur: 5.1s; --delay: -2.4s; --dx:  205%; --peak: -186%; --dy:  -80%; --rot: -28deg; }
+.fly-6 { --dur: 4.7s; --delay: -3s;   --dx: -195%; --peak: -142%; --dy:  -48%; --rot:  42deg; }
+.fly-7 { --dur: 5.4s; --delay: -3.6s; --dx:  -22%; --peak: -282%; --dy: -232%; --rot: -16deg; }
+.fly-8 { --dur: 5s;   --delay: -4.2s; --dx:  172%; --peak: -214%; --dy: -126%; --rot:  24deg; }
 
 /* ------------------------------------------------------------- strips */
 
@@ -427,7 +441,6 @@ h1 em, h2 em { font-family: 'Playfair Display', serif; font-weight: 600; color: 
 
 /* ------------------------------------------------------------- keyframes */
 
-@keyframes rail-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 @keyframes item-pop {
   0% { opacity: 0; transform: scale(.5) translateY(10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -459,26 +472,22 @@ h1 em, h2 em { font-family: 'Playfair Display', serif; font-weight: 600; color: 
   0%, 100% { transform: scaleY(1); }
   35% { transform: scaleY(.97); }
 }
-@keyframes tilt {
-  0%, 100% { transform: rotate(-9deg); }
-  50% { transform: rotate(11deg); }
+/* horizontal drift stays linear; the arc wrapper eases the throw */
+@keyframes fly-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--dx)); }
 }
-@keyframes float-a {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(14px, -20px); }
-  55% { transform: translate(-10px, -32px); }
-  80% { transform: translate(-16px, -8px); }
+/* up fast, hang at the apex, settle back a little — a thrown arc */
+@keyframes fly-y {
+  0% { transform: translateY(14%); }
+  58% { transform: translateY(var(--peak)); }
+  100% { transform: translateY(var(--dy)); }
 }
-@keyframes float-b {
-  0%, 100% { transform: translate(0, 0); }
-  30% { transform: translate(-18px, 16px); }
-  60% { transform: translate(8px, 26px); }
-  85% { transform: translate(16px, 6px); }
-}
-@keyframes float-c {
-  0%, 100% { transform: translate(0, 0); }
-  33% { transform: translate(20px, 14px); }
-  66% { transform: translate(-14px, -18px); }
+@keyframes fly-pop {
+  0% { opacity: 0; transform: scale(.42) rotate(0deg); }
+  14% { opacity: 1; transform: scale(1) rotate(calc(var(--rot) * .25)); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: scale(.96) rotate(var(--rot)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -493,7 +502,6 @@ h1 em, h2 em { font-family: 'Playfair Display', serif; font-weight: 600; color: 
   .lede { margin: 0 auto; }
   .hero-actions { justify-content: center; }
   .cart-stage { margin: 10px auto 0; max-width: 540px; }
-  .orbit-5 { right: 0; }
   .dash-grid { grid-template-columns: 1fr; }
 }
 

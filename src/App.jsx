@@ -46,10 +46,13 @@ export default function App() {
       ? <Dashboard onBack={() => { setActive('top'); go('landing'); }} />
       : <Landing onStart={() => { setActive('start'); go('dashboard'); }} />;
 
+  /* The rail belongs to the dashboard — the landing page never shows it. */
+  const showRail = view === 'dashboard';
+
   return (
     <>
-      <Sidebar active={active} onNavigate={handleNavigate} />
-      <main className="viewport">
+      <Sidebar open={showRail} active={active} onNavigate={handleNavigate} />
+      <main className={`viewport${showRail ? ' has-rail' : ''}`}>
         {leaving && (
           <div className={`view is-leaving leave-${leaving.dir}`} aria-hidden="true">
             {render(leaving.view)}

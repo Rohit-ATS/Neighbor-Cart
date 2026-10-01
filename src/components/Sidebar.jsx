@@ -8,7 +8,7 @@ const items = [
   { id: 'start', label: 'Dashboard', icon: '◉', goesToDashboard: true },
 ];
 
-export default function Sidebar({ active, onNavigate }) {
+export default function Sidebar({ open, active, onNavigate }) {
   const [ripples, setRipples] = useState([]);
   const nextRipple = useRef(0);
 
@@ -24,7 +24,7 @@ export default function Sidebar({ active, onNavigate }) {
   }
 
   return (
-    <aside className="sidebar" aria-label="Primary">
+    <aside className={`sidebar${open ? ' is-open' : ''}`} aria-label="Primary" aria-hidden={!open} inert={!open}>
       <span className="sidebar-brand" aria-hidden="true">
         <i />
         <b />
