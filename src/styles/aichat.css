@@ -98,7 +98,11 @@
   transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
 }
 
-.ai-location-btn:hover:not(:disabled) {
+/* The hover rule has to stand aside for the stateful variants: it outranks a
+   plain `.is-on` on specificity, which painted the active button's label in
+   the same crimson as its own background and made it vanish under the cursor
+   that had just clicked it. */
+.ai-location-btn:hover:not(:disabled):not(.is-on):not(.is-denied) {
   border-color: var(--green);
   color: var(--green);
   transform: translateY(-1px);
@@ -109,10 +113,76 @@
   border-color: var(--green);
   color: var(--cream);
 }
+.ai-location-btn.is-on:hover:not(:disabled) {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+  color: var(--cream);
+  transform: translateY(-1px);
+}
+.ai-location-btn.is-denied:hover:not(:disabled) {
+  background: var(--mint);
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
 
 .ai-location-btn:disabled {
   opacity: .6;
   cursor: default;
+}
+
+/* Waiting on the browser's permission prompt is the slowest moment here, so
+   it gets its own look rather than a frozen idle button. */
+.ai-location-btn.is-busy {
+  opacity: 1;
+  border-color: var(--amber);
+  color: var(--green-deep);
+  cursor: progress;
+}
+.ai-location-btn.is-denied {
+  border-color: rgba(146, 7, 17, .34);
+  color: var(--green-deep);
+}
+
+/* The mark holds its own size while the icon inside it is swapped, so the
+   label does not shuffle sideways mid-transition. */
+.ai-location-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.ai-location-mark svg { grid-area: 1 / 1; }
+
+/* Two rings, the second half a beat behind, pulsing out of the pin. */
+.ai-location-ping {
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  border: 1.5px solid var(--amber);
+  opacity: 0;
+  animation: ai-location-ping 1.5s cubic-bezier(.22, .9, .3, 1) infinite;
+  pointer-events: none;
+}
+.ai-location-ping.is-delayed { animation-delay: .75s; }
+
+@keyframes ai-location-ping {
+  0% { transform: scale(.65); opacity: .75; }
+  80%, 100% { transform: scale(2.1); opacity: 0; }
+}
+
+/* The label clips its own overflow so a leaving line slides out of view
+   instead of pushing the header around. */
+.ai-location-label {
+  display: grid;
+  overflow: hidden;
+  min-width: 0;
+}
+.ai-location-label > span { grid-area: 1 / 1; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-location-ping { animation: none; display: none; }
 }
 
 /* ---- the thread ---- */
