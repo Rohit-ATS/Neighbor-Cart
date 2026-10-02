@@ -10,9 +10,10 @@ FROM python:3.12-alpine
 
 ENV PORT=8080
 WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=build /app/dist/ ./dist/
 COPY api/ ./api/
-COPY server.py ./server.py
 
 EXPOSE 8080
-CMD ["python3", "server.py"]
+CMD ["python3", "-m", "api.app"]

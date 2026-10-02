@@ -29,6 +29,7 @@ SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
 IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 HOUSEHOLD_SIZES = {"1 person", "2-3 people", "4-5 people", "6+ people"}
 DEFAULT_SLOT_CAPACITY = 12
+AI_MAX_MESSAGE = 2000
 
 
 class ApiError(Exception):
@@ -399,6 +400,102 @@ def read_json(handler: BaseHTTPRequestHandler) -> dict:
     return body
 
 
+def ai_text(value: object, field: str, maximum: int) -> str:
+    if not isinstance(value, str) or not value.strip() or len(value.strip()) > maximum:
+        raise ApiError(HTTPStatus.BAD_REQUEST, f"{field} must be a non-empty string up to {maximum} characters")
+    return value.strip()
+
+
+def clean_ai_history(value: object) -> list[dict]:
+    if not isinstance(value, list):
+        return []
+    cleaned = []
+    for turn in value[-8:]:
+        if not isinstance(turn, dict):
+            continue
+        role = turn.get("role")
+        text = turn.get("text")
+        if role in {"user", "assistant"} and isinstance(text, str) and text.strip():
+            cleaned.append({"role": role, "content": [{"text": text.strip()[:AI_MAX_MESSAGE]}]})
+    return cleaned
+
+
+def clean_ai_catalog(value: object) -> list[dict]:
+    if not isinstance(value, list):
+        raise ApiError(HTTPStatus.BAD_REQUEST, "catalog must be a list")
+    cleaned = []
+    for place in value[:40]:
+        if not isinstance(place, dict) or not isinstance(place.get("id"), str) or not isinstance(place.get("name"), str):
+            continue
+        cleaned.append({
+            "id": place["id"][:96],
+            "name": place["name"][:120],
+            "address": str(place.get("address", ""))[:180],
+            "city": str(place.get("city", ""))[:80],
+            "services": [str(item)[:80] for item in place.get("services", [])[:8]],
+            "dietary": [str(item)[:80] for item in place.get("dietary", [])[:8]],
+            "hours": str(place.get("hours", ""))[:180],
+        })
+    return cleaned
+
+
+def clean_ai_memory(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item.strip()[:AI_MAX_MESSAGE] for item in value[-12:] if isinstance(item, str) and item.strip()]
+
+
+def bedrock_chat(payload: dict) -> dict:
+    """Call Converse server-side and accept only catalog IDs in the response."""
+    message = ai_text(payload.get("message"), "message", AI_MAX_MESSAGE)
+    catalog = clean_ai_catalog(payload.get("catalog"))
+    memory = clean_ai_memory(payload.get("memory"))
+    valid_ids = {place["id"] for place in catalog}
+    if not catalog:
+        raise ApiError(HTTPStatus.BAD_REQUEST, "catalog must contain at least one verified location")
+
+    try:
+        import boto3
+        from botocore.exceptions import BotoCoreError, ClientError
+    except ImportError as error:
+        raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "AI service is not installed on this server") from error
+
+    system = (
+        "You are HarvestLink's compassionate food access navigator. Answer in plain language. "
+        "Only recommend locations from the VERIFIED_CATALOG supplied below. Never invent an address, "
+        "hours, inventory, eligibility rule, or availability. Do not make medical or eligibility decisions. "
+        "For greetings or general small talk, return an empty placeIds list and warmly ask what food help is needed. "
+        "When a customer only shares a requirement (for example a diet, budget, no-car need, language, children, or ID concern) without asking to find or suggest a place, acknowledge that you will remember it and return an empty placeIds list. Recommend locations only after an explicit request to find, show, suggest, or recommend food options. "
+        "Return ONLY JSON: {\"reply\":\"...\",\"placeIds\":[\"verified-id\"],\"warning\":\"optional\","
+        "\"followUps\":[\"...\"]}. Include at most three place IDs.\n\nVERIFIED_CATALOG:\n"
+        + json.dumps(catalog, separators=(",", ":"))
+        + "\n\nCUSTOMER_REQUIREMENTS_MEMORY (use these conditions together with the newest message):\n"
+        + json.dumps(memory, separators=(",", ":"))
+    )
+    try:
+        client = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+        response = client.converse(
+            modelId=os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0"),
+            system=[{"text": system}],
+            messages=[*clean_ai_history(payload.get("history")), {"role": "user", "content": [{"text": message}]}],
+            inferenceConfig={"maxTokens": 500, "temperature": 0.25, "topP": 0.9},
+        )
+        raw = "".join(part.get("text", "") for part in response["output"]["message"]["content"]).strip()
+        raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.IGNORECASE).strip()
+        parsed = json.loads(raw)
+        if not isinstance(parsed.get("reply"), str) or not parsed["reply"].strip():
+            raise ValueError("Bedrock returned no reply")
+        return {
+            "reply": parsed["reply"].strip()[:1800],
+            "placeIds": [place_id for place_id in parsed.get("placeIds", []) if place_id in valid_ids][:3],
+            "warning": parsed.get("warning", "")[:400] if isinstance(parsed.get("warning", ""), str) else "",
+            "followUps": [item[:120] for item in parsed.get("followUps", [])[:3] if isinstance(item, str)],
+        }
+    except (BotoCoreError, ClientError, KeyError, ValueError, TypeError, json.JSONDecodeError) as error:
+        print(f"Bedrock chat failed: {type(error).__name__}")
+        raise ApiError(HTTPStatus.BAD_GATEWAY, "The AI service could not complete that request") from error
+
+
 def make_handler(database: Database):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -447,7 +544,10 @@ def make_handler(database: Database):
 
         def do_POST(self):
             try:
-                if urlsplit(self.path).path != "/api/v1/reservations":
+                path = urlsplit(self.path).path
+                if path == "/api/v1/ai/chat":
+                    return self.send_json(HTTPStatus.OK, bedrock_chat(read_json(self)))
+                if path != "/api/v1/reservations":
                     raise ApiError(HTTPStatus.NOT_FOUND, "Route not found")
                 key = self.headers.get("Idempotency-Key")
                 if key is not None and not IDEMPOTENCY_RE.fullmatch(key):
