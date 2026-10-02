@@ -73,3 +73,11 @@ Untrusted forwarding headers are ignored by default.
 npm run build
 npm run preview
 ```
+
+### GitHub Pages
+
+Pushing to `main` publishes the static React build through GitHub Actions at
+`https://Rohit-ATS.github.io/Neighbor-Cart/`. GitHub Pages cannot run the
+Python/SQLite API, so locations retain their checked-in demo snapshot there,
+while live reservations, AI navigation, and place enrichment require a
+separately deployed API.

@@ -23,22 +23,20 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
       - name: Build site
-        working-directory: frontend
-        # Pages serves the product at the repository root.
         env:
-          BASE_PATH: /
+          # This is a project Pages site: https://<owner>.github.io/<repository>/
+          BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
-          path: frontend/dist
+          path: dist
 
   deploy:
     permissions:
