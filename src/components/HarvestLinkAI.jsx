@@ -106,6 +106,16 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
     const lower = [...needs, query].join(' ').toLowerCase();
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    if (isConversationOnly(query)) {
+      return {
+        sender: 'ai',
+        text: 'Hi! I’m here to help you find food support that fits your situation. You can tell me what you need, or ask me to find a pantry, meal site, or grocery resource near you.',
+        citations: [],
+        warning: null,
+        timestamp: nowTime
+      };
+    }
+
     // A customer may share needs across several messages. Keep those details
     // without prematurely sending a location list; the next explicit request
     // for places will use the combined remembered context above.
