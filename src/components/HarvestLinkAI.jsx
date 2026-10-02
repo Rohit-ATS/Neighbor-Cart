@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PLACES, getIsOpenNow } from '../data/places.js';
+import { askHarvestLink } from '../lib/api.js';
 import AskBar from './AskBar.jsx';
 
 export default function HarvestLinkAI({ onClose, onSelectPlace }) {
@@ -68,13 +69,7 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
         role: message.sender === 'ai' ? 'assistant' : 'user',
         text: message.text,
       }));
-      const apiResponse = await fetch('/api/v1/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: q, history, catalog: verifiedCatalog, memory: nextNeeds }),
-      });
-      if (!apiResponse.ok) throw new Error('AI request failed');
-      const answer = await apiResponse.json();
+      const answer = await askHarvestLink({ message: q, history, catalog: verifiedCatalog, memory: nextNeeds });
       const citations = (answer.placeIds || []).map((placeId) => PLACES.find((place) => place.id === placeId))
         .filter(Boolean)
         .map((place) => ({

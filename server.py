@@ -5,11 +5,10 @@ from __future__ import annotations
 import mimetypes
 import os
 from http import HTTPStatus
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from api.app import DEFAULT_DB_PATH, Database, make_handler
+from api.app import BoundedThreadingHTTPServer, DEFAULT_DB_PATH, Database, make_handler
 
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist"
@@ -41,7 +40,7 @@ def make_application():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
-    server = ThreadingHTTPServer(("0.0.0.0", port), make_application())
+    server = BoundedThreadingHTTPServer(("0.0.0.0", port), make_application())
     print(f"Neighbor Cart listening on http://127.0.0.1:{port}")
     try:
         server.serve_forever()

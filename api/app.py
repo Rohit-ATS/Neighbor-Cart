@@ -8,13 +8,17 @@ and is proxied by Vite during development.
 from __future__ import annotations
 
 import json
+import ipaddress
 import os
 import re
 import secrets
+import socket
 import sqlite3
 import threading
+import time
 import uuid
-from datetime import date, datetime, timezone
+from collections import defaultdict, deque
+from datetime import date, datetime, timedelta, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,11 +29,21 @@ DEFAULT_DB_PATH = ROOT / "data" / "neighbor-cart.db"
 SEED_PATH = Path(__file__).resolve().parent / "demo_places.json"
 MAX_BODY_BYTES = 64 * 1024
 MAX_CONNECTIONS = 32
-SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
+REQUEST_TIMEOUT_SECONDS = 10
+SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
 IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 HOUSEHOLD_SIZES = {"1 person", "2-3 people", "4-5 people", "6+ people"}
 DEFAULT_SLOT_CAPACITY = 12
 AI_MAX_MESSAGE = 2000
+SESSION_TTL_DAYS = 30
+BOOKING_HORIZON_DAYS = 30
+MAX_RESERVATIONS_PER_SESSION_PER_DAY = 1
+MAX_SESSIONS_PER_NETWORK_PER_DAY = 4
+MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE = 5
+MAX_AI_CONCURRENT_REQUESTS = 2
+TRUSTED_PROXY_ADDRESSES = frozenset(
+    address.strip() for address in os.environ.get("NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES", "").split(",") if address.strip()
+)
 
 
 class ApiError(Exception):
@@ -37,6 +51,66 @@ class ApiError(Exception):
         self.status = status
         self.message = message
         super().__init__(message)
+
+
+class SlidingWindowLimiter:
+    """Process-local abuse control. Peer addresses are not taken from forwarded headers."""
+
+    def __init__(self):
+        self._requests: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+        self._lock = threading.Lock()
+
+    def allow(self, scope: str, subject: str, maximum: int, window_seconds: int) -> bool:
+        now = time.monotonic()
+        key = (scope, subject)
+        with self._lock:
+            entries = self._requests[key]
+            while entries and entries[0] <= now - window_seconds:
+                entries.popleft()
+            if len(entries) >= maximum:
+                return False
+            entries.append(now)
+            return True
+
+    def clear(self) -> None:
+        """Clear in-memory counters; used only by isolated integration tests."""
+        with self._lock:
+            self._requests.clear()
+
+
+class BoundedThreadingHTTPServer(ThreadingHTTPServer):
+    """Threaded HTTP server with finite request workers and socket read deadlines."""
+
+    daemon_threads = True
+    block_on_close = False
+
+    def __init__(self, server_address, request_handler_class, max_workers=MAX_CONNECTIONS,
+                 request_timeout=REQUEST_TIMEOUT_SECONDS):
+        super().__init__(server_address, request_handler_class)
+        self.request_queue_size = max_workers
+        self._worker_slots = threading.BoundedSemaphore(max_workers)
+        self.request_timeout = request_timeout
+
+    def process_request(self, request, client_address):
+        if not self._worker_slots.acquire(blocking=False):
+            request.close()
+            return
+        try:
+            request.settimeout(self.request_timeout)
+            super().process_request(request, client_address)
+        except Exception:
+            self._worker_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._worker_slots.release()
+
+
+rate_limiter = SlidingWindowLimiter()
+ai_request_slots = threading.BoundedSemaphore(MAX_AI_CONCURRENT_REQUESTS)
 
 
 def utc_now() -> str:
@@ -99,6 +173,14 @@ class Database:
                   ON reservations(session_id, created_at DESC);
                 CREATE INDEX IF NOT EXISTS reservations_slot_idx
                   ON reservations(location_id, pickup_date, time_slot);
+
+                CREATE TABLE IF NOT EXISTS anonymous_sessions (
+                  id TEXT PRIMARY KEY,
+                  created_at TEXT NOT NULL,
+                  expires_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS anonymous_sessions_expiry_idx
+                  ON anonymous_sessions(expires_at);
                 """
             )
             self._seed_locations(connection)
@@ -169,6 +251,27 @@ class Database:
             raise ApiError(HTTPStatus.NOT_FOUND, "Location not found")
         return json.loads(row["data_json"])
 
+    def issue_session(self) -> dict:
+        session_id = secrets.token_urlsafe(32)
+        created_at = utc_now()
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=SESSION_TTL_DAYS)).replace(microsecond=0).isoformat()
+        self.connection().execute(
+            "INSERT INTO anonymous_sessions (id, created_at, expires_at) VALUES (?, ?, ?)",
+            (session_id, created_at, expires_at),
+        )
+        return {"id": session_id, "expiresAt": expires_at}
+
+    def active_session(self, value: str) -> str:
+        if not SESSION_RE.fullmatch(value):
+            raise ApiError(HTTPStatus.UNAUTHORIZED, "A valid anonymous device session is required")
+        row = self.connection().execute(
+            "SELECT id FROM anonymous_sessions WHERE id = ? AND expires_at > ?",
+            (value, utc_now()),
+        ).fetchone()
+        if row is None:
+            raise ApiError(HTTPStatus.UNAUTHORIZED, "A valid anonymous device session is required")
+        return row["id"]
+
     def availability(self, location_id: str, pickup_date: str) -> dict:
         location = self.location(location_id)
         if not location.get("acceptsReservations"):
@@ -207,7 +310,7 @@ class Database:
         if not location.get("acceptsReservations"):
             raise ApiError(HTTPStatus.CONFLICT, "This location does not accept reservations")
 
-        pickup_date = require_future_date(payload.get("pickupDate"))
+        pickup_date = require_booking_date(payload.get("pickupDate"))
         time_slot = require_text(payload, "timeSlot", 80)
         if time_slot not in location.get("reservationWindows", []):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Pickup window is not available at this location")
@@ -235,6 +338,13 @@ class Database:
                     response = reservation_response(existing, self.location(existing["location_id"]))
                     connection.execute("COMMIT")
                     return response
+
+            session_reservations = connection.execute(
+                "SELECT COUNT(*) FROM reservations WHERE session_id = ? AND pickup_date = ?",
+                (session_id, pickup_date),
+            ).fetchone()[0]
+            if session_reservations >= MAX_RESERVATIONS_PER_SESSION_PER_DAY:
+                raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "This device already has a pickup reservation for that day")
 
             capacity = slot_capacity(location)
             reserved = connection.execute(
@@ -338,7 +448,7 @@ def require_string_list(value: object, field: str, maximum_items: int, maximum_l
     return cleaned
 
 
-def require_future_date(value: object) -> str:
+def require_booking_date(value: object) -> str:
     if not isinstance(value, str):
         raise ApiError(HTTPStatus.BAD_REQUEST, "pickupDate is required")
     try:
@@ -347,6 +457,8 @@ def require_future_date(value: object) -> str:
         raise ApiError(HTTPStatus.BAD_REQUEST, "pickupDate must use YYYY-MM-DD") from error
     if parsed < date.today():
         raise ApiError(HTTPStatus.BAD_REQUEST, "pickupDate cannot be in the past")
+    if parsed > date.today() + timedelta(days=BOOKING_HORIZON_DAYS):
+        raise ApiError(HTTPStatus.BAD_REQUEST, f"pickupDate must be within {BOOKING_HORIZON_DAYS} days")
     return parsed.isoformat()
 
 
@@ -374,11 +486,21 @@ def reservation_response(row: sqlite3.Row, location: dict) -> dict:
     }
 
 
-def session_id(headers) -> str:
+def session_id(headers, database: Database) -> str:
     value = headers.get("X-Neighbor-Session", "")
-    if not SESSION_RE.fullmatch(value):
-        raise ApiError(HTTPStatus.UNAUTHORIZED, "A valid anonymous device session is required")
-    return value
+    return database.active_session(value)
+
+
+def client_identity(handler: BaseHTTPRequestHandler) -> str:
+    """Return a rate-limit key, trusting forwarding headers only from configured proxies."""
+    peer = handler.client_address[0]
+    if peer not in TRUSTED_PROXY_ADDRESSES:
+        return peer
+    forwarded = handler.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+    try:
+        return str(ipaddress.ip_address(forwarded))
+    except ValueError:
+        return peer
 
 
 def read_json(handler: BaseHTTPRequestHandler) -> dict:
@@ -393,6 +515,8 @@ def read_json(handler: BaseHTTPRequestHandler) -> dict:
         raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "Request body must be between 1 and 65536 bytes")
     try:
         body = json.loads(handler.rfile.read(length))
+    except socket.timeout as error:
+        raise ApiError(HTTPStatus.REQUEST_TIMEOUT, "Request body timed out") from error
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ApiError(HTTPStatus.BAD_REQUEST, "Request body must be valid JSON") from error
     if not isinstance(body, dict):
@@ -527,7 +651,7 @@ def make_handler(database: Database):
                     return self.send_json(HTTPStatus.OK, {"locations": database.locations(search, category, reservable)})
                 availability_match = re.fullmatch(r"/api/v1/locations/([^/]+)/availability", url.path)
                 if availability_match:
-                    pickup_date = require_future_date(query.get("date", [None])[0])
+                    pickup_date = require_booking_date(query.get("date", [None])[0])
                     return self.send_json(
                         HTTPStatus.OK,
                         {"availability": database.availability(availability_match.group(1), pickup_date)},
@@ -535,7 +659,9 @@ def make_handler(database: Database):
                 if url.path.startswith("/api/v1/locations/"):
                     return self.send_json(HTTPStatus.OK, {"location": database.location(url.path.rsplit("/", 1)[1])})
                 if url.path == "/api/v1/reservations":
-                    return self.send_json(HTTPStatus.OK, {"reservations": database.reservations(session_id(self.headers))})
+                    return self.send_json(
+                        HTTPStatus.OK, {"reservations": database.reservations(session_id(self.headers, database))}
+                    )
                 raise ApiError(HTTPStatus.NOT_FOUND, "Route not found")
             except ApiError as error:
                 self.send_json(error.status, {"error": error.message})
@@ -545,14 +671,28 @@ def make_handler(database: Database):
         def do_POST(self):
             try:
                 path = urlsplit(self.path).path
+                peer = client_identity(self)
+                if path == "/api/v1/sessions":
+                    if not rate_limiter.allow("session", peer, MAX_SESSIONS_PER_NETWORK_PER_DAY, 24 * 60 * 60):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many anonymous sessions from this network")
+                    return self.send_json(HTTPStatus.CREATED, {"session": database.issue_session()})
                 if path == "/api/v1/ai/chat":
-                    return self.send_json(HTTPStatus.OK, bedrock_chat(read_json(self)))
+                    session_id(self.headers, database)
+                    payload = read_json(self)
+                    if not rate_limiter.allow("ai", peer, MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE, 60):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "AI request limit reached. Please try again shortly.")
+                    if not ai_request_slots.acquire(blocking=False):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "AI is busy. Please try again shortly.")
+                    try:
+                        return self.send_json(HTTPStatus.OK, bedrock_chat(payload))
+                    finally:
+                        ai_request_slots.release()
                 if path != "/api/v1/reservations":
                     raise ApiError(HTTPStatus.NOT_FOUND, "Route not found")
                 key = self.headers.get("Idempotency-Key")
                 if key is not None and not IDEMPOTENCY_RE.fullmatch(key):
                     raise ApiError(HTTPStatus.BAD_REQUEST, "Idempotency-Key must be 8-128 URL-safe characters")
-                reservation = database.create_reservation(session_id(self.headers), key, read_json(self))
+                reservation = database.create_reservation(session_id(self.headers, database), key, read_json(self))
                 self.send_json(HTTPStatus.CREATED, {"reservation": reservation})
             except ApiError as error:
                 self.send_json(error.status, {"error": error.message})
@@ -574,10 +714,13 @@ def make_handler(database: Database):
     return Handler
 
 
-def create_server(host: str = "127.0.0.1", port: int = 8080, db_path: str | Path | None = None):
+def create_server(host: str = "127.0.0.1", port: int = 8080, db_path: str | Path | None = None,
+                  max_workers: int = MAX_CONNECTIONS, request_timeout: int | float = REQUEST_TIMEOUT_SECONDS):
     database = Database(db_path or os.environ.get("NEIGHBOR_CART_DB_PATH", DEFAULT_DB_PATH))
-    server = ThreadingHTTPServer((host, port), make_handler(database))
-    server.request_queue_size = MAX_CONNECTIONS
+    server = BoundedThreadingHTTPServer(
+        (host, port), make_handler(database), max_workers=max_workers, request_timeout=request_timeout
+    )
+    server.database = database
     return server
 
 
