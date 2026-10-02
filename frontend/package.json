@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite --open",
     "build": "vite build",
+    "test": "node --test places-data.test.js",
     "preview": "vite preview"
   },
   "devDependencies": {

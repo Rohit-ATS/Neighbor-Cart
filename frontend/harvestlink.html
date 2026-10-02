@@ -1,77 +1,24 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HarvestLink | Find help. Move food.</title>
-  <style>
-    :root{--ink:#17352d;--muted:#66756e;--paper:#f7f8f1;--card:#fff;--line:#dfe7dc;--leaf:#2f7654;--lime:#dff1b7;--gold:#f2c86b;--coral:#e68069;--shadow:0 16px 48px #17352d14}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:24px}.top{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:34px}.brand{font-size:24px;font-weight:800;letter-spacing:-.04em}.brand span{color:var(--leaf)}.eyebrow{color:var(--leaf);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.top small{color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab,.ghost{border:1px solid var(--line);background:transparent;border-radius:999px;padding:9px 15px;color:var(--muted)}.tab.active,.primary{background:var(--ink);border-color:var(--ink);color:#fff}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:end;margin-bottom:28px}.hero h1{font:400 clamp(42px,6vw,78px)/.96 Georgia,serif;letter-spacing:-.06em;margin:10px 0 18px}.hero p{max-width:590px;color:var(--muted);font-size:17px}.search{background:var(--card);padding:16px;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.search label{display:block;font-weight:700;margin-bottom:8px}.search-row{display:flex;gap:8px}.search input{min-width:0;flex:1;border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--ink);background:#fbfcf8}.primary{border:0;border-radius:10px;padding:12px 16px;font-weight:700}.notice{margin-top:12px;color:var(--muted);font-size:12px}.layout{display:grid;grid-template-columns:1.35fr .65fr;gap:18px}.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:var(--shadow)}.panel h2{margin:0;font:400 31px/1.1 Georgia,serif;letter-spacing:-.04em}.panel-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:16px}.resource{border:1px solid var(--line);border-radius:15px;padding:16px;margin-top:12px;display:grid;grid-template-columns:1fr auto;gap:12px}.resource h3{margin:0 0 4px;font-size:17px}.resource p{margin:0;color:var(--muted);font-size:13px}.tag{display:inline-block;background:var(--lime);border-radius:999px;padding:3px 8px;color:var(--leaf);font-size:11px;font-weight:800}.resource .action{align-self:center;border:0;border-radius:9px;padding:9px 12px;background:#edf5e7;color:var(--leaf);font-weight:700}.meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:12px}.assistant{background:var(--ink);color:#fff}.assistant h2{color:#fff}.bubble{background:#285447;border-radius:14px;padding:14px;margin:15px 0;color:#f3f8e9}.assistant small{color:#bed7c6}.role-panel{display:none}.role-panel.active{display:block}.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.metric{background:#f2f6ed;border-radius:14px;padding:16px}.metric b{display:block;font:400 30px Georgia,serif}.metric small{color:var(--muted)}.need{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding:13px 0}.need:first-of-type{margin-top:12px}.need button{border:0;border-radius:8px;background:var(--leaf);color:white;padding:8px 11px;font-weight:700}.foot{color:var(--muted);font-size:12px;margin:28px 0 8px}.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);transition:.2s}.toast.show{opacity:1;transform:none}@media(max-width:800px){.hero,.layout{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.metric-grid{grid-template-columns:1fr 1fr}}@media(max-width:500px){.shell{padding:16px}.search-row{flex-direction:column}.resource{grid-template-columns:1fr}.resource .action{justify-self:start}}
-  </style>
-</head>
-<body>
-  <main class="shell">
-    <header class="top"><div><div class="brand">Harvest<span>Link</span></div><small>Trusted food help, one clear next action.</small></div><nav class="tabs" aria-label="View"><button class="tab active" data-role="resident">Resident</button><button class="tab" data-role="organization">Organization</button><button class="tab" data-role="volunteer">Volunteer</button></nav></header>
-    <section class="hero"><div><div class="eyebrow">Iowa food access prototype</div><h1>Find help.<br><em>Move food.</em></h1><p>HarvestLink turns fragmented food assistance into a location-aware action plan for residents, organizations, and volunteers.</p></div><form class="search" id="searchForm"><label for="zip">Where should we look?</label><div class="search-row"><input id="zip" value="50309" inputmode="numeric" aria-label="ZIP code" /><button class="primary">Search resources</button></div><div class="notice">Prototype estimate · simulated demo data · records last verified today</div></form></section>
-    <section class="role-panel active" data-panel="resident"><div class="layout"><section class="panel"><div class="panel-head"><div><div class="eyebrow">Near 50309</div><h2>Your next good options</h2></div><span class="tag">3 verified</span></div><article class="resource"><div><h3>Des Moines Community Fridge</h3><p>Open pantry · 0.8 mi · No appointment</p><div class="meta"><span>Today 8am–8pm</span><span>Last verified Oct 1</span></div></div><button class="action" data-action="route">Get directions</button></article><article class="resource"><div><h3>Central Iowa Food Bank</h3><p>Groceries + produce · 2.1 mi · ID not required</p><div class="meta"><span>Thu 9am–3pm</span><span>Last verified Sep 30</span></div></div><button class="action" data-action="save">Save option</button></article><article class="resource"><div><h3>Hope Pantry Mobile Stop</h3><p>Pickup registration · 3.4 mi · Spanish available</p><div class="meta"><span>Tomorrow 4–6pm</span><span>Last verified Sep 29</span></div></div><button class="action" data-action="request">Request help</button></article></section><aside class="panel assistant"><div class="eyebrow">Grounded assistant</div><h2>Ask with confidence.</h2><div class="bubble">“Which option can I visit today without an appointment?”<br><br><strong>Des Moines Community Fridge</strong> is open today from 8am–8pm and does not require an appointment.</div><small>Source: verified resource record · last verified Oct 1, 2026</small></aside></div></section>
-    <section class="role-panel" data-panel="organization"><div class="panel"><div class="eyebrow">Partner workspace</div><h2>Signals you can act on</h2><div class="metric-grid"><div class="metric"><b>18</b><small>open resident requests</small></div><div class="metric"><b>142 lb</b><small>food listed this week</small></div><div class="metric"><b>86%</b><small>pickup completion target</small></div></div><div class="need"><div><strong>Produce needed near 50309</strong><br><small>7 households · requested today</small></div><button data-action="post">Post response</button></div><div class="need"><div><strong>Urgent: 80 lb pantry surplus</strong><br><small>Pickup by 5pm · 2.4 mi away</small></div><button data-action="match">Match volunteer</button></div></div></section>
-    <section class="role-panel" data-panel="volunteer"><div class="panel"><div class="eyebrow">Volunteer route</div><h2>Make one trip count</h2><div class="resource"><div><h3>Pantry surplus pickup</h3><p>80 lb produce · Hope Pantry → Central Iowa Food Bank</p><div class="meta"><span>2.4 mi</span><span>Pickup by 5pm</span></div></div><button class="action" data-action="claim">Claim route</button></div><div class="metric-grid"><div class="metric"><b>80 lb</b><small>matched to a recipient organization</small></div><div class="metric"><b>96</b><small>estimated meals delivered</small></div><div class="metric"><b>92%</b><small>pickup completion target</small></div></div></div></section>
-    <p class="foot">HarvestLink is a prototype. Impact figures are simulated demo data and targets, not partner-validated outcomes.</p>
-  </main><div class="toast" id="toast" role="status"></div>
-  <script>const toast=document.querySelector('#toast');let timer;function show(message){toast.textContent=message;toast.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>toast.classList.remove('show'),2400)}document.querySelectorAll('[data-role]').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('[data-role]').forEach(x=>x.classList.toggle('active',x===tab));document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===tab.dataset.role))}));document.querySelector('#searchForm').addEventListener('submit',e=>{e.preventDefault();show('Showing verified demo resources near '+document.querySelector('#zip').value)});document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>show(button.textContent.trim()+' — demo action recorded')));</script>
-  <script>
-    (() => {
-      const tabs = [...document.querySelectorAll('[data-role]')];
-      const panels = [...document.querySelectorAll('[data-panel]')];
-      const setRole = (role) => {
-        tabs.forEach((tab) => {
-          const active = tab.dataset.role === role;
-          tab.classList.toggle('active', active);
-          tab.setAttribute('aria-selected', String(active));
-        });
-        panels.forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === role));
-        localStorage.setItem('harvestlink-role', role);
-      };
-      setRole(localStorage.getItem('harvestlink-role') || 'resident');
-      tabs.forEach((tab) => tab.addEventListener('click', () => setRole(tab.dataset.role)));
-      const resident = document.querySelector('[data-panel="resident"]');
-      const label = resident?.querySelector('.eyebrow');
-      const tag = resident?.querySelector('.tag');
-      const resources = [...(resident?.querySelectorAll('.resource') || [])];
-      const empty = document.createElement('p');
-      empty.className = 'notice';
-      empty.textContent = 'No verified demo resources found for that ZIP code yet.';
-      empty.hidden = true;
-      resident?.querySelector('.panel')?.append(empty);
-      document.querySelector('#searchForm')?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const zip = document.querySelector('#zip').value.trim();
-        if (!/^\d{5}$/.test(zip)) return window.show?.('Enter a valid 5-digit ZIP code');
-        label.textContent = 'Checking near ' + zip;
-        tag.textContent = 'Searching...';
-        empty.hidden = true;
-        resources.forEach((resource) => { resource.hidden = true; });
-        setTimeout(() => {
-          const found = zip === '50309';
-          resources.forEach((resource) => { resource.hidden = !found; });
-          empty.hidden = found;
-          label.textContent = 'Near ' + zip;
-          tag.textContent = found ? '3 verified' : '0 verified';
-          window.show?.(found ? 'Showing verified demo resources near ' + zip : 'No demo resources found near ' + zip);
-        }, 350);
-      });
-      document.querySelectorAll('[data-action="save"]').forEach((button) => button.addEventListener('click', () => {
-        const saved = button.textContent.trim() === 'Saved';
-        button.textContent = saved ? 'Save option' : 'Saved';
-        button.setAttribute('aria-pressed', String(!saved));
-        window.show?.(saved ? 'Option removed' : 'Option saved on this device');
-      }));
-      document.querySelectorAll('[data-action="request"]').forEach((button) => button.addEventListener('click', () => {
-        button.textContent = 'Requested';
-        button.disabled = true;
-        window.show?.('Help request recorded for this demo');
-      }));
-    })();
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Find verified food assistance and fresh inventory near you in Iowa." />
+    <title>HarvestLink | Places</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="./places.css" />
+  </head>
+  <body>
+    <a class="skip" href="#places">Skip to places</a>
+    <main class="shell">
+      <header class="topbar"><a class="brand" href="./harvestlink.html" aria-label="HarvestLink home">Harvest<span>Link</span></a><nav aria-label="Primary navigation"><a class="nav-active" href="#places">Places</a><a href="#inventory">Inventory</a><a href="#about">About</a></nav><button class="help" type="button" data-action="help">Need help?</button></header>
+      <section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">Iowa food access network</p><h1 id="page-title">Good food,<br /><em>closer to home.</em></h1><p class="intro-copy">Find food banks, pantries, community fridges, and fresh inventory with clear details you can trust.</p></div><form class="search-card" id="filter-form"><label for="zip">Search by ZIP code</label><div class="search-row"><input id="zip" name="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" value="50309" aria-describedby="zip-help" /><button class="primary" type="submit">Find places</button></div><p id="zip-help" class="helper">Demo coverage includes 50309, 50310, and 50010.</p></form></section>
+      <section class="controls" aria-label="Place filters"><div class="control-group"><label for="neighborhood">Neighborhood</label><select id="neighborhood"><option value="all">All neighborhoods</option></select></div><div class="control-group"><label for="service">Service</label><select id="service"><option value="all">All services</option><option value="food-bank">Food bank</option><option value="pantry">Pantry</option><option value="fridge">Community fridge</option><option value="mobile">Mobile pickup</option></select></div><button class="clear" type="button" id="clear-filters">Clear filters</button></section>
+      <section class="places-layout" id="places" aria-labelledby="places-title"><div class="map-panel"><div class="section-head"><div><p class="eyebrow">Verified resources</p><h2 id="places-title">Places near <span id="near-label">50309</span></h2></div><span class="count" id="result-count" aria-live="polite">3 places</span></div><div id="map" class="map" role="application" aria-label="Map of food assistance places"></div><p class="map-credit">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors</p></div><div class="list-panel" aria-labelledby="list-title"><div class="section-head"><div><p class="eyebrow">Accessible list</p><h2 id="list-title">Choose a place</h2></div></div><div id="status" class="status" role="status" aria-live="polite"></div><div id="place-list" class="place-list"></div></div></section>
+      <section class="inventory" id="inventory" aria-labelledby="inventory-title"><div class="section-head"><div><p class="eyebrow">Freshness matters</p><h2 id="inventory-title">What is available now</h2></div><p class="muted">Provider-reported inventory</p></div><div id="inventory-list" class="inventory-grid"></div></section>
+      <footer id="about"><span>HarvestLink</span><p>Information is community-maintained. Call ahead when timing matters.</p><button class="text-button" type="button" data-action="feedback">Report an update</button></footer>
+    </main>
+    <dialog id="detail-dialog" aria-labelledby="detail-title"><button class="dialog-close" type="button" aria-label="Close details">×</button><div id="detail-content"></div></dialog><div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script type="module" src="./places.js"></script>
+  </body>
 </html>
-
