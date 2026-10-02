@@ -3988,14 +3988,12 @@ h2 em {
 }
 
 .vol-shift-card {
-  background: #fff;
-  border: 1.5px solid #dbe4de;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
   border-radius: 16px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  padding: 20px 22px;
+  display: grid;
+  gap: 10px;
 }
 
 .vsc-title {
@@ -4622,3 +4620,344 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   .ai-memory-strip { grid-template-columns: 1fr auto; margin: 8px 14px 14px; }
   .ai-memory-strip p { display: none; }
 }
+
+/* ==========================================================================
+   VOLUNTEER + FOOD RESCUE HUBS
+   Both hubs shipped with markup but no layout rules, so their cards
+   collapsed into a single squashed row (volunteers) or plain text (rescue).
+   ========================================================================== */
+
+.vol-shifts-list { display: grid; gap: 14px; }
+
+.vsc-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.vsc-type-tag {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 700;
+}
+.vsc-spots { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.vol-shift-card .vsc-title {
+  font-size: 20px !important;
+  line-height: 1.1;
+  margin: 2px 0 0;
+  color: var(--ink);
+}
+.vsc-org, .vsc-date, .vsc-skills, .vsc-impact { font-size: 14.5px; color: var(--muted); line-height: 1.5; }
+.vsc-org b, .vsc-skills b, .vsc-impact b { color: var(--ink); }
+.vsc-actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.vsc-claimed-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--orange);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* actions should never stack a label into a tall column */
+.btn-primary.small, .btn-secondary.small { white-space: nowrap; padding: 11px 20px; font-size: 14px; }
+
+.vol-impact-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 22px;
+  background: var(--panel-2);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+.vol-impact-item { display: grid; gap: 4px; }
+.vii-val { font-size: 27px; font-weight: 700; color: var(--orange); line-height: 1.1; }
+.vii-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+.vol-filter-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.filter-label { font-size: 14px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+
+/* ---- food rescue ---- */
+
+.rescue-action-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 22px; }
+
+.rescue-listings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+.rescue-item-card {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.rescue-item-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(72, 40, 32, .09); }
+
+.ric-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ric-donor-type {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ric-status-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 700;
+}
+.rescue-item-card .ric-food { font-size: 20px !important; line-height: 1.1; margin: 2px 0 0; color: var(--ink); }
+.ric-meta { font-size: 14.5px; color: var(--muted); }
+.ric-meta b { color: var(--ink); }
+
+.ric-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  font-size: 14px;
+  color: var(--muted);
+}
+.ric-specs-grid b { color: var(--ink); font-weight: 600; }
+
+.ric-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+  font-size: 14px;
+  color: var(--muted);
+}
+.ric-footer b { color: var(--ink); }
+
+.post-surplus-card {
+  padding: 22px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: var(--panel-2);
+  border: 1.5px solid var(--border);
+}
+
+@media (max-width: 860px) {
+  .rescue-listings-grid, .ric-specs-grid, .vol-impact-summary { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* .btn-primary carries flex:1 for modal footers where buttons share a row.
+   Inside these hubs it must size to its label instead of swallowing the row. */
+.rescue-action-bar { justify-content: space-between; }
+.rescue-action-bar h3 { margin: 0; flex: 0 1 auto; }
+.rescue-action-bar .btn-primary,
+.vsc-actions .btn-primary,
+.vsc-actions .btn-secondary,
+.ric-footer .btn-secondary,
+.vol-filter-strip .btn-primary { flex: 0 0 auto; width: auto; }
+
+/* ==========================================================================
+   IMPACT REPORT
+   The category breakdown and performance stats shipped without rules, so
+   their label/value pairs ran together as plain text. These mirror the ZIP
+   table above them so both columns read as one report.
+   ========================================================================== */
+
+.np-desc { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin-bottom: 18px; }
+
+.category-metric-list { display: grid; gap: 16px; }
+
+.cat-metric-item { display: grid; gap: 8px; }
+.cmi-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.cmi-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.cmi-pct { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.cmi-bar-track { height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+.cmi-bar-fill { height: 100%; background: var(--orange); border-radius: 4px; transition: width .5s cubic-bezier(.22,.9,.3,1); }
+
+.performance-stat-box {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-light);
+}
+.psb-item { display: grid; gap: 4px; text-align: center; }
+.psb-val { font-size: 24px; font-weight: 700; color: var(--orange); line-height: 1.1; }
+.psb-label { font-size: 11.5px; line-height: 1.35; color: var(--muted); }
+
+/* the ZIP table's own cells never got type rules */
+.zip-city { font-size: 13px; font-weight: 600; color: var(--ink); }
+.zip-num { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
+.zip-reqs { font-size: 12.5px; font-weight: 600; color: var(--muted); text-align: right; white-space: nowrap; }
+
+@media (max-width: 860px) {
+  .performance-stat-box { grid-template-columns: minmax(0, 1fr); }
+  .zip-row { grid-template-columns: 70px 1fr; row-gap: 4px; }
+}
+
+/* ==========================================================================
+   NONPROFIT DASHBOARD
+   Shipped with markup but almost no rules; these give its tabs, stat grid,
+   demand bars, inventory rows and referral table a layout.
+   ========================================================================== */
+
+.np-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.np-header-left { display: grid; gap: 6px; }
+.np-top-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.np-org-select {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.np-status-toggle-wrap { display: inline-flex; align-items: center; gap: 10px; }
+.np-status-label { font-size: 13.5px; font-weight: 600; color: var(--muted); }
+
+.np-tabs-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 22px 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.np-tabs-nav button {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.np-tabs-nav button:hover { border-color: var(--orange); color: var(--orange); }
+.np-tabs-nav button.active,
+.np-tabs-nav button[aria-selected="true"] { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+.np-tab-content { display: grid; gap: 26px; }
+
+.np-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.np-stat-card {
+  display: grid;
+  gap: 5px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+}
+.np-sc-val { font-size: 27px; font-weight: 700; color: var(--orange); line-height: 1.05; }
+.np-sc-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.np-sc-sub { font-size: 12px; color: var(--muted); }
+
+.np-demand-section { display: grid; gap: 14px; }
+.demand-bars-list { display: grid; gap: 16px; }
+.demand-bar-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+.demand-bar-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.demand-bar-pct { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.demand-bar-track { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.demand-bar-fill { height: 100%; border-radius: 4px; background: var(--orange); }
+
+.np-inv-head { display: grid; gap: 6px; }
+.np-inventory-table { display: grid; gap: 12px; }
+.np-inv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+}
+.np-inv-info { display: grid; gap: 4px; min-width: 0; }
+.np-inv-cat {
+  justify-self: start;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.np-inventory-table .np-inv-title { margin: 0; font-size: 16px !important; color: var(--ink); }
+.np-inv-note { font-size: 13px; color: var(--muted); }
+.np-inv-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.btn-stock-toggle, .btn-verify-stamp, .btn-export-rep, .urgent-del-btn {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+.btn-stock-toggle:hover, .btn-verify-stamp:hover, .btn-export-rep:hover { border-color: var(--orange); color: var(--orange); }
+.urgent-del-btn { border-color: rgba(146, 7, 17, .3); color: var(--orange); }
+
+.np-referrals-head, .ref-action-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.referrals-table { display: grid; gap: 12px; }
+.referral-row-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+}
+.ref-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.ref-client { font-size: 15px; font-weight: 700; color: var(--ink); }
+.ref-time { font-size: 12.5px; color: var(--muted); }
+.ref-need { font-size: 14px; color: var(--muted); }
+.ref-status-tag {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.np-urgent-manager { display: grid; gap: 16px; }
+.urgent-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.urgent-active-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.urgent-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1.5px solid var(--border);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) { .np-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .demand-bar-row { grid-template-columns: 1fr auto; } .demand-bar-row .demand-bar-track { grid-column: 1 / -1; } }
+@media (max-width: 620px) { .np-stat-grid { grid-template-columns: minmax(0, 1fr); } }

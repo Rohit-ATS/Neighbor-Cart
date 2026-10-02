@@ -63,11 +63,11 @@ export default function FoodRescueHub({ onClose }) {
         {/* Impact Bar */}
         <div className="vol-impact-summary">
           <div className="vol-impact-item">
-            <span className="vii-val">{totalRescuedLbs.toLocaleString()} lbs</span>
+            <span className="vii-val">{totalRescuedLbs.toLocaleString('en-US')} lbs</span>
             <span className="vii-label">Total Surplus Rescued</span>
           </div>
           <div className="vol-impact-item">
-            <span className="vii-val">{estimatedMeals.toLocaleString()}</span>
+            <span className="vii-val">{estimatedMeals.toLocaleString('en-US')}</span>
             <span className="vii-label">Wholesome Meals Created</span>
           </div>
           <div className="vol-impact-item">
@@ -186,7 +186,7 @@ export default function FoodRescueHub({ onClose }) {
               <h3 className="ric-food">{item.foodType}</h3>
               <p className="ric-meta">🏢 Donor: <b>{item.donorName}</b> ({item.location})</p>
               <div className="ric-specs-grid">
-                <div><b>Weight:</b> {item.quantityLbs.toLocaleString()} lbs</div>
+                <div><b>Weight:</b> {item.quantityLbs.toLocaleString('en-US')} lbs</div>
                 <div><b>Storage:</b> {item.storageReq}</div>
                 <div><b>Window:</b> {item.expirationDays}</div>
                 <div><b>Matched With:</b> {item.matchedOrg}</div>
