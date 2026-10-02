@@ -1653,21 +1653,22 @@ h2 em {
 .ai-filters-toggle svg { transition: transform .22s cubic-bezier(.22, .9, .3, 1); }
 .ai-filters-toggle.is-open svg { transform: rotate(180deg); }
 
-.ai-filters-panel {
+/* The drawer's height is animated from 0 to its own content height, so it has
+   to clip while it travels or the rows spill over the card below. The border
+   lives on the inner wrapper: on the outer one it would be a stray line across
+   the card at height 0. */
+.ai-filters-panel { overflow: hidden; }
+.ai-filters-inner {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-top: 4px;
+  margin-top: 4px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-light);
-  animation: ai-filters-open .26s cubic-bezier(.22, .9, .3, 1) both;
 }
-/* A class rule's `display` beats the `hidden` attribute's UA style, so the
-   collapsed panel has to say so itself. */
-.ai-filters-panel[hidden] { display: none; }
 
-@keyframes ai-filters-open {
-  from { opacity: 0; transform: translateY(-6px); }
-}
+/* The chevron turns with the drawer rather than snapping once it is open. */
+.ai-filters-toggle svg { transition: transform .3s cubic-bezier(.22, .9, .3, 1); }
 
 @media (max-width: 720px) {
   .ai-search-row { padding-left: 14px; gap: 8px; }
@@ -1677,7 +1678,7 @@ h2 em {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-filters-panel { animation: none; }
+  .ai-filters-toggle svg { transition: none; }
   .ai-search-go:active { transform: none; }
 }
 

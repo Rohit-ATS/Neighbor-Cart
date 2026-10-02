@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILITY_OPTIONS, getIsOpenNow } from '../data/places.js';
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
@@ -24,7 +25,18 @@ const nearKey = (place) => {
   return `${name}@${place.lat.toFixed(3)},${place.lng.toFixed(3)}`;
 };
 
+/* The filter drawer opens as one movement: the panel grows to its own height
+   while the three groups inside arrive in sequence, so the options read as
+   unfolding rather than appearing all at once. */
+const DRAWER = { type: 'spring', stiffness: 260, damping: 30, mass: 0.8 };
+const DRAWER_ROWS = { hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } } };
+const DRAWER_ROW = {
+  hidden: { opacity: 0, y: -10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 0.9, 0.3, 1] } },
+};
+
 export default function Places({ onNavigateHome }) {
+  const reduceMotion = useReducedMotion();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -792,9 +804,24 @@ export default function Places({ onNavigateHome }) {
               {showAllFilters ? 'Hide all filters' : 'Browse all filters'}
             </button>
 
-            <div className={`ai-filters-panel${showAllFilters ? ' is-open' : ''}`} hidden={!showAllFilters}>
+            <AnimatePresence initial={false}>
+            {showAllFilters && (
+            <motion.div
+              className="ai-filters-panel"
+              key="all-filters"
+              initial={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+              animate={reduceMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+              transition={reduceMotion ? { duration: 0.12 } : DRAWER}
+            >
+            <motion.div
+              className="ai-filters-inner"
+              variants={DRAWER_ROWS}
+              initial={reduceMotion ? false : 'hidden'}
+              animate="show"
+            >
             {/* Category scroll pills */}
-            <div className="category-scroll-strip">
+            <motion.div className="category-scroll-strip" variants={DRAWER_ROW}>
               {PLACE_CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
@@ -806,10 +833,10 @@ export default function Places({ onNavigateHome }) {
                   <span className="cat-label">{cat.label}</span>
                 </button>
               ))}
-            </div>
+            </motion.div>
 
             {/* Secondary Advanced Filters Dropdowns */}
-            <div className="advanced-filter-row">
+            <motion.div className="advanced-filter-row" variants={DRAWER_ROW}>
               <div className="adv-filter-group">
                 <label className="adv-filter-label">🥗 Dietary Accommodations</label>
                 <div className="select-wrapper">
@@ -857,10 +884,10 @@ export default function Places({ onNavigateHome }) {
                   </select>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Quick check toggles */}
-            <div className="toggle-filters-row">
+            <motion.div className="toggle-filters-row" variants={DRAWER_ROW}>
               <label className="toggle-filter-label">
                 <input
                   type="checkbox"
@@ -893,8 +920,11 @@ export default function Places({ onNavigateHome }) {
                   ✕ Reset filters
                 </button>
               )}
-            </div>
-            </div>
+            </motion.div>
+            </motion.div>
+            </motion.div>
+            )}
+            </AnimatePresence>
           </div>
         </div>
       </section>
