@@ -4,6 +4,7 @@ import { useStore } from '../app/store.jsx';
 import { PLACES, PRODUCTS, byId } from '../data/catalog.js';
 import FoodArt from '../components/FoodArt.jsx';
 import { AllergenBadge, Button, Icon, Rating, SafetyNote, Skeleton, Tag } from '../components/ui.jsx';
+import AskBar from '../components/AskBar.jsx';
 
 /* A scripted guide. Each reply names the reasoning behind its picks, and never
    states that a dish is safe — only what the provider has published. */
@@ -121,7 +122,6 @@ function RecCard({ id, reason, onSave, saved }) {
 export default function Chat({ query }) {
   const { profile, isSaved, toggleSaved } = useStore();
   const [turns, setTurns] = useState([]);
-  const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
   const feed = useRef(null);
   const started = useRef(false);
@@ -129,7 +129,6 @@ export default function Chat({ query }) {
   const send = (text) => {
     const q = text.trim();
     if (!q || pending) return;
-    setInput('');
     setTurns((t) => [...t, { role: 'user', text: q }]);
     setPending(true);
     setTimeout(() => {

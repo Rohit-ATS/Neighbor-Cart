@@ -26,11 +26,10 @@ const STORES = PLACES.filter((p) => p.type === 'grocery');
 
 export default function Dashboard() {
   const { profile, saved } = useStore();
-  const [ask, setAsk] = useState('');
   const [activeId, setActiveId] = useState(RESTAURANTS[0].id);
 
   const submit = (text) => {
-    const q = (text ?? ask).trim();
+    const q = (text ?? '').trim();
     if (!q) return;
     navigate(`/chat?q=${encodeURIComponent(q)}`);
   };

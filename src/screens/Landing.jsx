@@ -129,12 +129,15 @@ export default function Landing() {
               AI helps you discover nearby meals and groceries that work for you.
             </p>
             <div className="hero-actions">
-              <Button as={Link} to="/onboarding" variant="primary" size="lg" icon="arrow">Find food for me</Button>
+              <Button as={Link} to="/onboarding" variant="primary" size="lg" icon="spark">Find food for me</Button>
               <a href="#how" className="text-link">See how it works <Icon name="arrow" size={16} /></a>
             </div>
-            <p className="hero-note">
-              Know what works for your body, then know exactly where to get it.
-            </p>
+            <ul className="meta-row">
+              <li><Icon name="check" size={16} />Every suggestion says why it fits</li>
+              <li><Icon name="alert" size={16} />Missing allergen data is flagged</li>
+              <li><Icon name="user" size={16} />Private to your profile</li>
+              <li><Icon name="info" size={16} />Food information, not medical advice</li>
+            </ul>
           </div>
 
           <div className="hero-preview">
