@@ -708,23 +708,6 @@ export default function Places({ onNavigateHome }) {
                 100% free, confidential, and zero paperwork required.
               </p>
             </div>
-
-            <div className="places-action-pills">
-              <button 
-                type="button" 
-                className="hero-action-pill ai-pill"
-                onClick={() => setWorkspaceView('chat')}
-              >
-                🤖 Ask AI Navigator
-              </button>
-              <button 
-                type="button" 
-                className="hero-action-pill plan-pill"
-                onClick={() => setShowIntake(true)}
-              >
-                📋 Build My Custom Food Plan
-              </button>
-            </div>
           </div>
 
           {/* One sentence replaces the search field, the city pills, the
