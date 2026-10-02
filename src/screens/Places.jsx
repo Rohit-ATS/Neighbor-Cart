@@ -3,7 +3,8 @@ import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILIT
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
-import { currentPosition, listLocations, listReservations } from '../lib/api.js';
+import { currentPosition, discoverPlaces, enrichPlaces, listLocations, listReservations } from '../lib/api.js';
+import { isStockImage, placeImage } from '../lib/placeImages.js';
 import AiChat from '../components/AiChat.jsx';
 import ResidentIntakeModal from '../components/ResidentIntakeModal.jsx';
 import NonprofitDashboard from '../components/NonprofitDashboard.jsx';
@@ -12,6 +13,13 @@ import FoodRescueHub from '../components/FoodRescueHub.jsx';
 import CommunityFeed from '../components/CommunityFeed.jsx';
 import ImpactDashboard from '../components/ImpactDashboard.jsx';
 import AdminPortal from '../components/AdminPortal.jsx';
+
+/* Two catalogues describe the same pantry differently, so matching is by
+   normalised name plus a ~150m coordinate bucket rather than exact equality. */
+const nearKey = (place) => {
+  const name = String(place.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `${name}@${place.lat.toFixed(3)},${place.lng.toFixed(3)}`;
+};
 
 export default function Places({ onNavigateHome }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -79,6 +87,27 @@ export default function Places({ onNavigateHome }) {
         setPlaces(found);
         setPlacesTotal(total);
         setUserPosition(position);
+
+        // Then widen to everything Google lists around the visitor. This is
+        // fetched live rather than stored, so coverage is near-complete
+        // without keeping a copy of Google's catalogue.
+        if (position) {
+          try {
+            const { places: live } = await discoverPlaces({ ...position, radiusM: 25_000 });
+            if (cancelled || !live?.length) return;
+
+            // Our own records win on a collision: they carry inventory,
+            // languages and reservation windows that a Google pin has not.
+            const seen = new Set(found.map((p) => nearKey(p)));
+            const additions = live.filter((p) => !seen.has(nearKey(p)));
+            if (additions.length) {
+              setPlaces([...found, ...additions]);
+              setPlacesTotal(total + additions.length);
+            }
+          } catch {
+            // No key, rate limit, or Google down — the stored directory stands.
+          }
+        }
       } catch {
         // Keep the checked-in demo snapshot visible while a local API is starting.
       }
@@ -86,6 +115,7 @@ export default function Places({ onNavigateHome }) {
 
     return () => { cancelled = true; };
   }, []);
+
 
   const refreshReservations = async () => {
     try {
@@ -163,6 +193,48 @@ export default function Places({ onNavigateHome }) {
     () => filteredPlaces.filter((place) => place.verifiedBadge).length,
     [filteredPlaces],
   );
+
+  /* Real photographs, pulled live from Google for the places actually on
+     screen. Google's terms forbid copying their images into our own storage,
+     so each one is proxied per request through the API (which also keeps the
+     key server-side). Without a key nothing happens and the stock stand-ins
+     remain. Only the first screenful is enriched — every lookup is billed. */
+  useEffect(() => {
+    let cancelled = false;
+    const needPhotos = filteredPlaces
+      .filter((place) => !place.images?.length && !place.photoUrl)
+      .slice(0, 12);
+    if (needPhotos.length === 0) return undefined;
+
+    enrichPlaces({
+      places: needPhotos.map((place) => ({
+        id: place.id,
+        name: place.name,
+        address: [place.address, place.cityStateZip].filter(Boolean).join(', '),
+        lat: place.lat,
+        lng: place.lng,
+      })),
+    })
+      .then((body) => {
+        if (cancelled || body?.provider === 'none') return;
+        const photos = new Map(
+          Object.entries(body.enrichment || {})
+            .filter(([, info]) => info?.photoUrl)
+            .map(([id, info]) => [id, info.photoUrl]),
+        );
+        if (photos.size === 0) return;
+        setPlaces((current) =>
+          current.map((place) =>
+            photos.has(place.id) ? { ...place, photoUrl: photos.get(place.id) } : place,
+          ),
+        );
+      })
+      .catch(() => {
+        // No key, rate limit, or Google down — stand-in images stay.
+      });
+
+    return () => { cancelled = true; };
+  }, [filteredPlaces]);
 
   return (
     <div className={`places-workspace ${sidebarCollapsed ? 'is-collapsed' : ''} ${mobileMenuOpen ? 'has-mobile-drawer' : ''}`}>
@@ -763,13 +835,18 @@ export default function Places({ onNavigateHome }) {
                       onClick={() => setActivePlace(place)}
                     >
                       <div className="card-thumb-wrap">
-                        {/* Real directory records have no photo of their own.
-                            A monogram beats a broken-image icon. */}
-                        {place.images?.length ? (
-                          <img src={place.images[0]} alt="" className="card-thumb-img" />
-                        ) : (
-                          <span className="card-thumb-fallback" aria-hidden="true">
-                            {place.name.trim().charAt(0).toUpperCase()}
+                        {/* Google photo when the listing has one, otherwise a
+                            stable stock image that is labelled as such — a
+                            photo of a different building would mislead. */}
+                        <img
+                          src={placeImage(place, 640)}
+                          alt=""
+                          className="card-thumb-img"
+                          loading="lazy"
+                        />
+                        {isStockImage(place) && (
+                          <span className="card-stock-note" title="Generic photo — this location has no photo of its own">
+                            Stock photo
                           </span>
                         )}
                         {/* Without hours we cannot claim open or closed. */}

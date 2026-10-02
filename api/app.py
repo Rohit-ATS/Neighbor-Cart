@@ -8,6 +8,7 @@ and is proxied by Vite during development.
 from __future__ import annotations
 
 import json
+import math
 import ipaddress
 import os
 import re
@@ -23,12 +24,13 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, quote_plus, urlencode, urlsplit
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = ROOT / "data" / "neighbor-cart.db"
 SEED_PATH = Path(__file__).resolve().parent / "demo_places.json"
+OSM_SEED_PATH = Path(__file__).resolve().parent / "osm_places.json"
 MAX_BODY_BYTES = 64 * 1024
 MAX_CONNECTIONS = 32
 REQUEST_TIMEOUT_SECONDS = 10
@@ -45,6 +47,18 @@ MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE = 5
 MAX_AI_CONCURRENT_REQUESTS = 2
 MAX_PLACE_ENRICH_REQUESTS_PER_NETWORK_PER_MINUTE = 20
 MAX_ENRICH_PLACES_PER_REQUEST = 12
+MAX_DISCOVER_REQUESTS_PER_NETWORK_PER_MINUTE = 10
+# Each discover call fans out to one Nearby Search per keyword, so this is the
+# per-call bill (~$0.032 each at Google's rate). Keep the list tight.
+GOOGLE_DISCOVER_KEYWORDS = (
+    "food bank",
+    "food pantry",
+    "soup kitchen",
+    "community fridge",
+    "free meals",
+)
+GOOGLE_DISCOVER_CACHE_TTL_SECONDS = 60 * 60 * 6
+GOOGLE_DISCOVER_MAX_RADIUS_M = 50_000
 GOOGLE_TIMEOUT_SECONDS = 6
 GOOGLE_CACHE_TTL_SECONDS = 60 * 60 * 6
 GOOGLE_DISTANCE_CACHE_TTL_SECONDS = 60 * 30
@@ -124,6 +138,18 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+
+def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle distance in kilometres."""
+    radius = 6371.0088
+    d_lat = math.radians(lat2 - lat1)
+    d_lng = math.radians(lng2 - lng1)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lng / 2) ** 2
+    )
+    return 2 * radius * math.asin(math.sqrt(a))
+
 class Database:
     """SQLite repository. Connections are thread-local because requests are concurrent."""
 
@@ -169,8 +195,12 @@ class Database:
                   category TEXT NOT NULL,
                   accepts_reservations INTEGER NOT NULL CHECK (accepts_reservations IN (0, 1)),
                   data_json TEXT NOT NULL,
-                  updated_at TEXT NOT NULL
+                  updated_at TEXT NOT NULL,
+                  lat REAL,
+                  lng REAL
                 );
+                CREATE INDEX IF NOT EXISTS locations_category_idx ON locations(category);
+                CREATE INDEX IF NOT EXISTS locations_latlng_idx ON locations(lat, lng);
                 CREATE INDEX IF NOT EXISTS locations_category_idx ON locations(category);
 
                 CREATE TABLE IF NOT EXISTS reservations (
@@ -203,25 +233,46 @@ class Database:
                   ON anonymous_sessions(expires_at);
                 """
             )
+            self._migrate(connection)
             self._seed_locations(connection)
         finally:
             connection.close()
+
+    def _migrate(self, connection: sqlite3.Connection) -> None:
+        """Add columns introduced after a database was first created.
+
+        CREATE TABLE IF NOT EXISTS skips an existing table, so a database made
+        before lat/lng existed would keep the old shape and every geo query
+        would quietly return nothing.
+        """
+        # Raw connection (no row_factory): PRAGMA rows are plain tuples.
+        existing = {row[1] for row in connection.execute("PRAGMA table_info(locations)")}
+        for column in ("lat", "lng"):
+            if column not in existing:
+                connection.execute(f"ALTER TABLE locations ADD COLUMN {column} REAL")
 
     def _seed_locations(self, connection: sqlite3.Connection) -> None:
         if not SEED_PATH.exists():
             raise RuntimeError("Missing API seed data. Run: npm run seed:places")
         places = json.loads(SEED_PATH.read_text(encoding="utf-8"))
+        # Real OpenStreetMap records when the fetch script has been run. The
+        # curated demo rows keep their hand-written detail; OSM rows upsert
+        # alongside them under their own osm-* ids.
+        if OSM_SEED_PATH.exists():
+            places = places + json.loads(OSM_SEED_PATH.read_text(encoding="utf-8"))
         now = utc_now()
         connection.executemany(
             """
-            INSERT INTO locations (id, name, category, accepts_reservations, data_json, updated_at)
-            VALUES (:id, :name, :type, :acceptsReservations, :data_json, :updated_at)
+            INSERT INTO locations (id, name, category, accepts_reservations, data_json, updated_at, lat, lng)
+            VALUES (:id, :name, :type, :acceptsReservations, :data_json, :updated_at, :lat, :lng)
             ON CONFLICT(id) DO UPDATE SET
               name = excluded.name,
               category = excluded.category,
               accepts_reservations = excluded.accepts_reservations,
               data_json = excluded.data_json,
-              updated_at = excluded.updated_at
+              updated_at = excluded.updated_at,
+              lat = excluded.lat,
+              lng = excluded.lng
             """,
             [
                 {
@@ -231,25 +282,68 @@ class Database:
                     "acceptsReservations": int(bool(place.get("acceptsReservations"))),
                     "data_json": json.dumps(place, separators=(",", ":")),
                     "updated_at": now,
+                    "lat": place.get("lat"),
+                    "lng": place.get("lng"),
                 }
                 for place in places
             ],
         )
 
-    def locations(self, query: str | None, category: str | None, reservable: bool) -> list[dict]:
-        sql = "SELECT data_json FROM locations WHERE 1 = 1"
+    def locations(
+        self,
+        query: str | None,
+        category: str | None,
+        reservable: bool,
+        near: tuple[float, float] | None = None,
+        radius_km: float = 40.0,
+        limit: int = 250,
+    ) -> list[dict]:
+        """Locations, optionally narrowed to a radius around a point.
+
+        With thousands of real places nationwide, returning the whole table
+        would be a multi-megabyte response no client wants. A bounding box
+        runs in SQL against the lat/lng index, then exact great-circle
+        distance trims the box corners.
+        """
+        sql = "SELECT data_json, lat, lng FROM locations WHERE 1 = 1"
         values: list[object] = []
         if category and category != "all":
             sql += " AND category = ?"
             values.append(category)
         if reservable:
             sql += " AND accepts_reservations = 1"
+
+        if near is not None:
+            centre_lat, centre_lng = near
+            lat_span = radius_km / 111.0
+            # Longitude degrees shrink toward the poles; guard the cosine so a
+            # near-polar request cannot divide by ~0 and explode the box.
+            lng_span = radius_km / max(111.0 * math.cos(math.radians(centre_lat)), 1e-6)
+            sql += " AND lat IS NOT NULL AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?"
+            values.extend([
+                centre_lat - lat_span, centre_lat + lat_span,
+                centre_lng - lng_span, centre_lng + lng_span,
+            ])
+
         rows = self.connection().execute(sql + " ORDER BY name", values).fetchall()
-        places = [json.loads(row["data_json"]) for row in rows]
+
+        places = []
+        for row in rows:
+            place = json.loads(row["data_json"])
+            if near is not None:
+                distance = haversine_km(near[0], near[1], row["lat"], row["lng"])
+                if distance > radius_km:
+                    continue
+                place["distanceKm"] = round(distance, 2)
+                place["distanceMiles"] = round(distance * 0.621371, 1)
+            places.append(place)
+
         if not query:
-            return places
+            if near is not None:
+                places.sort(key=lambda item: item.get("distanceKm", 0))
+            return places[:limit]
         needle = query.casefold().strip()
-        return [
+        matches = [
             place
             for place in places
             if needle in " ".join(
@@ -258,10 +352,19 @@ class Database:
                     place.get("address", ""),
                     place.get("cityStateZip", ""),
                     place.get("neighborhood", ""),
+                    place.get("city", ""),
+                    place.get("state", ""),
+                    place.get("zip", ""),
                     *[item.get("item", "") for item in place.get("inventory", [])],
                 ]
             ).casefold()
         ]
+        if near is not None:
+            matches.sort(key=lambda item: item.get("distanceKm", 0))
+        return matches[:limit]
+
+    def locations_count(self) -> int:
+        return self.connection().execute("SELECT COUNT(*) AS n FROM locations").fetchone()["n"]
 
     def location(self, location_id: str) -> dict:
         row = self.connection().execute(
@@ -675,6 +778,7 @@ class TtlCache:
 
 google_details_cache = TtlCache(GOOGLE_CACHE_TTL_SECONDS)
 google_distance_cache = TtlCache(GOOGLE_DISTANCE_CACHE_TTL_SECONDS)
+google_discover_cache = TtlCache(GOOGLE_DISCOVER_CACHE_TTL_SECONDS, maximum=256)
 
 
 def google_key() -> str:
@@ -750,7 +854,7 @@ def google_place_details(place: dict) -> dict:
             place_id = candidates[0].get("place_id")
             detail = google_get("place/details/json", {
                 "place_id": place_id,
-                "fields": "rating,user_ratings_total,reviews,url,opening_hours",
+                "fields": "rating,user_ratings_total,reviews,url,opening_hours,photos",
                 "reviews_sort": "newest",
             }).get("result") or {}
             details = {
@@ -758,6 +862,14 @@ def google_place_details(place: dict) -> dict:
                 "rating": detail.get("rating"),
                 "ratingCount": detail.get("user_ratings_total"),
                 "mapsUrl": detail.get("url"),
+                # A reference, never the image itself: Google requires photos
+                # be served live from their endpoint rather than copied into
+                # our storage, and the key must stay server-side.
+                "photoUrl": (
+                    "/api/v1/places/photo?ref="
+                    + quote_plus((detail.get("photos") or [{}])[0].get("photo_reference", ""))
+                    + "&w=640"
+                ) if (detail.get("photos") or [{}])[0].get("photo_reference") else None,
                 "openNow": (detail.get("opening_hours") or {}).get("open_now"),
                 "reviews": [
                     {
@@ -776,6 +888,146 @@ def google_place_details(place: dict) -> dict:
     google_details_cache.put(cache_key, details)
     return details
 
+
+
+# --------------------------------------------------------------------------
+# Live Google discovery
+#
+# Google knows essentially every food assistance site in the country, but its
+# terms (Maps Platform §3.2.3) forbid pre-fetching that catalogue into our own
+# database. So we never store it: results are fetched for the area the visitor
+# is actually looking at, held in a short-lived in-process cache, and merged on
+# top of the OpenStreetMap records we are licensed to keep. The visitor sees
+# everything Google has; we persist nothing we may not.
+# --------------------------------------------------------------------------
+
+GOOGLE_TYPE_HINTS = (
+    ("fridge", "community-fridge"),
+    ("soup kitchen", "hot-meal"),
+    ("kitchen", "hot-meal"),
+    ("meal", "hot-meal"),
+    ("pantry", "pantry"),
+    ("bank", "food-bank"),
+)
+
+
+def google_place_category(name: str, keyword: str) -> str:
+    haystack = f"{name} {keyword}".casefold()
+    for needle, category in GOOGLE_TYPE_HINTS:
+        if needle in haystack:
+            return category
+    return "food-bank"
+
+
+def google_discover(latitude: float, longitude: float, radius_m: int) -> list[dict]:
+    """Every food assistance place Google lists around a point.
+
+    One Nearby Search per keyword, deduplicated by place_id. Cached on a
+    coarse grid so a city block of visitors shares one set of billed calls.
+    """
+    cache_key = f"{latitude:.2f},{longitude:.2f}|{radius_m}"
+    cached = google_discover_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    found: dict[str, dict] = {}
+    for keyword in GOOGLE_DISCOVER_KEYWORDS:
+        try:
+            body = google_get("place/nearbysearch/json", {
+                "location": f"{latitude},{longitude}",
+                "radius": radius_m,
+                "keyword": keyword,
+            })
+        except (HTTPError, URLError, socket.timeout, ValueError, json.JSONDecodeError):
+            # One keyword failing should not lose the other four.
+            continue
+
+        for result in body.get("results") or []:
+            place_id = result.get("place_id")
+            location = ((result.get("geometry") or {}).get("location")) or {}
+            if not place_id or "lat" not in location or "lng" not in location:
+                continue
+            if result.get("business_status") == "CLOSED_PERMANENTLY":
+                continue
+            if place_id in found:
+                continue
+
+            photos = result.get("photos") or []
+            photo_ref = (photos[0] or {}).get("photo_reference") if photos else None
+            name = str(result.get("name", "")).strip()
+            if not name:
+                continue
+
+            found[place_id] = {
+                "id": f"google-{place_id}",
+                "googlePlaceId": place_id,
+                "name": name[:160],
+                "type": google_place_category(name, keyword),
+                "typeLabel": "Food Assistance (Google listing)",
+                "tagline": "",
+                "neighborhood": "",
+                "address": str(result.get("vicinity", ""))[:200],
+                "city": "",
+                "state": "",
+                "zip": "",
+                "cityStateZip": str(result.get("vicinity", ""))[:200],
+                "lat": float(location["lat"]),
+                "lng": float(location["lng"]),
+                "phone": "",
+                "email": "",
+                "website": "",
+                "directionsUrl": (
+                    "https://www.google.com/maps/search/?api=1"
+                    f"&query={quote_plus(name)}&query_place_id={place_id}"
+                ),
+                "verifiedBadge": False,
+                "verifiedDate": "",
+                # Google's open_now is a live signal, so trust it when present.
+                "callAheadWarning": ((result.get("opening_hours") or {}).get("open_now")) is None,
+                "requirements": "",
+                "languages": [],
+                "dietary": [],
+                "hasFreshProduce": False,
+                "transitInfo": "",
+                "accessibility": "",
+                "eligibilityTags": [],
+                # A reference, not a stored image: the client fetches it back
+                # through our proxy so the API key stays server-side.
+                "photoRef": photo_ref,
+                "images": [f"/api/v1/places/photo?ref={quote_plus(photo_ref)}&w=640"] if photo_ref else [],
+                "hoursSummary": "Hours from Google — call ahead",
+                "hoursKnown": False,
+                "weeklyHours": [],
+                "services": [],
+                "inventory": [],
+                "urgentNeeds": [],
+                "acceptsReservations": False,
+                "reservationWindows": [],
+                "rating": result.get("rating"),
+                "ratingCount": result.get("user_ratings_total"),
+                "openNow": (result.get("opening_hours") or {}).get("open_now"),
+                "dataSource": "google",
+                "attribution": "Listing data © Google",
+            }
+
+    places = sorted(found.values(), key=lambda place: place["name"])
+    google_discover_cache.put(cache_key, places)
+    return places
+
+
+def google_photo(reference: str, width: int) -> tuple[bytes, str]:
+    """Stream one Places photo through our server.
+
+    Google requires photos be served live from their endpoint rather than
+    copied into our own storage, and the API key must not reach the browser,
+    so the bytes are proxied per request and never written to disk.
+    """
+    url = (
+        "https://maps.googleapis.com/maps/api/place/photo?"
+        + urlencode({"photo_reference": reference, "maxwidth": width, "key": google_key()})
+    )
+    with urlopen(url, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
+        return response.read(), response.headers.get("Content-Type", "image/jpeg")
 
 def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, dict]:
     cache_key = f"{mode}|{origin['lat']:.4f},{origin['lng']:.4f}|" + ",".join(place["id"] for place in places)
@@ -830,6 +1082,30 @@ def enrich_places(payload: dict) -> dict:
     return {"provider": "google", "enrichment": enrichment}
 
 
+
+def bounded_float(raw: object, default: float, minimum: float, maximum: float, field: str) -> float:
+    if raw is None or raw == "":
+        return default
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        raise ApiError(HTTPStatus.BAD_REQUEST, f"{field} must be a number") from None
+    if not math.isfinite(value) or not minimum <= value <= maximum:
+        raise ApiError(HTTPStatus.BAD_REQUEST, f"{field} must be between {minimum} and {maximum}")
+    return value
+
+
+def optional_point(raw_lat: object, raw_lng: object) -> tuple[float, float] | None:
+    """A lat/lng pair, or None when neither is given. One without the other is a client bug."""
+    if raw_lat in (None, "") and raw_lng in (None, ""):
+        return None
+    if raw_lat in (None, "") or raw_lng in (None, ""):
+        raise ApiError(HTTPStatus.BAD_REQUEST, "lat and lng must be supplied together")
+    return (
+        bounded_float(raw_lat, 0.0, -90.0, 90.0, "lat"),
+        bounded_float(raw_lng, 0.0, -180.0, 180.0, "lng"),
+    )
+
 def make_handler(database: Database):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -854,11 +1130,61 @@ def make_handler(database: Database):
                 query = parse_qs(url.query)
                 if url.path == "/healthz" or url.path == "/api/v1/healthz":
                     return self.send_json(HTTPStatus.OK, {"status": "ok", "storage": "sqlite"})
+                if url.path == "/api/v1/places/photo":
+                    reference = (query.get("ref", [""])[0] or "").strip()
+                    if not reference or len(reference) > 512:
+                        raise ApiError(HTTPStatus.BAD_REQUEST, "ref is required")
+                    if not google_key():
+                        raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Photos need GOOGLE_MAPS_API_KEY")
+                    width = int(bounded_float(query.get("w", [None])[0], 640.0, 80.0, 1600.0, "w"))
+                    try:
+                        payload, content_type = google_photo(reference, width)
+                    except (HTTPError, URLError, socket.timeout, ValueError):
+                        raise ApiError(HTTPStatus.BAD_GATEWAY, "Photo unavailable") from None
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Content-Length", str(len(payload)))
+                    # Within Google's caching allowance, and keeps the bill down.
+                    self.send_header("Cache-Control", "public, max-age=86400")
+                    self.end_headers()
+                    return self.wfile.write(payload)
+
+                if url.path == "/api/v1/places/discover":
+                    # Each call bills several Google searches, so it is limited
+                    # per network the same way the POST routes are.
+                    if not rate_limiter.allow(
+                        "discover", client_identity(self),
+                        MAX_DISCOVER_REQUESTS_PER_NETWORK_PER_MINUTE, 60,
+                    ):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many lookups. Please try again shortly.")
+                    point = optional_point(query.get("lat", [None])[0], query.get("lng", [None])[0])
+                    if point is None:
+                        raise ApiError(HTTPStatus.BAD_REQUEST, "lat and lng are required")
+                    radius_m = int(bounded_float(
+                        query.get("radiusM", [None])[0], 16_000.0, 500.0,
+                        float(GOOGLE_DISCOVER_MAX_RADIUS_M), "radiusM",
+                    ))
+                    if not google_key():
+                        # Not an error: the stored OSM directory still works.
+                        return self.send_json(HTTPStatus.OK, {"places": [], "provider": "none"})
+                    return self.send_json(HTTPStatus.OK, {
+                        "places": google_discover(point[0], point[1], radius_m),
+                        "provider": "google",
+                    })
+
                 if url.path == "/api/v1/locations":
                     category = query.get("category", [None])[0]
                     search = query.get("q", [None])[0]
                     reservable = query.get("reservable", ["false"])[0].lower() == "true"
-                    return self.send_json(HTTPStatus.OK, {"locations": database.locations(search, category, reservable)})
+                    near = optional_point(query.get("lat", [None])[0], query.get("lng", [None])[0])
+                    radius_km = bounded_float(query.get("radiusKm", [None])[0], 40.0, 1.0, 500.0, "radiusKm")
+                    limit = int(bounded_float(query.get("limit", [None])[0], 250.0, 1.0, 1000.0, "limit"))
+                    results = database.locations(search, category, reservable, near, radius_km, limit)
+                    return self.send_json(HTTPStatus.OK, {
+                        "locations": results,
+                        "total": database.locations_count(),
+                        "returned": len(results),
+                    })
                 availability_match = re.fullmatch(r"/api/v1/locations/([^/]+)/availability", url.path)
                 if availability_match:
                     pickup_date = require_booking_date(query.get("date", [None])[0])

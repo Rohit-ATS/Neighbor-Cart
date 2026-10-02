@@ -910,12 +910,16 @@
   margin: 14px 0 16px;
 }
 .modal-backdrop .urgent-form .form-input { flex: 1; min-width: 0; margin: 0; }
-.modal-backdrop .urgent-active-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.modal-backdrop .urgent-active-list { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* The heading is a flex sibling of the pills, so it has to claim its own row
+   or the badges try to sit beside it and overflow the panel. */
+.modal-backdrop .urgent-active-list > h4 { flex: 1 0 100%; margin: 0 0 2px; font-size: 13px; }
 .modal-backdrop .urgent-item-badge {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px 9px 16px;
+  max-width: 100%;
+  padding: 8px 8px 8px 16px;
   border-radius: 999px;
   background: rgba(252, 158, 37, .16);
   border: 1px solid rgba(180, 84, 10, .3);
@@ -923,17 +927,23 @@
   font-size: 12.5px;
   font-weight: 650;
 }
+.modal-backdrop .urgent-item-badge > span { min-width: 0; }
+/* This button's label is the phrase "Resolve / Remove", not an ×, so it is
+   sized as a text pill. As a fixed 20px circle the words escaped the badge
+   and overlapped the one next to it. */
 .modal-backdrop .urgent-del-btn {
-  width: 20px; height: 20px;
-  display: grid;
-  place-items: center;
+  flex: none;
+  padding: 5px 12px;
   border: 0;
-  border-radius: 50%;
-  background: rgba(180, 84, 10, .2);
+  border-radius: 999px;
+  background: rgba(180, 84, 10, .18);
   color: var(--d-warn);
-  font-size: 13px;
-  line-height: 1;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background .18s var(--d-ease), color .18s var(--d-ease);
 }
 .modal-backdrop .urgent-del-btn:hover { background: var(--d-warn); color: #fff; }
 
@@ -1343,3 +1353,21 @@
   line-height: 1.6;
 }
 .places-attribution a { color: #920711; text-decoration: underline; }
+
+/* A stand-in photo must say so — a picture of a different building would
+   mislead someone deciding where to walk. */
+.card-stock-note {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(45, 4, 7, .72);
+  color: rgba(255, 247, 232, .92);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}

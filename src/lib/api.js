@@ -109,3 +109,17 @@ export async function askHarvestLink(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+/**
+ * Everything Google lists around a point. Fetched live per area rather than
+ * stored, because Google's terms forbid keeping a copy of their catalogue.
+ * Returns `{ places: [], provider: 'none' }` when no API key is configured.
+ */
+export async function discoverPlaces({ lat, lng, radiusM = 25000 }) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lng),
+    radiusM: String(radiusM),
+  });
+  return request(`/api/v1/places/discover?${params}`, {}, false);
+}
