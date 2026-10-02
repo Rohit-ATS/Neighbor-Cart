@@ -555,8 +555,10 @@ export default function Landing({ onNavigatePlaces }) {
         </div>
       </footer>
 
-      {/* The navigator rides along, knowing whichever section is in view. */}
-      <AiLauncher sectionId={aiSection} />
+      {/* The navigator rides along, knowing whichever section is in view. Here
+          it wears the guide appearance: this visitor is still reading, not yet
+          searching. It becomes the cart mark in the workspace. */}
+      <AiLauncher sectionId={aiSection} appearance="guide" />
     </div>
   );
 }
