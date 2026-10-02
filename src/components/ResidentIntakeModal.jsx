@@ -108,129 +108,202 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="intake-modal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close intake">×</button>
-
-        {step === 'questions' && (
-          <div className="intake-form-wrapper">
-            <span className="modal-eyebrow">Resident Support</span>
-            <h2 className="modal-title">{text.title}</h2>
-            <p className="intake-sub">{text.sub}</p>
-            <div className="privacy-pill">{text.privacy}</div>
-
-            <form onSubmit={handleGenerate} className="intake-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">{text.q1}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={zip}
-                    onChange={(e) => setZip(e.target.value)}
-                    placeholder="e.g. 50309 or Des Moines"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">{text.q2}</label>
-                  <select
-                    className="form-input"
-                    value={householdSize}
-                    onChange={(e) => setHouseholdSize(e.target.value)}
-                  >
-                    <option value="1 person">1 person</option>
-                    <option value="2-3 people">2-3 people</option>
-                    <option value="4-5 people">4-5 people</option>
-                    <option value="6+ people">6+ people</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{text.q3}</label>
-                <div className="slot-grid">
-                  <button
-                    type="button"
-                    className={`slot-pill ${urgency === 'today' ? 'is-selected' : ''}`}
-                    onClick={() => setUrgency('today')}
-                  >
-                    ⚡ {text.today}
-                  </button>
-                  <button
-                    type="button"
-                    className={`slot-pill ${urgency === 'this-week' ? 'is-selected' : ''}`}
-                    onClick={() => setUrgency('this-week')}
-                  >
-                    📅 {text.week}
-                  </button>
-                  <button
-                    type="button"
-                    className={`slot-pill ${urgency === 'ongoing' ? 'is-selected' : ''}`}
-                    onClick={() => setUrgency('ongoing')}
-                  >
-                    🔄 {text.ongoing}
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{text.q4}</label>
-                <div className="slot-grid">
-                  <button
-                    type="button"
-                    className={`slot-pill ${transit === 'car' ? 'is-selected' : ''}`}
-                    onClick={() => setTransit('car')}
-                  >
-                    🚗 {text.car}
-                  </button>
-                  <button
-                    type="button"
-                    className={`slot-pill ${transit === 'transit' ? 'is-selected' : ''}`}
-                    onClick={() => setTransit('transit')}
-                  >
-                    🚌 {text.transitOpt}
-                  </button>
-                  <button
-                    type="button"
-                    className={`slot-pill ${transit === 'walk' ? 'is-selected' : ''}`}
-                    onClick={() => setTransit('walk')}
-                  >
-                    🚶 {text.walkOpt}
-                  </button>
-                  <button
-                    type="button"
-                    className={`slot-pill ${transit === 'delivery' ? 'is-selected' : ''}`}
-                    onClick={() => setTransit('delivery')}
-                  >
-                    📦 {text.deliveryOpt}
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{text.dietLabel}</label>
-                <div className="diet-grid">
-                  {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans'].map((diet) => (
-                    <label key={diet} className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={dietary.includes(diet)}
-                        onChange={() => toggleDiet(diet)}
-                      />
-                      <span>{diet}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button type="submit" className="btn-primary">
-                  {text.btnGenerate}
-                </button>
-              </div>
-            </form>
+      <div className="intake-modal-card lexis-modal" onClick={(e) => e.stopPropagation()}>
+        {/* Modal Header */}
+        <div className="lexis-modal-header">
+          <div className="lmh-copy">
+            <span className="lmh-eyebrow">
+              <span className="lmh-dot" /> Resident Support Navigator
+            </span>
+            <h2 className="lmh-title">{step === 'questions' ? text.title : step === 'plan' ? text.planTitle : 'Confidential Partner Referral'}</h2>
+            <p className="lmh-sub">
+              {step === 'questions' ? text.sub : step === 'plan' ? `Customized for ${planResult?.householdSize} in ZIP ${planResult?.zip}.` : 'Zero paperwork required. 100% confidential assistance.'}
+            </p>
           </div>
-        )}
+
+          <button 
+            type="button" 
+            className="lexis-modal-close" 
+            onClick={onClose} 
+            aria-label="Close navigator"
+            title="Close"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Modal Scrollable Body */}
+        <div className="intake-modal-scroll">
+          {step === 'questions' && (
+            <div className="intake-form-wrapper">
+              <div className="lexis-privacy-callout">
+                <span className="lpc-icon">🛡️</span>
+                <div className="lpc-text">
+                  <strong>100% Confidential & Secure:</strong> No ID, proof of income, or legal documentation required. Food assistance is open to all community members.
+                </div>
+              </div>
+
+              <form onSubmit={handleGenerate} className="intake-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">{text.q1}</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={zip}
+                      onChange={(e) => setZip(e.target.value)}
+                      placeholder="e.g. 50309, Des Moines, NYC..."
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">{text.q2}</label>
+                    <select
+                      className="form-input"
+                      value={householdSize}
+                      onChange={(e) => setHouseholdSize(e.target.value)}
+                    >
+                      <option value="1 person">1 person</option>
+                      <option value="2-3 people">2-3 people</option>
+                      <option value="4-5 people">4-5 people</option>
+                      <option value="6+ people">6+ people</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{text.q3}</label>
+                  <div className="intake-choice-grid">
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${urgency === 'today' ? 'is-selected' : ''}`}
+                      onClick={() => setUrgency('today')}
+                    >
+                      <span className="icc-icon">⚡</span>
+                      <div className="icc-info">
+                        <strong>{text.today}</strong>
+                        <span>Walk-in hot meals, fridges & crisis boxes</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${urgency === 'this-week' ? 'is-selected' : ''}`}
+                      onClick={() => setUrgency('this-week')}
+                    >
+                      <span className="icc-icon">📅</span>
+                      <div className="icc-info">
+                        <strong>{text.week}</strong>
+                        <span>Pantry appointments & weekend distributions</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`intake-choice-card full-width ${urgency === 'ongoing' ? 'is-selected' : ''}`}
+                      onClick={() => setUrgency('ongoing')}
+                    >
+                      <span className="icc-icon">🔄</span>
+                      <div className="icc-info">
+                        <strong>{text.ongoing}</strong>
+                        <span>Monthly food bank allotments, SNAP enrollment, & grocery delivery</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{text.q4}</label>
+                  <div className="intake-choice-grid">
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${transit === 'car' ? 'is-selected' : ''}`}
+                      onClick={() => setTransit('car')}
+                    >
+                      <span className="icc-icon">🚗</span>
+                      <div className="icc-info">
+                        <strong>{text.car}</strong>
+                        <span>Drive-thru trunk loading eligible</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${transit === 'transit' ? 'is-selected' : ''}`}
+                      onClick={() => setTransit('transit')}
+                    >
+                      <span className="icc-icon">🚌</span>
+                      <div className="icc-info">
+                        <strong>{text.transitOpt}</strong>
+                        <span>Near public bus or transit lines</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${transit === 'walk' ? 'is-selected' : ''}`}
+                      onClick={() => setTransit('walk')}
+                    >
+                      <span className="icc-icon">🚶</span>
+                      <div className="icc-info">
+                        <strong>{text.walkOpt}</strong>
+                        <span>Under 1-mile walking distance</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`intake-choice-card ${transit === 'delivery' ? 'is-selected' : ''}`}
+                      onClick={() => setTransit('delivery')}
+                    >
+                      <span className="icc-icon">📦</span>
+                      <div className="icc-info">
+                        <strong>{text.deliveryOpt}</strong>
+                        <span>Homebound door delivery options</span>
+                      </div>
+                      <span className="icc-check" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{text.dietLabel}</label>
+                  <div className="intake-diet-tags">
+                    {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans'].map((diet) => (
+                      <label key={diet} className={`intake-diet-chip ${dietary.includes(diet) ? 'is-checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={dietary.includes(diet)}
+                          onChange={() => toggleDiet(diet)}
+                        />
+                        <span className="idc-box" />
+                        <span className="idc-text">{diet}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="modal-actions-bar">
+                  <button type="submit" className="lexis-submit-btn">
+                    <span>{text.btnGenerate}</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
         {step === 'plan' && planResult && (
           <div className="intake-plan-view">
@@ -375,6 +448,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
             </form>
           </div>
         )}
+        </div> {/* /.intake-modal-scroll */}
       </div>
     </div>
   );

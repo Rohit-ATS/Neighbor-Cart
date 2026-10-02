@@ -3476,98 +3476,453 @@ h2 em {
   cursor: not-allowed;
 }
 
-/* Intake Navigator & Plan */
-.intake-body {
-  padding: 24px 28px;
-  overflow-y: auto;
-  flex: 1;
-  box-sizing: border-box;
-}
+/* ==========================================================================
+   RESIDENT INTAKE & PERSONALIZED FOOD ACCESS NAVIGATOR (LEXIS STYLE)
+   ========================================================================== */
 
-.intake-group {
-  margin-bottom: 20px;
-}
-
-.intake-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-
-.intake-grid-opts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.intake-opt-btn {
-  background: #f7faf8;
-  border: 1.5px solid #dbe3de;
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s;
-  color: var(--ink);
-}
-
-.intake-opt-btn.is-selected {
-  background: #eef7f2;
-  border-color: #920711;
-  color: #920711;
-  box-shadow: inset 0 0 0 1px #920711;
-}
-
-.intake-input-text {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1.5px solid #dbe3de;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.plan-steps-container {
+.intake-modal-card.lexis-modal {
+  max-width: 780px;
+  width: 95%;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid var(--lg-line, #ece3cd);
+  box-shadow: 0 25px 60px -15px rgba(27, 28, 20, 0.28), 0 0 1px rgba(27, 28, 20, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  margin-top: 14px;
-}
-
-.plan-step-card {
-  background: #fbfdfc;
-  border: 1.5px solid #d9e5dd;
-  border-radius: 16px;
-  padding: 18px 20px;
+  overflow: hidden;
   position: relative;
 }
 
-.plan-step-header {
+/* Modal Header Bar */
+.lexis-modal-header {
+  padding: 22px 28px 18px;
+  background: #faf7ee;
+  border-bottom: 1px solid #ece3cd;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.lmh-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lmh-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #00674f;
+}
+
+.lmh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00674f;
+  display: inline-block;
+}
+
+.lmh-title {
+  margin: 0;
+  font-family: "Newsreader", "Playfair Display", Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #1b1c14;
+  line-height: 1.15;
+}
+
+.lmh-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(27, 28, 20, 0.65);
+  line-height: 1.45;
+}
+
+.lexis-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid #ece3cd;
+  background: #ffffff;
+  color: rgba(27, 28, 20, 0.6);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.lexis-modal-close:hover {
+  background: #1b1c14;
+  border-color: #1b1c14;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Modal Scrollable Body */
+.intake-modal-scroll {
+  padding: 24px 28px 28px;
+  overflow-y: auto;
+  flex: 1;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+/* Privacy Banner */
+.lexis-privacy-callout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0f7f3;
+  border: 1px solid #c8e4d3;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+}
+
+.lpc-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.lpc-text {
+  font-size: 13px;
+  color: #1a4a34;
+  line-height: 1.45;
+}
+
+.lpc-text strong {
+  color: #0b3322;
+}
+
+/* Form Groups & Inputs */
+.intake-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.intake-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intake-form .form-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: #1b1c14;
+  text-transform: none;
+}
+
+.intake-form .form-input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #ded6c5;
+  background: #faf9f6;
+  font-size: 14px;
+  color: #1b1c14;
+  transition: all 0.16s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.intake-form .form-input:focus {
+  background: #ffffff;
+  border-color: #00674f;
+  box-shadow: 0 0 0 3px rgba(0, 103, 79, 0.12);
+}
+
+/* Modern Card Option Selector */
+.intake-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .intake-choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.intake-choice-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #faf8f3;
+  border: 1.5px solid #ece4d4;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.16s ease;
+  position: relative;
+}
+
+.intake-choice-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.intake-choice-card:hover {
+  background: #ffffff;
+  border-color: #c9c2ad;
+  transform: translateY(-1px);
+}
+
+.intake-choice-card.is-selected {
+  background: #ffffff;
+  border-color: #1b1c14;
+  box-shadow: 0 4px 14px rgba(27, 28, 20, 0.08);
+}
+
+.icc-icon {
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: #f1ebd9;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.16s ease;
+}
+
+.intake-choice-card.is-selected .icc-icon {
+  background: #1b1c14;
+  color: #ffffff;
+}
+
+.icc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.icc-info strong {
+  font-size: 13.5px;
+  color: #1b1c14;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.icc-info span {
+  font-size: 11.5px;
+  color: rgba(27, 28, 20, 0.6);
+  line-height: 1.35;
+}
+
+.icc-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #d5cebf;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+
+.intake-choice-card.is-selected .icc-check {
+  border-color: #00674f;
+  background: #00674f;
+}
+
+.intake-choice-card.is-selected .icc-check::after {
+  content: "";
+  width: 5px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+/* Dietary & Accommodations Chips */
+.intake-diet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intake-diet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #faf8f3;
+  border: 1px solid #e5dccb;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2b2e27;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.intake-diet-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.idc-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid #bbb3a1;
+  display: grid;
+  place-items: center;
+  transition: all 0.16s ease;
+}
+
+.intake-diet-chip.is-checked {
+  background: #eef7f2;
+  border-color: #00674f;
+  color: #00674f;
+}
+
+.intake-diet-chip.is-checked .idc-box {
+  background: #00674f;
+  border-color: #00674f;
+}
+
+.intake-diet-chip.is-checked .idc-box::after {
+  content: "";
+  width: 3.5px;
+  height: 6px;
+  border: solid white;
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+  margin-top: -1px;
+}
+
+/* Actions Bar & Submit CTA */
+.modal-actions-bar {
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid #ece4d4;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lexis-submit-btn {
+  background: #1b1c14;
+  color: #ffffff;
+  border: 0;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(27, 28, 20, 0.18);
+  width: 100%;
+  justify-content: center;
+}
+
+.lexis-submit-btn:hover {
+  background: #00674f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 103, 79, 0.25);
+}
+
+/* Plan Result Cards */
+.plan-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.plan-card-item {
+  background: #ffffff;
+  border: 1px solid #ece3cd;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(27, 28, 20, 0.04);
+}
+
+.pci-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.plan-step-badge {
-  background: #920711;
-  color: #fff;
+.pci-badge {
+  background: #eef7f2;
+  color: #00674f;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.pci-status {
   font-size: 11px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 10px;
+  font-weight: 700;
+  color: #b3531b;
+  background: #fdf2ea;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.plan-actions-footer {
-  display: flex;
-  gap: 10px;
-  margin-top: 24px;
-  flex-wrap: wrap;
+.pci-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1b1c14;
+}
+
+.pci-addr, .pci-hours, .pci-reason {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: rgba(27, 28, 20, 0.7);
+  line-height: 1.45;
+}
+
+.pci-actions {
+  margin-top: 12px;
+}
+
+.pci-actions .btn-primary.small {
+  background: #1b1c14;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.pci-actions .btn-primary.small:hover {
+  background: #00674f;
 }
 
 /* Volunteer Hub */
