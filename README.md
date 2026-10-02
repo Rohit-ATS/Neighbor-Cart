@@ -35,13 +35,23 @@ anonymous, device-scoped pickup pass instead of an account or ID requirement.
 - `GET /api/v1/locations` — search/filter the seeded demo locations
 - `GET /api/v1/locations/:id` — location details and inventory snapshot
 - `GET /api/v1/locations/:id/availability?date=YYYY-MM-DD` — remaining capacity for each pickup window
+- `POST /api/v1/sessions` — issue a private, anonymous device session (the web client does this automatically)
 - `POST /api/v1/reservations` — create an idempotent pickup pass
 - `GET /api/v1/reservations` — passes for the current anonymous device
 
 Each reservable window has a default capacity of 12 passes per day. A future
 data source can override it with a positive integer `slotCapacity` on a place.
 The reservation write uses a SQLite transaction, so concurrent requests cannot
-overbook a window. Run its integration suite with `npm run test:api`.
+overbook a window. Sessions are server-issued, expire after 30 days, and may
+create one pass per device per pickup day; pickup dates are limited to the next
+30 days. The API also bounds HTTP workers and request-body reads, and the AI
+route is session-gated, rate-limited, and capped at two simultaneous Bedrock
+calls. Run its integration suite with `npm run test:api`.
+
+For a direct deployment, rate limits use the TCP peer address. Behind a reverse
+proxy, set `NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES` to a comma-separated allowlist
+of proxy addresses only after confirming that proxy replaces `X-Forwarded-For`.
+Untrusted forwarding headers are ignored by default.
 
 ### Production Build
 ```bash

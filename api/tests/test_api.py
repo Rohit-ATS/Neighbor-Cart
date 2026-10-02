@@ -1,23 +1,27 @@
 import json
+import socket
 import tempfile
 import threading
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from http.client import HTTPConnection
 from pathlib import Path
+from unittest.mock import patch
 
-from api.app import create_server
+from api.app import create_server, rate_limiter
 
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
+        rate_limiter.clear()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.server = create_server("127.0.0.1", 0, Path(self.temp_dir.name) / "test.db")
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.port = self.server.server_port
-        self.session = "test-device-session-0123456789"
+        self.session = self.new_session()
 
     def tearDown(self):
         self.server.shutdown()
@@ -51,8 +55,11 @@ class ApiTests(unittest.TestCase):
             "guestName": "Alex",
         }
 
-    def headers(self, key="request-key-0001"):
-        return {"X-Neighbor-Session": self.session, "Idempotency-Key": key}
+    def new_session(self):
+        return self.server.database.issue_session()["id"]
+
+    def headers(self, key="request-key-0001", session=None):
+        return {"X-Neighbor-Session": session or self.session, "Idempotency-Key": key}
 
     def test_lists_seeded_locations(self):
         status, body = self.request("GET", "/api/v1/locations?q=food")
@@ -104,6 +111,36 @@ class ApiTests(unittest.TestCase):
         _, second = self.request("POST", "/api/v1/reservations", payload, headers)
         self.assertEqual(first["reservation"]["id"], second["reservation"]["id"])
 
+    def test_server_issues_sessions_and_rejects_client_forged_ones(self):
+        status, body = self.request("POST", "/api/v1/sessions")
+        self.assertEqual(status, 201)
+        issued = body["session"]
+        self.assertRegex(issued["id"], r"^[A-Za-z0-9_-]{32,128}$")
+        self.assertIn("expiresAt", issued)
+
+        forged = "x" * 32
+        status, body = self.request("GET", "/api/v1/reservations", headers={"X-Neighbor-Session": forged})
+        self.assertEqual(status, 401)
+        self.assertIn("session", body["error"])
+
+    def test_session_issuance_is_rate_limited_per_network(self):
+        for _ in range(4):
+            status, _ = self.request("POST", "/api/v1/sessions")
+            self.assertEqual(status, 201)
+        status, body = self.request("POST", "/api/v1/sessions")
+        self.assertEqual(status, 429)
+        self.assertIn("Too many", body["error"])
+
+    def test_configured_trusted_proxy_uses_a_valid_forwarded_client_address(self):
+        with patch("api.app.TRUSTED_PROXY_ADDRESSES", frozenset({"127.0.0.1"})):
+            for _ in range(4):
+                status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.10"})
+                self.assertEqual(status, 201)
+            status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.10"})
+            self.assertEqual(status, 429)
+            status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.11"})
+            self.assertEqual(status, 201)
+
     def test_rejects_a_reservation_without_a_device_session(self):
         status, body = self.request("POST", "/api/v1/reservations", self.reservation_payload())
         self.assertEqual(status, 401)
@@ -111,7 +148,7 @@ class ApiTests(unittest.TestCase):
 
     def test_reservations_are_isolated_between_anonymous_devices(self):
         self.request("POST", "/api/v1/reservations", self.reservation_payload(), self.headers("request-key-0003"))
-        other_session = {"X-Neighbor-Session": "other-device-session-0123456789"}
+        other_session = {"X-Neighbor-Session": self.new_session()}
         status, body = self.request("GET", "/api/v1/reservations", headers=other_session)
         self.assertEqual(status, 200)
         self.assertEqual(body["reservations"], [])
@@ -130,6 +167,17 @@ class ApiTests(unittest.TestCase):
         payload = self.reservation_payload()
         payload["pickupDate"] = (date.today() - timedelta(days=1)).isoformat()
         status, _ = self.request("POST", "/api/v1/reservations", payload, self.headers("request-key-0005"))
+        self.assertEqual(status, 400)
+
+        payload = self.reservation_payload()
+        payload["pickupDate"] = (date.today() + timedelta(days=31)).isoformat()
+        status, _ = self.request("POST", "/api/v1/reservations", payload, self.headers("request-key-horizon"))
+        self.assertEqual(status, 400)
+
+        status, _ = self.request(
+            "GET",
+            f"/api/v1/locations/{self.reservation_payload()['locationId']}/availability?date={(date.today() + timedelta(days=31)).isoformat()}",
+        )
         self.assertEqual(status, 400)
 
         payload = self.reservation_payload()
@@ -164,10 +212,7 @@ class ApiTests(unittest.TestCase):
         capacity = slot["capacity"]
 
         def reserve(index):
-            headers = {
-                "X-Neighbor-Session": f"capacity-test-device-{index:016d}",
-                "Idempotency-Key": f"capacity-request-{index:016d}",
-            }
+            headers = self.headers(f"capacity-request-{index:016d}", self.new_session())
             return self.request("POST", "/api/v1/reservations", payload, headers)[0]
 
         with ThreadPoolExecutor(max_workers=capacity + 2) as executor:
@@ -181,3 +226,134 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(slot["reserved"], capacity)
         self.assertEqual(slot["available"], 0)
         self.assertFalse(slot["isAvailable"])
+
+    def test_one_pickup_per_session_per_day_preserves_idempotent_retry(self):
+        payload = self.reservation_payload()
+        first_headers = self.headers("quota-request-0001")
+        status, first = self.request("POST", "/api/v1/reservations", payload, first_headers)
+        self.assertEqual(status, 201)
+
+        status, replay = self.request("POST", "/api/v1/reservations", payload, first_headers)
+        self.assertEqual(status, 201)
+        self.assertEqual(replay["reservation"]["id"], first["reservation"]["id"])
+
+        payload["timeSlot"] = self.reservation_payload()["timeSlot"]
+        status, body = self.request("POST", "/api/v1/reservations", payload, self.headers("quota-request-0002"))
+        self.assertEqual(status, 429)
+        self.assertIn("already", body["error"])
+
+    def test_ai_requires_a_valid_session_and_enforces_a_peer_limit(self):
+        payload = {"message": "Where can I find food?", "catalog": [{"id": "place-1", "name": "Place"}]}
+        status, _ = self.request("POST", "/api/v1/ai/chat", payload)
+        self.assertEqual(status, 401)
+
+        with patch("api.app.bedrock_chat", return_value={"reply": "Try Place", "placeIds": ["place-1"]}) as chat:
+            for _ in range(5):
+                status, body = self.request("POST", "/api/v1/ai/chat", payload, {"X-Neighbor-Session": self.session})
+                self.assertEqual(status, 200)
+                self.assertEqual(body["reply"], "Try Place")
+            status, body = self.request("POST", "/api/v1/ai/chat", payload, {"X-Neighbor-Session": self.session})
+        self.assertEqual(status, 429)
+        self.assertIn("limit", body["error"])
+        self.assertEqual(chat.call_count, 5)
+
+    def test_ai_concurrency_is_bounded_before_calling_bedrock(self):
+        payload = {"message": "Where can I find food?", "catalog": [{"id": "place-1", "name": "Place"}]}
+        entered = threading.Event()
+        release = threading.Event()
+        calls = 0
+        calls_lock = threading.Lock()
+
+        def blocked_chat(_payload):
+            nonlocal calls
+            with calls_lock:
+                calls += 1
+                if calls == 2:
+                    entered.set()
+            release.wait(timeout=2)
+            return {"reply": "Try Place", "placeIds": ["place-1"]}
+
+        with patch("api.app.bedrock_chat", side_effect=blocked_chat):
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                first = executor.submit(self.request, "POST", "/api/v1/ai/chat", payload, {"X-Neighbor-Session": self.session})
+                second = executor.submit(self.request, "POST", "/api/v1/ai/chat", payload, {"X-Neighbor-Session": self.session})
+                self.assertTrue(entered.wait(timeout=1), "two Bedrock calls did not begin")
+                third_status, third_body = self.request(
+                    "POST", "/api/v1/ai/chat", payload, {"X-Neighbor-Session": self.session}
+                )
+                self.assertEqual(third_status, 429)
+                self.assertIn("busy", third_body["error"])
+                release.set()
+                self.assertEqual(first.result(timeout=2)[0], 200)
+                self.assertEqual(second.result(timeout=2)[0], 200)
+        self.assertEqual(calls, 2)
+
+    def test_slow_ai_bodies_do_not_consume_bedrock_concurrency(self):
+        partial_clients = []
+        try:
+            for _ in range(2):
+                client = socket.create_connection(("127.0.0.1", self.port), timeout=1)
+                client.sendall(
+                    b"POST /api/v1/ai/chat HTTP/1.1\r\nHost: localhost\r\n"
+                    + f"X-Neighbor-Session: {self.session}\r\n".encode()
+                    + b"Content-Type: application/json\r\nContent-Length: 100\r\n\r\n{"
+                )
+                partial_clients.append(client)
+            time.sleep(0.1)
+            with patch("api.app.bedrock_chat", return_value={"reply": "Try Place", "placeIds": ["place-1"]}) as chat:
+                status, body = self.request(
+                    "POST",
+                    "/api/v1/ai/chat",
+                    {"message": "Where can I find food?", "catalog": [{"id": "place-1", "name": "Place"}]},
+                    {"X-Neighbor-Session": self.session},
+                )
+            self.assertEqual(status, 200)
+            self.assertEqual(body["reply"], "Try Place")
+            self.assertEqual(chat.call_count, 1)
+        finally:
+            for client in partial_clients:
+                try:
+                    client.shutdown(socket.SHUT_WR)
+                    client.settimeout(1)
+                    client.recv(4096)
+                except OSError:
+                    pass
+                finally:
+                    client.close()
+
+    def test_slow_body_times_out_without_permanently_consuming_the_only_worker(self):
+        constrained = create_server(
+            "127.0.0.1", 0, Path(self.temp_dir.name) / "constrained.db", max_workers=1, request_timeout=0.2
+        )
+        thread = threading.Thread(target=constrained.serve_forever, daemon=True)
+        thread.start()
+        session = constrained.database.issue_session()["id"]
+        client = socket.create_connection(("127.0.0.1", constrained.server_port), timeout=1)
+        try:
+            client.sendall(
+                b"POST /api/v1/reservations HTTP/1.1\r\nHost: localhost\r\n"
+                + f"X-Neighbor-Session: {session}\r\n".encode()
+                + b"Idempotency-Key: slow-body-request-0001\r\nConnection: close\r\n"
+                b"Content-Type: application/json\r\nContent-Length: 20\r\n\r\n{"
+            )
+            client.settimeout(1)
+            response = client.recv(4096)
+            self.assertIn(b"408", response)
+        finally:
+            client.close()
+
+        status, body = self.request_to_port("GET", "/healthz", constrained.server_port)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["status"], "ok")
+        constrained.shutdown()
+        constrained.server_close()
+        thread.join(timeout=2)
+
+    @staticmethod
+    def request_to_port(method, path, port):
+        connection = HTTPConnection("127.0.0.1", port, timeout=3)
+        connection.request(method, path)
+        response = connection.getresponse()
+        decoded = json.loads(response.read())
+        connection.close()
+        return response.status, decoded
