@@ -34,10 +34,14 @@ anonymous, device-scoped pickup pass instead of an account or ID requirement.
 
 - `GET /api/v1/locations` — search/filter the seeded demo locations
 - `GET /api/v1/locations/:id` — location details and inventory snapshot
+- `GET /api/v1/locations/:id/availability?date=YYYY-MM-DD` — remaining capacity for each pickup window
 - `POST /api/v1/reservations` — create an idempotent pickup pass
 - `GET /api/v1/reservations` — passes for the current anonymous device
 
-Run its integration suite with `npm run test:api`.
+Each reservable window has a default capacity of 12 passes per day. A future
+data source can override it with a positive integer `slotCapacity` on a place.
+The reservation write uses a SQLite transaction, so concurrent requests cannot
+overbook a window. Run its integration suite with `npm run test:api`.
 
 ### Production Build
 ```bash

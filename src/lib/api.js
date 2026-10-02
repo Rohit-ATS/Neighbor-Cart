@@ -41,3 +41,9 @@ export async function listLocations() {
   const body = await request('/api/v1/locations');
   return body.locations;
 }
+
+export async function getLocationAvailability(locationId, pickupDate) {
+  const params = new URLSearchParams({ date: pickupDate });
+  const body = await request(`/api/v1/locations/${encodeURIComponent(locationId)}/availability?${params}`);
+  return body.availability;
+}

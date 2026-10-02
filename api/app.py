@@ -28,6 +28,7 @@ MAX_CONNECTIONS = 32
 SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{16,128}$")
 IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 HOUSEHOLD_SIZES = {"1 person", "2-3 people", "4-5 people", "6+ people"}
+DEFAULT_SLOT_CAPACITY = 12
 
 
 class ApiError(Exception):
@@ -95,6 +96,8 @@ class Database:
                 );
                 CREATE INDEX IF NOT EXISTS reservations_session_idx
                   ON reservations(session_id, created_at DESC);
+                CREATE INDEX IF NOT EXISTS reservations_slot_idx
+                  ON reservations(location_id, pickup_date, time_slot);
                 """
             )
             self._seed_locations(connection)
@@ -165,6 +168,38 @@ class Database:
             raise ApiError(HTTPStatus.NOT_FOUND, "Location not found")
         return json.loads(row["data_json"])
 
+    def availability(self, location_id: str, pickup_date: str) -> dict:
+        location = self.location(location_id)
+        if not location.get("acceptsReservations"):
+            raise ApiError(HTTPStatus.CONFLICT, "This location does not accept reservations")
+
+        slots = location.get("reservationWindows", [])
+        capacity = slot_capacity(location)
+        rows = self.connection().execute(
+            """
+            SELECT time_slot, COUNT(*) AS reserved
+            FROM reservations
+            WHERE location_id = ? AND pickup_date = ?
+            GROUP BY time_slot
+            """,
+            (location_id, pickup_date),
+        ).fetchall()
+        reserved_by_slot = {row["time_slot"]: row["reserved"] for row in rows}
+        return {
+            "locationId": location_id,
+            "date": pickup_date,
+            "slots": [
+                {
+                    "timeSlot": time_slot,
+                    "capacity": capacity,
+                    "reserved": reserved_by_slot.get(time_slot, 0),
+                    "available": max(capacity - reserved_by_slot.get(time_slot, 0), 0),
+                    "isAvailable": reserved_by_slot.get(time_slot, 0) < capacity,
+                }
+                for time_slot in slots
+            ],
+        }
+
     def create_reservation(self, session_id: str, idempotency_key: str | None, payload: dict) -> dict:
         location_id = require_text(payload, "locationId", 96)
         location = self.location(location_id)
@@ -185,53 +220,83 @@ class Database:
         guest_name = optional_text(payload.get("guestName"), "Neighbor Guest", 64)
         contact = optional_text(payload.get("contact"), None, 200)
 
+        # BEGIN IMMEDIATE serializes writes before counting reservations. This makes
+        # the capacity check and insert one atomic operation even with concurrent users.
         connection = self.connection()
-        if idempotency_key:
-            existing = connection.execute(
-                "SELECT * FROM reservations WHERE session_id = ? AND idempotency_key = ?",
-                (session_id, idempotency_key),
-            ).fetchone()
-            if existing:
-                return reservation_response(existing, self.location(existing["location_id"]))
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            if idempotency_key:
+                existing = connection.execute(
+                    "SELECT * FROM reservations WHERE session_id = ? AND idempotency_key = ?",
+                    (session_id, idempotency_key),
+                ).fetchone()
+                if existing:
+                    response = reservation_response(existing, self.location(existing["location_id"]))
+                    connection.execute("COMMIT")
+                    return response
 
-        for _ in range(4):
-            confirmation_code = "NC-" + "".join(secrets.choice("23456789ABCDEFGHJKLMNPQRSTUVWXYZ") for _ in range(6))
-            try:
-                reservation_id = str(uuid.uuid4())
-                connection.execute(
-                    """
-                    INSERT INTO reservations (
-                      id, confirmation_code, session_id, idempotency_key, location_id, pickup_date,
-                      time_slot, household_size, dietary_json, needs_curbside, guest_name, contact, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        reservation_id,
-                        confirmation_code,
-                        session_id,
-                        idempotency_key,
-                        location_id,
-                        pickup_date,
-                        time_slot,
-                        household_size,
-                        json.dumps(dietary),
-                        int(needs_curbside),
-                        guest_name,
-                        contact,
-                        utc_now(),
-                    ),
+            capacity = slot_capacity(location)
+            reserved = connection.execute(
+                """
+                SELECT COUNT(*) FROM reservations
+                WHERE location_id = ? AND pickup_date = ? AND time_slot = ?
+                """,
+                (location_id, pickup_date, time_slot),
+            ).fetchone()[0]
+            if reserved >= capacity:
+                raise ApiError(HTTPStatus.CONFLICT, "This pickup window is full. Please choose another time.")
+
+            row = None
+            for _ in range(4):
+                confirmation_code = "NC-" + "".join(
+                    secrets.choice("23456789ABCDEFGHJKLMNPQRSTUVWXYZ") for _ in range(6)
                 )
-                row = connection.execute("SELECT * FROM reservations WHERE id = ?", (reservation_id,)).fetchone()
-                return reservation_response(row, location)
-            except sqlite3.IntegrityError:
-                if idempotency_key:
-                    existing = connection.execute(
-                        "SELECT * FROM reservations WHERE session_id = ? AND idempotency_key = ?",
-                        (session_id, idempotency_key),
-                    ).fetchone()
-                    if existing:
-                        return reservation_response(existing, self.location(existing["location_id"]))
-        raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Could not issue a pickup pass. Please try again.")
+                try:
+                    reservation_id = str(uuid.uuid4())
+                    connection.execute(
+                        """
+                        INSERT INTO reservations (
+                          id, confirmation_code, session_id, idempotency_key, location_id, pickup_date,
+                          time_slot, household_size, dietary_json, needs_curbside, guest_name, contact, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            reservation_id,
+                            confirmation_code,
+                            session_id,
+                            idempotency_key,
+                            location_id,
+                            pickup_date,
+                            time_slot,
+                            household_size,
+                            json.dumps(dietary),
+                            int(needs_curbside),
+                            guest_name,
+                            contact,
+                            utc_now(),
+                        ),
+                    )
+                    row = connection.execute("SELECT * FROM reservations WHERE id = ?", (reservation_id,)).fetchone()
+                    break
+                except sqlite3.IntegrityError:
+                    # A random confirmation-code collision is retried. The idempotency
+                    # constraint also protects a client retry with the same request key.
+                    if idempotency_key:
+                        existing = connection.execute(
+                            "SELECT * FROM reservations WHERE session_id = ? AND idempotency_key = ?",
+                            (session_id, idempotency_key),
+                        ).fetchone()
+                        if existing:
+                            row = existing
+                            break
+            if row is None:
+                raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Could not issue a pickup pass. Please try again.")
+            response = reservation_response(row, location)
+            connection.execute("COMMIT")
+            return response
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
 
     def reservations(self, session_id: str) -> list[dict]:
         rows = self.connection().execute(
@@ -282,6 +347,13 @@ def require_future_date(value: object) -> str:
     if parsed < date.today():
         raise ApiError(HTTPStatus.BAD_REQUEST, "pickupDate cannot be in the past")
     return parsed.isoformat()
+
+
+def slot_capacity(location: dict) -> int:
+    capacity = location.get("slotCapacity", DEFAULT_SLOT_CAPACITY)
+    if isinstance(capacity, int) and not isinstance(capacity, bool) and capacity > 0:
+        return capacity
+    return DEFAULT_SLOT_CAPACITY
 
 
 def reservation_response(row: sqlite3.Row, location: dict) -> dict:
@@ -356,6 +428,13 @@ def make_handler(database: Database):
                     search = query.get("q", [None])[0]
                     reservable = query.get("reservable", ["false"])[0].lower() == "true"
                     return self.send_json(HTTPStatus.OK, {"locations": database.locations(search, category, reservable)})
+                availability_match = re.fullmatch(r"/api/v1/locations/([^/]+)/availability", url.path)
+                if availability_match:
+                    pickup_date = require_future_date(query.get("date", [None])[0])
+                    return self.send_json(
+                        HTTPStatus.OK,
+                        {"availability": database.availability(availability_match.group(1), pickup_date)},
+                    )
                 if url.path.startswith("/api/v1/locations/"):
                     return self.send_json(HTTPStatus.OK, {"location": database.location(url.path.rsplit("/", 1)[1])})
                 if url.path == "/api/v1/reservations":

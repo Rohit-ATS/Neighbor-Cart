@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { createReservation } from '../lib/api.js';
+import React, { useCallback, useEffect, useState } from 'react';
+import { createReservation, getLocationAvailability } from '../lib/api.js';
 
 export default function ReservationModal({ place, onClose, onReservationConfirmed }) {
   const [step, setStep] = useState('form'); // 'form' | 'confirmed'
@@ -22,6 +22,65 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
   const [confirmedPass, setConfirmedPass] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availability, setAvailability] = useState(null);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(true);
+
+  const refreshAvailability = useCallback(async () => {
+    setIsLoadingAvailability(true);
+    setAvailabilityError('');
+    try {
+      const nextAvailability = await getLocationAvailability(place.id, date);
+      setAvailability(nextAvailability);
+      const nextOpenSlot = nextAvailability.slots.find((slot) => slot.isAvailable);
+      setTimeSlot((currentSlot) => (
+        nextAvailability.slots.some((slot) => slot.timeSlot === currentSlot && slot.isAvailable)
+          ? currentSlot
+          : (nextOpenSlot?.timeSlot ?? '')
+      ));
+    } catch (error) {
+      setAvailability(null);
+      setAvailabilityError(error.message);
+      setTimeSlot('');
+    } finally {
+      setIsLoadingAvailability(false);
+    }
+  }, [date, place.id]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setIsLoadingAvailability(true);
+      setAvailabilityError('');
+      try {
+        const nextAvailability = await getLocationAvailability(place.id, date);
+        if (!active) return;
+        setAvailability(nextAvailability);
+        const nextOpenSlot = nextAvailability.slots.find((slot) => slot.isAvailable);
+        setTimeSlot((currentSlot) => (
+          nextAvailability.slots.some((slot) => slot.timeSlot === currentSlot && slot.isAvailable)
+            ? currentSlot
+            : (nextOpenSlot?.timeSlot ?? '')
+        ));
+      } catch (error) {
+        if (!active) return;
+        setAvailability(null);
+        setAvailabilityError(error.message);
+        setTimeSlot('');
+      } finally {
+        if (active) setIsLoadingAvailability(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, [date, place.id]);
+
+  const slotOptions = availability?.slots ?? defaultSlots.map((timeSlot) => ({
+    timeSlot,
+    available: 0,
+    isAvailable: false,
+  }));
+  const selectedSlot = slotOptions.find((slot) => slot.timeSlot === timeSlot);
 
   const toggleDiet = (item) => {
     setDietary((prev) => 
@@ -31,6 +90,10 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!availability || !selectedSlot?.isAvailable) {
+      setSubmitError('Choose a pickup window with availability before confirming.');
+      return;
+    }
     setSubmitError('');
     setIsSubmitting(true);
     try {
@@ -49,6 +112,7 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
       onReservationConfirmed?.(pass);
     } catch (error) {
       setSubmitError(error.message);
+      refreshAvailability();
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +142,10 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
                   className="form-input"
                   value={date}
                   min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    setSubmitError('');
+                  }}
                   required
                 />
               </div>
@@ -86,17 +153,22 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
               <div className="form-group">
                 <label className="form-label">Select Time Window</label>
                 <div className="slot-grid">
-                  {defaultSlots.map((slot) => (
+                  {slotOptions.map((slot) => (
                     <button
-                      key={slot}
+                      key={slot.timeSlot}
                       type="button"
-                      className={`slot-pill ${timeSlot === slot ? 'is-selected' : ''}`}
-                      onClick={() => setTimeSlot(slot)}
+                      className={`slot-pill ${timeSlot === slot.timeSlot ? 'is-selected' : ''}`}
+                      onClick={() => setTimeSlot(slot.timeSlot)}
+                      disabled={isLoadingAvailability || !slot.isAvailable}
+                      aria-pressed={timeSlot === slot.timeSlot}
                     >
-                      {slot}
+                      <span>{slot.timeSlot}</span>
+                      {!isLoadingAvailability && <small>{slot.available} left</small>}
                     </button>
                   ))}
                 </div>
+                {isLoadingAvailability && <p className="availability-note" aria-live="polite">Checking pickup availability…</p>}
+                {availabilityError && <p className="form-error" role="alert">{availabilityError}</p>}
               </div>
 
               <div className="form-group">
@@ -175,8 +247,8 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
 
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating your pass…' : 'Confirm Free Reservation'}
+                <button type="submit" className="btn-primary" disabled={isSubmitting || isLoadingAvailability || !selectedSlot?.isAvailable}>
+                  {isSubmitting ? 'Creating your pass…' : isLoadingAvailability ? 'Checking availability…' : 'Confirm Free Reservation'}
                 </button>
               </div>
               {submitError && <p className="form-error" role="alert">{submitError}</p>}
