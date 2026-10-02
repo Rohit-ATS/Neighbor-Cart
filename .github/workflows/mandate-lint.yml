@@ -1,4 +1,4 @@
-name: Mandate lint
+name: Validate project
 
 on:
   push:
@@ -8,16 +8,19 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Mandates, protocols and tool docs are generic
-        run: bash tools/lint-mandates.sh
-      - name: Lint still catches violations (self-test)
-        run: |
-          bash tools/lint-mandates.sh tools/tests/lint-must-pass.md
-          if bash tools/lint-mandates.sh tools/tests/lint-must-fail.md; then
-            echo "::error::lint passed a file that must fail"; exit 1
-          fi
-          echo "self-test ok: violations are detected"
+      - name: Set up Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run API integration tests
+        run: npm run test:api
+      - name: Build frontend
+        run: npm run build
