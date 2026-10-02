@@ -803,49 +803,44 @@ h2 em {
   box-shadow: 0 6px 18px rgba(244, 107, 66, 0.45);
 }
 
-/* Side Menu Trigger Button */
-.side-menu-trigger-btn {
+/* Side Menu Retractable & Mobile Trigger Buttons */
+.lexis-rail-toggle-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f5f3ec;
+  border-radius: 9px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  padding: 0;
 }
 
-.side-menu-trigger-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(201, 232, 109, 0.5);
+.lexis-rail-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--lime);
   color: var(--lime);
   transform: translateY(-1px);
 }
 
-.hamburger-box {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 16px;
-  height: 12px;
+.desktop-only {
+  display: flex !important;
 }
 
-.hamburger-line {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
+.mobile-only {
+  display: none !important;
 }
 
-.menu-trigger-text {
-  font-size: 13px;
-  letter-spacing: -0.2px;
+@media (max-width: 840px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
 }
 
 /* Center Quick Hubs Strip */
@@ -856,6 +851,9 @@ h2 em {
 }
 
 .quick-hub-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #d1ded8;
@@ -888,29 +886,10 @@ h2 em {
 }
 
 /* ==========================================================================
-   SIDE DRAWER MENU STYLING
+   LEXISGUIDE SIGNATURE IN-PAGE RETRACTABLE WORKSPACE
    ========================================================================== */
 
-/* ==========================================================================
-   LEXISGUIDE SIGNATURE SIDEBAR DESIGN SYSTEM
-   ========================================================================== */
-
-.sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(27, 28, 20, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 998;
-  animation: fadeIn 0.22s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.places-side-drawer.lexis-sidebar {
+.places-workspace {
   --lg-ink: #1b1c14;
   --lg-ink-80: rgba(27, 28, 20, 0.8);
   --lg-ink-60: rgba(27, 28, 20, 0.6);
@@ -928,66 +907,93 @@ h2 em {
   --lg-sans: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
   --lg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 290px;
-  max-width: 90vw;
-  background: var(--lg-sand);
-  color: var(--lg-ink);
-  font-family: var(--lg-sans);
-  z-index: 999;
   display: flex;
   flex-direction: column;
-  padding: 16px 14px 14px;
+  min-height: 100vh;
+  background: #fbf9f4;
+  color: var(--lg-ink);
+}
+
+.places-workspace-frame {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  align-items: stretch;
+}
+
+/* Retractable Sidebar (Lexis-Guide style) */
+.lexis-workspace-sidebar {
+  width: 255px;
+  min-width: 255px;
+  background: var(--lg-sand);
   border-right: 1px solid var(--lg-line);
-  box-shadow: 0 30px 80px -25px rgba(40, 50, 30, 0.35);
-  transform: translateX(-100%);
-  transition: transform 0.32s var(--lg-ease);
+  padding: 18px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.26s var(--lg-ease), min-width 0.26s var(--lg-ease), padding 0.26s var(--lg-ease);
   box-sizing: border-box;
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
   overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 40;
 }
 
-.places-side-drawer.lexis-sidebar.is-open {
-  transform: translateX(0);
+/* Retracted / Collapsed State */
+.places-workspace.is-collapsed .lexis-workspace-sidebar {
+  width: 68px;
+  min-width: 68px;
+  padding: 16px 8px 14px;
 }
 
-/* Lexis Brand Row */
-.lexis-brand-row {
+.places-workspace.is-collapsed .lexis-brand-text,
+.places-workspace.is-collapsed .lexis-btn-label,
+.places-workspace.is-collapsed .ln-label,
+.places-workspace.is-collapsed .ln-badge,
+.places-workspace.is-collapsed .ln-dot,
+.places-workspace.is-collapsed .lexis-rail-label,
+.places-workspace.is-collapsed .lexis-recent-box,
+.places-workspace.is-collapsed .lfb-label {
+  display: none !important;
+}
+
+.places-workspace.is-collapsed .lexis-side-header {
+  justify-content: center;
+  padding-bottom: 12px;
+}
+
+.places-workspace.is-collapsed .lexis-new-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  margin: 0 auto 16px;
+  justify-content: center;
+}
+
+.places-workspace.is-collapsed .lexis-nav-btn {
+  justify-content: center;
+  padding: 0;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.places-workspace.is-collapsed .lexis-foot-btn {
+  justify-content: center;
+  padding: 0;
+  height: 38px;
+}
+
+/* Sidebar Internal Elements */
+.lexis-side-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 4px 14px;
+  padding: 0 4px 14px;
   border-bottom: 1px solid var(--lg-line);
-  margin-bottom: 14px;
-}
-
-.lexis-brand-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.lexis-brand-mark {
-  background: var(--lg-ink);
-  color: #fffaeb !important;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 0;
-  display: grid;
-  place-items: center;
-  flex: none;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.18s var(--lg-ease), background-color 0.18s;
-  box-shadow: 0 4px 12px rgba(27, 28, 20, 0.2);
-}
-
-.lexis-brand-mark:hover {
-  background: var(--lg-green);
-  transform: translateY(-1px) rotate(-6deg);
+  margin-bottom: 16px;
 }
 
 .lexis-brand-text {
@@ -997,11 +1003,11 @@ h2 em {
 
 .lexis-brand-name {
   font-family: var(--lg-serif);
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 500;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: var(--lg-ink);
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .lexis-brand-sub {
@@ -1011,53 +1017,58 @@ h2 em {
   letter-spacing: 0.2px;
 }
 
-.lexis-icon-btn {
+/* Minimalist Retract / Collapse Icon Button */
+.lexis-collapse-toggle-btn {
   border: 1px solid var(--lg-line);
   background: var(--lg-paper);
-  border-radius: 10px;
-  width: 32px;
-  height: 32px;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   color: var(--lg-ink-60);
   cursor: pointer;
-  transition: all 0.15s;
-  font-size: 13px;
+  transition: all 0.16s var(--lg-ease);
+  padding: 0;
 }
 
-.lexis-icon-btn:hover {
+.lexis-collapse-toggle-btn:hover {
   background: #ffffff;
   color: var(--lg-ink);
   border-color: var(--lg-line-2);
+  transform: scale(1.05);
 }
 
-/* Lexis Primary Action Button (Matches 'Add document') */
+/* Primary Action Button (Matches 'Add document') */
 .lexis-new-btn {
   background: var(--lg-ink);
   color: #ffffff !important;
-  height: 42px;
+  height: 40px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 16px;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 8px 20px -10px rgba(27, 28, 20, 0.5);
-  transition: transform 0.18s var(--lg-ease), background-color 0.18s;
+  box-shadow: 0 2px 8px rgba(27, 28, 20, 0.15);
+  transition: all 0.18s var(--lg-ease);
   width: 100%;
 }
 
 .lexis-new-btn:hover {
   background: #2b2d22;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(27, 28, 20, 0.2);
 }
 
 .lexis-new-icon {
-  font-size: 16px;
+  display: grid;
+  place-items: center;
+  color: #c9e86d;
 }
 
 /* Navigation Rail & Groups */
@@ -1070,16 +1081,16 @@ h2 em {
 .lexis-nav-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .lexis-rail-label {
   color: var(--lg-ink-45);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  margin: 6px 8px 4px;
+  margin: 6px 8px 3px;
   display: block;
 }
 
@@ -1088,16 +1099,16 @@ h2 em {
   height: 36px;
   background: transparent;
   border: 0;
-  border-radius: 10px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 10px;
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--lg-ink-80) !important;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.14s, color 0.14s;
   position: relative;
 }
 
@@ -1113,9 +1124,16 @@ h2 em {
 }
 
 .ln-icon {
-  font-size: 16px;
-  width: 18px;
-  text-align: center;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--lg-ink-60);
+  flex-shrink: 0;
+}
+
+.lexis-nav-btn.is-active .ln-icon {
+  color: var(--lg-green);
 }
 
 .ln-label {
@@ -1128,7 +1146,7 @@ h2 em {
 .ln-badge {
   background: var(--lg-green-soft);
   color: var(--lg-green);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   font-style: normal;
   padding: 2px 7px;
@@ -1161,16 +1179,16 @@ h2 em {
   height: 32px;
   background: transparent;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 10px;
-  font-size: 12.5px;
+  padding: 0 8px;
+  font-size: 12px;
   color: var(--lg-ink-60) !important;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.14s;
 }
 
 .lexis-recent-item:hover {
@@ -1179,7 +1197,10 @@ h2 em {
 }
 
 .lri-icon {
-  font-size: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--lg-green);
+  flex-shrink: 0;
 }
 
 .lri-title {
@@ -1203,7 +1224,7 @@ h2 em {
   border-top: 1px solid var(--lg-line);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .lexis-foot-btn {
@@ -1211,16 +1232,16 @@ h2 em {
   height: 34px;
   background: transparent;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 10px;
-  font-size: 12.5px;
+  padding: 0 8px;
+  font-size: 12px;
   color: var(--lg-ink-60);
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s;
+  transition: all 0.14s;
 }
 
 .lexis-foot-btn:hover {
@@ -1229,7 +1250,73 @@ h2 em {
 }
 
 .lfb-icon {
-  font-size: 14px;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* Main Workspace View Container */
+.places-workspace-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile responsive drawer behavior */
+@media (max-width: 840px) {
+  .lexis-workspace-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    z-index: 1001;
+    transform: translateX(-100%);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .lexis-workspace-sidebar.is-mobile-open {
+    transform: translateX(0);
+  }
+
+  .places-workspace.is-collapsed .lexis-workspace-sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+
+  .places-workspace.is-collapsed .lexis-brand-text,
+  .places-workspace.is-collapsed .lexis-btn-label,
+  .places-workspace.is-collapsed .ln-label,
+  .places-workspace.is-collapsed .ln-badge,
+  .places-workspace.is-collapsed .ln-dot,
+  .places-workspace.is-collapsed .lexis-rail-label,
+  .places-workspace.is-collapsed .lexis-recent-box,
+  .places-workspace.is-collapsed .lfb-label {
+    display: flex !important;
+  }
+
+  .places-workspace.is-collapsed .lexis-new-btn {
+    width: 100%;
+    height: 40px;
+    padding: 0 16px;
+    justify-content: center;
+  }
+
+  .places-workspace.is-collapsed .lexis-nav-btn {
+    justify-content: flex-start;
+    padding: 0 10px;
+    height: 36px;
+  }
+
+  .places-workspace.is-collapsed .lexis-foot-btn {
+    justify-content: flex-start;
+    padding: 0 8px;
+    height: 34px;
+  }
 }
 
 /* Places Hero / Header Bar */
