@@ -64,6 +64,16 @@ export async function getLocationAvailability(locationId, pickupDate) {
   return body.availability;
 }
 
+/* Google ratings, reviews, and travel time, fetched through our own API so the
+   Maps key stays server-side. Returns `provider: 'none'` until a key is set. */
+export async function enrichPlaces(payload) {
+  return request('/api/v1/places/enrich', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }, false);
+}
+
 export async function askHarvestLink(payload) {
   return request('/api/v1/ai/chat', {
     method: 'POST',

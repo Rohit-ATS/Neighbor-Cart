@@ -886,6 +886,52 @@ h2 em {
   border-color: var(--lime);
 }
 
+/* The pill is a destination, not just a shortcut, so it reads as selected
+   while the navigator holds the workspace. */
+.quick-hub-pill.ai-hub-pill.is-active {
+  background: var(--lime);
+  color: var(--ink);
+  border-color: var(--lime);
+}
+
+/* The top bar carries three groups that cannot all fit a phone. Everything
+   dropped below is reachable from the drawer the hamburger opens: the five
+   centre pills are the drawer's own hubs, and "Back to Home" is its "Return
+   to Home". What stays is what the drawer does not duplicate. */
+@media (max-width: 840px) {
+  .places-topbar-inner {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  .topbar-brand-group {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .places-brand-btn {
+    min-width: 0;
+    font-size: 17px;
+  }
+
+  .topbar-center-hubs-strip,
+  .topbar-live-tag,
+  .places-nav .nav-text-btn {
+    display: none;
+  }
+
+  .places-nav {
+    flex: none;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .places-topbar-inner { padding: 0 10px; }
+  .places-brand-btn { font-size: 15px; }
+  .lang-toggle-btn span { display: none; }
+}
+
 /* ==========================================================================
    LEXISGUIDE SIGNATURE IN-PAGE RETRACTABLE WORKSPACE
    ========================================================================== */
@@ -932,7 +978,8 @@ h2 em {
   padding: 18px 12px 16px;
   display: flex;
   flex-direction: column;
-  transition: width 0.26s var(--lg-ease), min-width 0.26s var(--lg-ease), padding 0.26s var(--lg-ease);
+  will-change: width, min-width, padding;
+  transition: width 0.5s cubic-bezier(.22, .9, .25, 1), min-width 0.5s cubic-bezier(.22, .9, .25, 1), padding 0.5s cubic-bezier(.22, .9, .25, 1);
   box-sizing: border-box;
   position: sticky;
   top: 64px;
@@ -957,11 +1004,13 @@ h2 em {
 .places-workspace.is-collapsed .lexis-rail-label,
 .places-workspace.is-collapsed .lexis-recent-box,
 .places-workspace.is-collapsed .lfb-label {
-  display: none !important;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .places-workspace.is-collapsed .lexis-side-header {
-  justify-content: center;
   padding-bottom: 12px;
 }
 
@@ -991,7 +1040,7 @@ h2 em {
 .lexis-side-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 4px 14px;
   border-bottom: 1px solid var(--lg-line);
   margin-bottom: 16px;
@@ -1000,6 +1049,10 @@ h2 em {
 .lexis-brand-text {
   display: flex;
   flex-direction: column;
+  margin-right: auto;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width .38s cubic-bezier(.22, .9, .25, 1), opacity .2s ease, transform .38s cubic-bezier(.22, .9, .25, 1), visibility 0s linear;
 }
 
 .lexis-brand-name {
@@ -1109,7 +1162,7 @@ h2 em {
   color: var(--lg-ink-80) !important;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.14s, color 0.14s;
+  transition: background-color .18s, color .18s, padding .5s cubic-bezier(.22, .9, .25, 1), gap .5s cubic-bezier(.22, .9, .25, 1);
   position: relative;
 }
 
@@ -3816,6 +3869,39 @@ h2 em {
   margin-top: -1px;
 }
 
+/* Other dietary need composer */
+.other-need-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border-radius: inherit;
+  background: rgba(27, 28, 20, .22);
+  backdrop-filter: blur(3px);
+}
+.other-need-composer {
+  position: relative;
+  width: min(100%, 500px);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: 0 20px 55px rgba(27, 28, 20, .2);
+}
+.other-need-composer h3 { margin: 4px 0 8px; font-size: 26px; }
+.other-need-composer > p:not(.other-need-eyebrow) { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.other-need-eyebrow { margin: 0; color: var(--green); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.other-need-composer textarea { width: 100%; min-height: 106px; margin-top: 18px; padding: 13px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); color: var(--ink); font: inherit; line-height: 1.5; }
+.other-need-composer textarea:focus { outline: 2px solid var(--green); outline-offset: 2px; }
+.other-need-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.other-need-cancel, .other-need-save { padding: 9px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.other-need-cancel { color: var(--ink); }
+.other-need-save { background: var(--ink); color: var(--panel); }
+.other-need-save:disabled { cursor: not-allowed; opacity: .45; }
+.other-need-close { position: absolute; top: 12px; right: 14px; color: var(--ink-60); font-size: 22px; line-height: 1; }
+
 /* Actions Bar & Submit CTA */
 .modal-actions-bar {
   margin-top: 10px;
@@ -4587,16 +4673,8 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 /* the illustration now sits under the centred hero copy */
 .cart-stage { margin-inline: auto; max-width: 520px; }
 
-/* ---- composer inside the AI modal ---- */
-.ai-modal-card { background: var(--panel); border: 1px solid var(--border); }
-.ai-modal-card .ai-chat-stream { flex: 1; min-height: 0; overflow-y: auto; }
-.ai-modal-card > .askbar {
-  flex: none;
-  width: auto;
-  max-width: none;
-  margin: 0 22px 22px;
-}
-.ai-modal-card > .askbar.is-open { max-width: none; }
+/* ---- the AI modal shell; the conversation inside it is styled by aichat.css ---- */
+.ai-modal-card { background: var(--panel); border: 1px solid var(--border); padding: 0; }
 
 /* A short, local-session memory summary makes the guide's retained context
    visible and lets a customer discard it at any time. */
@@ -4605,7 +4683,7 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  margin: 10px 22px 18px;
+  margin: 0;
   padding: 9px 11px;
   border: 1px solid var(--border-light);
   border-radius: 10px;
@@ -4617,8 +4695,122 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .ai-memory-strip p { overflow: hidden; margin: 0; text-overflow: ellipsis; white-space: nowrap; }
 .ai-memory-strip button { color: var(--green); font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 @media (max-width: 560px) {
-  .ai-memory-strip { grid-template-columns: 1fr auto; margin: 8px 14px 14px; }
+  .ai-memory-strip { grid-template-columns: 1fr auto; }
   .ai-memory-strip p { display: none; }
+}
+
+/* Smooth sidebar collapse: labels fade and clip in-place instead of being
+   removed from layout in a single frame. */
+@media (min-width: 841px) {
+  .lexis-workspace-sidebar {
+    flex: 0 0 255px;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    transition: flex-basis .68s cubic-bezier(.16, 1, .3, 1), width .68s cubic-bezier(.16, 1, .3, 1), min-width .68s cubic-bezier(.16, 1, .3, 1), padding .68s cubic-bezier(.16, 1, .3, 1);
+  }
+  .places-workspace.is-collapsed .lexis-workspace-sidebar { flex-basis: 68px; }
+  .lexis-brand-text { max-width: 190px; }
+  .lexis-btn-label,
+  .ln-label,
+  .ln-badge,
+  .ln-dot,
+  .lexis-rail-label,
+  .lfb-label {
+    display: block !important;
+    max-width: 190px;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width .46s cubic-bezier(.16, 1, .3, 1) .08s, opacity .24s ease .08s, transform .46s cubic-bezier(.16, 1, .3, 1) .08s, visibility 0s linear;
+  }
+  .lexis-recent-box {
+    display: block !important;
+    max-height: 280px;
+    overflow: hidden;
+    transition: max-height .5s cubic-bezier(.16, 1, .3, 1) .08s, opacity .24s ease .08s, transform .46s cubic-bezier(.16, 1, .3, 1) .08s, visibility 0s linear;
+  }
+  .places-workspace.is-collapsed .lexis-brand-text,
+  .places-workspace.is-collapsed .lexis-btn-label,
+  .places-workspace.is-collapsed .ln-label,
+  .places-workspace.is-collapsed .ln-badge,
+  .places-workspace.is-collapsed .ln-dot,
+  .places-workspace.is-collapsed .lexis-rail-label,
+  .places-workspace.is-collapsed .lfb-label {
+    display: block !important;
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-8px);
+    pointer-events: none;
+    visibility: hidden;
+    transition: max-width .3s cubic-bezier(.4, 0, 1, 1), opacity .18s ease, transform .3s cubic-bezier(.4, 0, 1, 1), visibility 0s linear .3s;
+  }
+  .places-workspace.is-collapsed .lexis-recent-box {
+    display: block !important;
+    max-height: 0;
+    opacity: 0;
+    transform: translateX(-8px);
+    pointer-events: none;
+    visibility: hidden;
+    transition: max-height .32s cubic-bezier(.4, 0, 1, 1), opacity .18s ease, transform .3s cubic-bezier(.4, 0, 1, 1), visibility 0s linear .32s;
+  }
+  .lexis-nav,
+  .lexis-nav-group,
+  .lexis-rail-label {
+    transition: gap .45s cubic-bezier(.16, 1, .3, 1), margin .35s ease, max-height .35s ease, height .35s ease;
+  }
+  .places-workspace.is-collapsed .lexis-nav { gap: 8px; }
+  .places-workspace.is-collapsed .lexis-nav-group { gap: 4px; }
+  .places-workspace.is-collapsed .lexis-rail-label {
+    height: 0;
+    max-height: 0;
+    margin: 0;
+    line-height: 0;
+    padding: 0;
+  }
+  .places-workspace.is-collapsed .lexis-nav-btn,
+  .places-workspace.is-collapsed .lexis-foot-btn,
+  .places-workspace.is-collapsed .lexis-new-btn { gap: 0; }
+  .places-workspace.is-collapsed .ln-label,
+  .places-workspace.is-collapsed .lexis-btn-label,
+  .places-workspace.is-collapsed .lfb-label {
+    flex: 0 0 0;
+    margin: 0;
+    padding: 0;
+  }
+  .places-workspace.is-collapsed .ln-badge,
+  .places-workspace.is-collapsed .ln-dot {
+    flex: 0 0 0;
+    width: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .places-workspace.is-collapsed .ln-icon,
+  .places-workspace.is-collapsed .lfb-icon,
+  .places-workspace.is-collapsed .lexis-new-icon {
+    display: grid;
+    place-items: center;
+    margin: 0;
+  }
+  .lexis-new-btn,
+  .lexis-nav-btn,
+  .lexis-foot-btn {
+    transition: width .68s cubic-bezier(.16, 1, .3, 1), height .68s cubic-bezier(.16, 1, .3, 1), padding .68s cubic-bezier(.16, 1, .3, 1), margin .68s cubic-bezier(.16, 1, .3, 1), border-radius .68s cubic-bezier(.16, 1, .3, 1), background-color .18s, color .18s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lexis-workspace-sidebar,
+  .lexis-brand-text,
+  .lexis-btn-label,
+  .ln-label,
+  .ln-badge,
+  .ln-dot,
+  .lexis-rail-label,
+  .lfb-label,
+  .lexis-new-btn,
+  .lexis-nav-btn,
+  .lexis-foot-btn { transition-duration: .01ms !important; }
 }
 
 /* ==========================================================================
@@ -4962,98 +5154,6 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 @media (max-width: 700px) { .demand-bar-row { grid-template-columns: 1fr auto; } .demand-bar-row .demand-bar-track { grid-column: 1 / -1; } }
 @media (max-width: 620px) { .np-stat-grid { grid-template-columns: minmax(0, 1fr); } }
 
-/* ==========================================================================
-   AI MATCH MAP
-   The navigator shows its matches on a map inside the conversation, so the
-   answer is a place you can see rather than a list of addresses.
-   ========================================================================== */
-
-.ai-map-panel {
-  margin: 14px 0;
-  border: 1.5px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.ai-map-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 16px 18px;
-  background: var(--panel-2);
-  border-bottom: 1px solid var(--border-light);
-}
-.ai-map-count { font-size: 14.5px; font-weight: 700; color: var(--ink); }
-.ai-map-criteria { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; list-style: none; padding: 0; }
-.ai-map-criteria li {
-  padding: 4px 11px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  font-size: 11.5px;
-  color: var(--muted);
-  max-width: 28ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ai-map-expand {
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: var(--orange);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background .18s ease, transform .18s ease;
-}
-.ai-map-expand:hover { background: var(--green-deep); transform: translateY(-1px); }
-
-.ai-inline-map { height: 280px; width: 100%; }
-.ai-inline-map .leaflet-container { height: 280px; width: 100%; }
-
-.ai-map-list { max-height: 190px; overflow-y: auto; padding: 10px; display: grid; gap: 6px; border-top: 1px solid var(--border-light); }
-.ai-map-row {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 11px;
-  border: 1px solid transparent;
-  transition: background .16s ease, border-color .16s ease;
-}
-.ai-map-row:hover { background: var(--panel-2); }
-.ai-map-row.is-active { background: var(--panel-2); border-color: var(--orange); }
-.ai-map-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
-.ai-map-row.is-active .ai-map-dot { background: var(--orange); box-shadow: 0 0 0 4px var(--tag-bg); }
-.ai-map-row-body { display: grid; gap: 2px; min-width: 0; }
-.ai-map-row-body b { font-size: 13.5px; color: var(--ink); }
-.ai-map-row-body span { font-size: 12px; color: var(--muted); }
-
-.ai-map-active {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 14px 18px;
-  border-top: 1px solid var(--border-light);
-  background: var(--panel-2);
-}
-.ai-map-active > div { display: grid; gap: 3px; min-width: 0; }
-.ai-map-active b { font-size: 14px; color: var(--ink); }
-.ai-map-active span { font-size: 12.5px; color: var(--muted); }
-
-@media (max-width: 620px) {
-  .ai-inline-map, .ai-inline-map .leaflet-container { height: 220px; }
-  .ai-map-expand { width: 100%; text-align: center; }
-}
-
 .ai-match-banner {
   display: inline-flex;
   align-items: center;
@@ -5069,6 +5169,4 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 }
 .ai-match-banner:hover { background: rgba(146, 7, 17, .14); }
 
-/* inside the AI modal the composer must not swallow the thread */
-.ai-modal-card > .askbar .askbar-tray { max-height: 148px; overflow-y: auto; }
-.ai-modal-card > .askbar .askbar-chips { padding-top: 12px; }
+.ai-chat-composer .askbar-chips { padding-top: 12px; }

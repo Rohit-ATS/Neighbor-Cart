@@ -12,6 +12,7 @@ Food support that stays with you. Neighbor Cart connects individuals and familie
   - **Real-Time Inventory Tracker**: Categorized view of available fresh produce, protein & dairy, shelf-stable canned goods, baby supplies, and dietary-specific items with stock levels (High, Moderate, Limited).
   - **Dignified Pickup Reservations**: Privacy-first booking flow (select pickup date, time window, household size, dietary requirements, and curbside loading) generating an instant, printable/downloadable digital Pickup Pass with confirmation code and barcode preview. Zero ID or paperwork required.
   - **Smart Filtering & Search**: Instant search by place name, street address, neighborhood, ZIP code, or food item, with toggles for "Open Right Now" and "Accepts Free Reservations".
+- **AI Navigator Chat (sidebar → "Ask HarvestLink AI")**: A full chat section of the workspace rather than a modal, so a conversation survives opening a place beside it. The composer rests as a single line and springs open on focus, carrying suggested prompts; it settles back only while still empty, so a half-written question is never thrown away. Every answer that names places draws its own mini map, ranks the matches nearest-first, and lets the person choose one — the choice becomes a turn in the conversation instead of ending it. Requirements shared across several messages are remembered for the session and shown in a strip the person can clear.
 
 ## Getting Started
 
@@ -38,6 +39,20 @@ anonymous, device-scoped pickup pass instead of an account or ID requirement.
 - `POST /api/v1/sessions` — issue a private, anonymous device session (the web client does this automatically)
 - `POST /api/v1/reservations` — create an idempotent pickup pass
 - `GET /api/v1/reservations` — passes for the current anonymous device
+- `POST /api/v1/ai/chat` — the navigator's grounded answer, restricted to verified catalog IDs
+- `POST /api/v1/places/enrich` — Google ratings, reviews, and travel time for a set of places
+
+#### Google Maps Platform (optional)
+
+Set `GOOGLE_MAPS_API_KEY` in the API's environment to switch on Google ratings,
+recent reviews, and real driving/transit times in the navigator's mini map. The
+key is read only by the Python API and never reaches the browser; enable the
+**Places API** and **Distance Matrix API** on it. Responses are cached in
+process (6h for place details, 30m for distances) to keep billing down.
+
+Without the key, `/api/v1/places/enrich` still answers with `provider: "none"`
+and the UI falls back to straight-line distance and no reviews, so nothing
+breaks before the key is issued.
 
 Each reservable window has a default capacity of 12 passes per day. A future
 data source can override it with a positive integer `slotCapacity` on a place.

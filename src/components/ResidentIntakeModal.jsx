@@ -8,6 +8,9 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
   const [urgency, setUrgency] = useState('today'); // 'today' | 'this-week' | 'ongoing'
   const [transit, setTransit] = useState('car'); // 'car' | 'transit' | 'walk' | 'delivery'
   const [dietary, setDietary] = useState([]);
+  const [otherNeed, setOtherNeed] = useState('');
+  const [otherNeedDraft, setOtherNeedDraft] = useState('');
+  const [showOtherComposer, setShowOtherComposer] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [contactInfo, setContactInfo] = useState('');
   const [planResult, setPlanResult] = useState(null);
@@ -73,12 +76,46 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
     );
   };
 
+  const openOtherComposer = () => {
+    if (dietary.includes('Other')) {
+      setDietary((prev) => prev.filter((item) => item !== 'Other'));
+      setOtherNeed('');
+      return;
+    }
+    setDietary((prev) => [...prev, 'Other']);
+    setOtherNeedDraft(otherNeed);
+    setShowOtherComposer(true);
+  };
+
+  const saveOtherNeed = () => {
+    const requirement = otherNeedDraft.trim().slice(0, 500);
+    if (!requirement) return;
+    setOtherNeed(requirement);
+    setShowOtherComposer(false);
+    // The AI navigator reads this private browser-session context whenever a
+    // resident asks it to suggest places later.
+    try {
+      const previous = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs') || '[]');
+      const memory = Array.isArray(previous) ? previous : [];
+      const remembered = `Other food requirement: ${requirement}`;
+      sessionStorage.setItem('harvestlink-ai-needs', JSON.stringify([...memory, remembered].filter((item, index, list) => list.indexOf(item) === index).slice(-12)));
+    } catch {
+      // The intake plan still keeps the requirement if browser storage is unavailable.
+    }
+  };
+
+  const closeOtherComposer = () => {
+    setShowOtherComposer(false);
+    if (!otherNeed) setDietary((prev) => prev.filter((item) => item !== 'Other'));
+  };
+
   const handleGenerate = (e) => {
     e.preventDefault();
 
     // Match locations
     const immediate = PLACES.find((p) => p.type === 'hot-meal' || p.type === 'community-fridge') || PLACES[0];
-    const pantryMatch = PLACES.find((p) => p.type === 'pantry' && (dietary.length === 0 || p.dietary?.some((d) => dietary.includes(d)))) || PLACES[1];
+    const matchedDietary = dietary.filter((item) => item !== 'Other');
+    const pantryMatch = PLACES.find((p) => p.type === 'pantry' && (matchedDietary.length === 0 || p.dietary?.some((d) => matchedDietary.includes(d)))) || PLACES[1];
     const bulkMatch = PLACES.find((p) => p.type === 'food-bank' || p.type === 'mobile') || PLACES[2];
 
     const generated = {
@@ -88,7 +125,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       householdSize,
       urgency,
       transit,
-      dietary,
+      dietary: otherNeed ? [...matchedDietary, `Other: ${otherNeed}`] : matchedDietary,
       immediatePlace: immediate,
       pantryPlace: pantryMatch,
       bulkPlace: bulkMatch
@@ -278,15 +315,15 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
                 <div className="form-group">
                   <label className="form-label">{text.dietLabel}</label>
                   <div className="intake-diet-tags">
-                    {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans'].map((diet) => (
+                    {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans', 'Other'].map((diet) => (
                       <label key={diet} className={`intake-diet-chip ${dietary.includes(diet) ? 'is-checked' : ''}`}>
                         <input
                           type="checkbox"
                           checked={dietary.includes(diet)}
-                          onChange={() => toggleDiet(diet)}
+                          onChange={() => diet === 'Other' ? openOtherComposer() : toggleDiet(diet)}
                         />
                         <span className="idc-box" />
-                        <span className="idc-text">{diet}</span>
+                        <span className="idc-text">{diet === 'Other' && otherNeed ? `Other: ${otherNeed}` : diet}</span>
                       </label>
                     ))}
                   </div>
@@ -449,6 +486,28 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
           </div>
         )}
         </div> {/* /.intake-modal-scroll */}
+        {showOtherComposer && (
+          <div className="other-need-backdrop" role="presentation" onClick={closeOtherComposer}>
+            <section className="other-need-composer" role="dialog" aria-modal="true" aria-labelledby="other-need-title" onClick={(event) => event.stopPropagation()}>
+              <button type="button" className="other-need-close" onClick={closeOtherComposer} aria-label="Close">×</button>
+              <p className="other-need-eyebrow">Personalize your food plan</p>
+              <h3 id="other-need-title">Tell us what you need</h3>
+              <p>For example: a sesame allergy, low-sodium meals, soft foods, culturally familiar groceries, or another accommodation.</p>
+              <textarea
+                autoFocus
+                value={otherNeedDraft}
+                onChange={(event) => setOtherNeedDraft(event.target.value)}
+                placeholder="Describe your food need or accommodation…"
+                maxLength={500}
+                rows={4}
+              />
+              <div className="other-need-actions">
+                <button type="button" className="other-need-cancel" onClick={closeOtherComposer}>Cancel</button>
+                <button type="button" className="other-need-save" onClick={saveOtherNeed} disabled={!otherNeedDraft.trim()}>Save requirement</button>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );

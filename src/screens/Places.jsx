@@ -4,7 +4,7 @@ import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
 import { listLocations, listReservations } from '../lib/api.js';
-import HarvestLinkAI from '../components/HarvestLinkAI.jsx';
+import AiChat from '../components/AiChat.jsx';
 import ResidentIntakeModal from '../components/ResidentIntakeModal.jsx';
 import NonprofitDashboard from '../components/NonprofitDashboard.jsx';
 import VolunteerHub from '../components/VolunteerHub.jsx';
@@ -32,8 +32,11 @@ export default function Places({ onNavigateHome }) {
   const [showMyPasses, setShowMyPasses] = useState(false);
   const [language, setLanguage] = useState('en'); // 'en' | 'es'
 
+  // The navigator is a section of the workspace, not a modal, so a
+  // conversation survives opening a place's details beside it.
+  const [workspaceView, setWorkspaceView] = useState('directory'); // 'directory' | 'chat'
+
   // Modals state
-  const [showAI, setShowAI] = useState(false);
   const [showIntake, setShowIntake] = useState(false);
   const [showNonprofit, setShowNonprofit] = useState(false);
   const [showVolunteer, setShowVolunteer] = useState(false);
@@ -160,7 +163,11 @@ export default function Places({ onNavigateHome }) {
           </div>
 
           <div className="topbar-center-hubs-strip">
-            <button type="button" className="quick-hub-pill ai-hub-pill" onClick={() => setShowAI(true)}>
+            <button
+              type="button"
+              className={`quick-hub-pill ai-hub-pill${workspaceView === 'chat' ? ' is-active' : ''}`}
+              onClick={() => setWorkspaceView('chat')}
+            >
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
               <span>Ask AI</span>
             </button>
@@ -246,8 +253,8 @@ export default function Places({ onNavigateHome }) {
           {/* Primary Action Button (Matches LexisGuide 'Add document') */}
           <button 
             type="button" 
-            className="lexis-new-btn"
-            onClick={() => { setShowAI(true); setMobileMenuOpen(false); }}
+            className={`lexis-new-btn${workspaceView === 'chat' ? ' is-active' : ''}`}
+            onClick={() => { setWorkspaceView('chat'); setMobileMenuOpen(false); }}
             title="Ask HarvestLink AI"
           >
             <span className="lexis-new-icon">
@@ -268,8 +275,8 @@ export default function Places({ onNavigateHome }) {
               
               <button 
                 type="button" 
-                className="lexis-nav-btn is-active" 
-                onClick={() => setMobileMenuOpen(false)}
+                className={`lexis-nav-btn${workspaceView === 'directory' ? ' is-active' : ''}`}
+                onClick={() => { setWorkspaceView('directory'); setMobileMenuOpen(false); }}
                 title="Map & Directory"
               >
                 <span className="ln-icon">
@@ -442,6 +449,22 @@ export default function Places({ onNavigateHome }) {
         {/* Workspace Main View Area */}
         <div className="places-workspace-main">
 
+      {workspaceView === 'chat' ? (
+        /* The navigator, as a full section of the workspace rather than a
+           modal, so the thread stays put while places open beside it. */
+        <section className="ai-chat-section">
+          <AiChat
+            variant="section"
+            onSelectPlace={(place) => setActivePlace(place)}
+            onShowMatches={(matches) => {
+              // Narrow the directory to the navigator's matches and show them.
+              setAiMatchIds(matches.map((match) => match.id));
+              setWorkspaceView('directory');
+            }}
+          />
+        </section>
+      ) : (
+      <>
       {/* Hero / Filter Section */}
       <section className="places-hero-bar">
         <div className="shell-contained">
@@ -467,7 +490,7 @@ export default function Places({ onNavigateHome }) {
               <button 
                 type="button" 
                 className="hero-action-pill ai-pill"
-                onClick={() => setShowAI(true)}
+                onClick={() => setWorkspaceView('chat')}
               >
                 🤖 Ask AI Navigator
               </button>
@@ -783,6 +806,8 @@ export default function Places({ onNavigateHome }) {
           </div>
         </div>
       </main>
+      </>
+      )}
 
       {/* Place Detail Modal */}
       {activePlace && (
@@ -803,19 +828,6 @@ export default function Places({ onNavigateHome }) {
           onClose={() => setPlaceToReserve(null)}
           onReservationConfirmed={() => {
             refreshReservations();
-          }}
-        />
-      )}
-
-      {/* AI Assistant Modal */}
-      {showAI && (
-        <HarvestLinkAI
-          onClose={() => setShowAI(false)}
-          onSelectPlace={(p) => setActivePlace(p)}
-          onShowMatches={(matches) => {
-            // Narrow the list and map to the navigator's matches. Opening one
-            // place's detail here would hide the very thing we just revealed.
-            setAiMatchIds(matches.map((m) => m.id));
           }}
         />
       )}

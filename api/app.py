@@ -22,7 +22,9 @@ from datetime import date, datetime, timedelta, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = ROOT / "data" / "neighbor-cart.db"
@@ -41,6 +43,11 @@ MAX_RESERVATIONS_PER_SESSION_PER_DAY = 1
 MAX_SESSIONS_PER_NETWORK_PER_DAY = 4
 MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE = 5
 MAX_AI_CONCURRENT_REQUESTS = 2
+MAX_PLACE_ENRICH_REQUESTS_PER_NETWORK_PER_MINUTE = 20
+MAX_ENRICH_PLACES_PER_REQUEST = 12
+GOOGLE_TIMEOUT_SECONDS = 6
+GOOGLE_CACHE_TTL_SECONDS = 60 * 60 * 6
+GOOGLE_DISTANCE_CACHE_TTL_SECONDS = 60 * 30
 TRUSTED_PROXY_ADDRESSES = frozenset(
     address.strip() for address in os.environ.get("NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES", "").split(",") if address.strip()
 )
@@ -621,6 +628,195 @@ def bedrock_chat(payload: dict) -> dict:
         raise ApiError(HTTPStatus.BAD_GATEWAY, "The AI service could not complete that request") from error
 
 
+class TtlCache:
+    """Tiny in-process cache so one person browsing does not re-bill every lookup."""
+
+    def __init__(self, ttl_seconds: int, maximum: int = 512):
+        self._ttl = ttl_seconds
+        self._maximum = maximum
+        self._entries: dict[str, tuple[float, object]] = {}
+        self._lock = threading.Lock()
+
+    def get(self, key: str):
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is None:
+                return None
+            stored_at, value = entry
+            if time.monotonic() - stored_at > self._ttl:
+                self._entries.pop(key, None)
+                return None
+            return value
+
+    def put(self, key: str, value: object) -> None:
+        with self._lock:
+            if len(self._entries) >= self._maximum:
+                oldest = min(self._entries, key=lambda name: self._entries[name][0])
+                self._entries.pop(oldest, None)
+            self._entries[key] = (time.monotonic(), value)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._entries.clear()
+
+
+google_details_cache = TtlCache(GOOGLE_CACHE_TTL_SECONDS)
+google_distance_cache = TtlCache(GOOGLE_DISTANCE_CACHE_TTL_SECONDS)
+
+
+def google_key() -> str:
+    return os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+
+
+def google_get(path: str, params: dict) -> dict:
+    """One Google Maps Platform call. The key never leaves the server."""
+    url = f"https://maps.googleapis.com/maps/api/{path}?{urlencode({**params, 'key': google_key()})}"
+    with urlopen(url, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
+        body = json.loads(response.read().decode("utf-8"))
+    if body.get("status") not in {"OK", "ZERO_RESULTS"}:
+        raise ValueError(f"Google replied {body.get('status')}")
+    return body
+
+
+def clean_enrich_places(value: object) -> list[dict]:
+    if not isinstance(value, list) or not value:
+        raise ApiError(HTTPStatus.BAD_REQUEST, "places must be a non-empty list")
+    cleaned = []
+    for place in value[:MAX_ENRICH_PLACES_PER_REQUEST]:
+        if not isinstance(place, dict) or not isinstance(place.get("id"), str):
+            continue
+        try:
+            latitude = float(place["lat"])
+            longitude = float(place["lng"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+            continue
+        cleaned.append({
+            "id": place["id"][:96],
+            "name": str(place.get("name", ""))[:120],
+            "address": str(place.get("address", ""))[:180],
+            "lat": latitude,
+            "lng": longitude,
+        })
+    if not cleaned:
+        raise ApiError(HTTPStatus.BAD_REQUEST, "places must contain valid coordinates")
+    return cleaned
+
+
+def clean_origin(value: object) -> dict | None:
+    if not isinstance(value, dict):
+        return None
+    try:
+        latitude = float(value["lat"])
+        longitude = float(value["lng"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+        return None
+    return {"lat": latitude, "lng": longitude}
+
+
+def google_place_details(place: dict) -> dict:
+    """Rating, review count, and a couple of recent reviews for one location."""
+    cache_key = f"{place['id']}|{place['lat']:.5f},{place['lng']:.5f}"
+    cached = google_details_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    details: dict = {}
+    try:
+        found = google_get("place/findplacefromtext/json", {
+            "input": f"{place['name']} {place['address']}".strip(),
+            "inputtype": "textquery",
+            "fields": "place_id",
+            "locationbias": f"point:{place['lat']},{place['lng']}",
+        })
+        candidates = found.get("candidates") or []
+        if candidates:
+            place_id = candidates[0].get("place_id")
+            detail = google_get("place/details/json", {
+                "place_id": place_id,
+                "fields": "rating,user_ratings_total,reviews,url,opening_hours",
+                "reviews_sort": "newest",
+            }).get("result") or {}
+            details = {
+                "placeId": place_id,
+                "rating": detail.get("rating"),
+                "ratingCount": detail.get("user_ratings_total"),
+                "mapsUrl": detail.get("url"),
+                "openNow": (detail.get("opening_hours") or {}).get("open_now"),
+                "reviews": [
+                    {
+                        "author": str(review.get("author_name", ""))[:80],
+                        "rating": review.get("rating"),
+                        "text": str(review.get("text", ""))[:280],
+                        "when": str(review.get("relative_time_description", ""))[:60],
+                    }
+                    for review in (detail.get("reviews") or [])[:2]
+                ],
+            }
+    except (HTTPError, URLError, socket.timeout, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        # A missing rating is a cosmetic loss; the verified record still stands.
+        details = {}
+
+    google_details_cache.put(cache_key, details)
+    return details
+
+
+def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, dict]:
+    cache_key = f"{mode}|{origin['lat']:.4f},{origin['lng']:.4f}|" + ",".join(place["id"] for place in places)
+    cached = google_distance_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    distances: dict[str, dict] = {}
+    try:
+        body = google_get("distancematrix/json", {
+            "origins": f"{origin['lat']},{origin['lng']}",
+            "destinations": "|".join(f"{place['lat']},{place['lng']}" for place in places),
+            "mode": mode,
+            "units": "imperial",
+        })
+        elements = (body.get("rows") or [{}])[0].get("elements") or []
+        for place, element in zip(places, elements):
+            if element.get("status") != "OK":
+                continue
+            distances[place["id"]] = {
+                "distanceText": (element.get("distance") or {}).get("text"),
+                "distanceMeters": (element.get("distance") or {}).get("value"),
+                "durationText": (element.get("duration") or {}).get("text"),
+                "durationSeconds": (element.get("duration") or {}).get("value"),
+                "travelMode": mode,
+            }
+    except (HTTPError, URLError, socket.timeout, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        distances = {}
+
+    google_distance_cache.put(cache_key, distances)
+    return distances
+
+
+def enrich_places(payload: dict) -> dict:
+    """Google ratings, reviews, and travel time for the places the navigator picked.
+
+    Without a key the endpoint still answers, with an empty enrichment map and
+    `provider: "none"`, so the UI falls back to straight-line distance rather
+    than breaking.
+    """
+    places = clean_enrich_places(payload.get("places"))
+    origin = clean_origin(payload.get("origin"))
+    mode = payload.get("mode") if payload.get("mode") in {"driving", "walking", "transit", "bicycling"} else "driving"
+
+    if not google_key():
+        return {"provider": "none", "enrichment": {}}
+
+    enrichment = {place["id"]: dict(google_place_details(place)) for place in places}
+    if origin:
+        for place_id, travel in google_distances(origin, places, mode).items():
+            enrichment.setdefault(place_id, {}).update(travel)
+    return {"provider": "google", "enrichment": enrichment}
+
+
 def make_handler(database: Database):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -688,6 +884,10 @@ def make_handler(database: Database):
                         return self.send_json(HTTPStatus.OK, bedrock_chat(payload))
                     finally:
                         ai_request_slots.release()
+                if path == "/api/v1/places/enrich":
+                    if not rate_limiter.allow("enrich", peer, MAX_PLACE_ENRICH_REQUESTS_PER_NETWORK_PER_MINUTE, 60):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many lookups. Please try again shortly.")
+                    return self.send_json(HTTPStatus.OK, enrich_places(read_json(self)))
                 if path != "/api/v1/reservations":
                     raise ApiError(HTTPStatus.NOT_FOUND, "Route not found")
                 key = self.headers.get("Idempotency-Key")

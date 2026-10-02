@@ -10,6 +10,9 @@ from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
 
+from urllib.error import URLError
+
+from api import app
 from api.app import create_server, rate_limiter
 
 
@@ -256,6 +259,63 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(status, 429)
         self.assertIn("limit", body["error"])
         self.assertEqual(chat.call_count, 5)
+
+    def test_place_enrichment_degrades_without_a_google_key(self):
+        payload = {"places": [{"id": "place-1", "name": "Place", "lat": 41.6, "lng": -93.6}]}
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": ""}, clear=False):
+            status, body = self.request("POST", "/api/v1/places/enrich", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body, {"provider": "none", "enrichment": {}})
+
+    def test_place_enrichment_rejects_places_without_usable_coordinates(self):
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            status, body = self.request("POST", "/api/v1/places/enrich", {"places": [{"id": "a", "lat": 999, "lng": 0}]})
+        self.assertEqual(status, 400)
+        self.assertIn("coordinates", body["error"])
+
+    def test_place_enrichment_merges_ratings_with_travel_time(self):
+        app.google_details_cache.clear()
+        app.google_distance_cache.clear()
+        payload = {
+            "places": [{"id": "place-1", "name": "Place", "address": "1 Main St", "lat": 41.6, "lng": -93.6}],
+            "origin": {"lat": 41.59, "lng": -93.62},
+        }
+
+        def fake_google(path, params):
+            if path.startswith("place/findplacefromtext"):
+                return {"status": "OK", "candidates": [{"place_id": "g-1"}]}
+            if path.startswith("place/details"):
+                return {"status": "OK", "result": {
+                    "rating": 4.6,
+                    "user_ratings_total": 212,
+                    "reviews": [{"author_name": "Sam", "rating": 5, "text": "Kind staff.", "relative_time_description": "a week ago"}],
+                }}
+            return {"status": "OK", "rows": [{"elements": [
+                {"status": "OK", "distance": {"text": "1.4 mi", "value": 2253}, "duration": {"text": "6 mins", "value": 360}},
+            ]}]}
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.google_get", side_effect=fake_google):
+                status, body = self.request("POST", "/api/v1/places/enrich", payload)
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body["provider"], "google")
+        place = body["enrichment"]["place-1"]
+        self.assertEqual(place["rating"], 4.6)
+        self.assertEqual(place["ratingCount"], 212)
+        self.assertEqual(place["distanceText"], "1.4 mi")
+        self.assertEqual(place["durationText"], "6 mins")
+        self.assertEqual(place["reviews"][0]["author"], "Sam")
+
+    def test_place_enrichment_survives_a_google_outage(self):
+        app.google_details_cache.clear()
+        app.google_distance_cache.clear()
+        payload = {"places": [{"id": "place-1", "name": "Place", "lat": 41.6, "lng": -93.6}]}
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.google_get", side_effect=URLError("google is down")):
+                status, body = self.request("POST", "/api/v1/places/enrich", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["enrichment"], {"place-1": {}})
 
     def test_ai_concurrency_is_bounded_before_calling_bedrock(self):
         payload = {"message": "Where can I find food?", "catalog": [{"id": "place-1", "name": "Place"}]}
