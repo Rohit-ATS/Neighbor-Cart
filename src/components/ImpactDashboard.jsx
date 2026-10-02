@@ -381,6 +381,38 @@ export default function ImpactDashboard({ onClose }) {
         <div className="ir-body">
 
           {/* ------------------------------------------------- the journey */}
+          {/* -------------------------------------------- how they arrive */}
+          <section className="impact-section-panel ir-span-2 ir-arrive">
+            <div className="ir-panel-head">
+              <div>
+                <h3>How people arrive</h3>
+                <p className="np-desc">Share of sessions by the route taken to a location.</p>
+              </div>
+            </div>
+            <ChannelSplit channels={a.channels} scale={scale} />
+
+            <div className="ir-mini-grid">
+              <div className="ir-mini-tile">
+                <span className="ir-mini-cap">Total</span>
+                <b>{nf.format(scale(a.totals.sessions))}</b>
+                <span className="ir-mini-label">Sessions</span>
+                <span className="ir-mini-foot">visits in this window</span>
+              </div>
+              <div className="ir-mini-tile">
+                <span className="ir-mini-cap">Typical</span>
+                <b>{Math.floor(a.totals.avgSessionSeconds / 60)}m {a.totals.avgSessionSeconds % 60}s</b>
+                <span className="ir-mini-label">Median session</span>
+                <span className="ir-mini-foot">time to find a place</span>
+              </div>
+              <div className="ir-mini-tile">
+                <span className="ir-mini-cap">Loyalty</span>
+                <b>{a.totals.returningShare}%</b>
+                <span className="ir-mini-label">Returning residents</span>
+                <span className="ir-mini-foot">came back within 30 days</span>
+              </div>
+            </div>
+          </section>
+
           <section className="impact-section-panel ir-span-2">
             <div className="ir-panel-head">
               <div>
@@ -472,23 +504,6 @@ export default function ImpactDashboard({ onClose }) {
               </div>
             </div>
             <HourlyChart data={a.hourly} scale={scale} />
-          </section>
-
-          {/* -------------------------------------------- how they arrive */}
-          <section className="impact-section-panel">
-            <div className="ir-panel-head">
-              <div>
-                <h3>How people arrive</h3>
-                <p className="np-desc">Share of sessions by the route taken to a location.</p>
-              </div>
-            </div>
-            <ChannelSplit channels={a.channels} scale={scale} />
-
-            <div className="ir-mini-grid">
-              <div><b>{nf.format(scale(a.totals.sessions))}</b><span>Sessions</span></div>
-              <div><b>{Math.floor(a.totals.avgSessionSeconds / 60)}m {a.totals.avgSessionSeconds % 60}s</b><span>Median session</span></div>
-              <div><b>{a.totals.returningShare}%</b><span>Returning residents</span></div>
-            </div>
           </section>
 
           {/* ------------------------------------------------ demand by ZIP */}

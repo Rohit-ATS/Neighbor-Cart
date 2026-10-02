@@ -2026,22 +2026,76 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Headline figures, given the same weight as the KPI row at the top of the
+   report rather than three bare numbers under a chart. */
 .modal-backdrop .ir-mini-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 20px;
+  padding-top: 18px;
   border-top: 1px solid var(--d-line-soft);
 }
-.modal-backdrop .ir-mini-grid b {
-  display: block;
-  font-size: 18px;
+
+.modal-backdrop .ir-mini-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--d-line);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(252, 158, 37, .07), rgba(255, 255, 255, 0) 60%),
+    var(--d-surface);
+  overflow: hidden;
+  transition: transform .22s var(--d-ease), box-shadow .22s var(--d-ease), border-color .22s var(--d-ease);
+}
+/* a thin brand rule down the leading edge, echoing the report header */
+.modal-backdrop .ir-mini-tile::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--d-crimson), var(--d-amber));
+}
+.modal-backdrop .ir-mini-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(146, 7, 17, .28);
+  box-shadow: 0 2px 4px rgba(45, 4, 7, .05), 0 12px 28px rgba(45, 4, 7, .1);
+}
+
+.modal-backdrop .ir-mini-cap {
+  font-size: 9.5px;
   font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--d-amber);
+}
+.modal-backdrop .ir-mini-tile b {
+  display: block;
+  margin-top: 2px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.025em;
   color: var(--d-crimson);
   font-variant-numeric: tabular-nums;
 }
-.modal-backdrop .ir-mini-grid span { font-size: 11px; font-weight: 600; color: var(--d-muted); }
+.modal-backdrop .ir-mini-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--d-brown);
+}
+.modal-backdrop .ir-mini-foot {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--d-muted);
+}
+
+/* The arrival panel now leads the report, so its channel bar gets more room. */
+.modal-backdrop .ir-arrive .ir-channel-bar { height: 14px; }
 
 /* ---- the ZIP table ---- */
 
@@ -2214,4 +2268,22 @@
   .modal-backdrop .ir-feed-status { grid-column: 2; }
   .modal-backdrop .ir-feed-time { grid-column: 3; grid-row: 1; }
   .modal-backdrop .ir-mini-grid { grid-template-columns: 1fr; }
+}
+
+/* Detail gallery: say when the hero image is a stand-in rather than a
+   photograph of this location. */
+.gallery-stock-note {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  z-index: 3;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(45, 4, 7, .72);
+  color: rgba(255, 247, 232, .94);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  backdrop-filter: blur(5px);
+  pointer-events: none;
 }

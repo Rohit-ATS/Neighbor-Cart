@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getIsOpenNow } from '../data/places.js';
+import { isStockImage, placeImage } from '../lib/placeImages.js';
 
 export default function PlaceDetailModal({ place, onClose, onOpenReserve }) {
   const [activeImgIdx, setActiveImgIdx] = useState(0);
@@ -8,6 +9,12 @@ export default function PlaceDetailModal({ place, onClose, onOpenReserve }) {
   if (!place) return null;
 
   const openStatus = getIsOpenNow(place);
+  // A real photo when the place has one (its own, or one Google matched),
+  // otherwise a single stable stand-in.
+  const usingStockPhoto = isStockImage(place);
+  const gallery = usingStockPhoto
+    ? [placeImage(place, 1200)]
+    : (place.photoUrl ? [place.photoUrl, ...place.images] : place.images);
   const categories = ['all', ...new Set(place.inventory.map((i) => i.category))];
   const filteredInventory = inventoryTab === 'all' 
     ? place.inventory 
@@ -18,30 +25,41 @@ export default function PlaceDetailModal({ place, onClose, onOpenReserve }) {
       <div className="detail-modal-card" onClick={(e) => e.stopPropagation()}>
         <button className="detail-modal-close" onClick={onClose} aria-label="Close details">×</button>
 
-        {/* Photo Gallery Header */}
+        {/* Photo Gallery Header.
+            Directory records from OpenStreetMap carry no photo, and a Google
+            listing may have none either, so the gallery falls back to a
+            labelled stock image rather than a broken-image icon. */}
         <div className="detail-gallery">
           <div className="gallery-main-frame">
-            <img 
-              src={place.images[activeImgIdx] || place.images[0]} 
-              alt={`${place.name} preview`} 
-              className="gallery-main-img" 
+            <img
+              src={gallery[activeImgIdx] || gallery[0]}
+              alt=""
+              className="gallery-main-img"
             />
             <div className="gallery-overlay-badge">
-              <span className={`status-pill ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
-                {openStatus.isOpen ? '🟢' : '🔴'} {openStatus.text}
-              </span>
+              {place.hoursKnown !== false && (
+                <span className={`status-pill ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
+                  {openStatus.isOpen ? '🟢' : '🔴'} {openStatus.text}
+                </span>
+              )}
             </div>
+            {usingStockPhoto && (
+              <span className="gallery-stock-note">
+                Generic photo — no image available for this location
+              </span>
+            )}
           </div>
-          {place.images.length > 1 && (
+          {gallery.length > 1 && (
             <div className="gallery-thumb-strip">
-              {place.images.map((img, idx) => (
+              {gallery.map((img, idx) => (
                 <button
-                  key={idx}
+                  key={img + idx}
                   type="button"
                   className={`gallery-thumb-btn ${idx === activeImgIdx ? 'is-active' : ''}`}
                   onClick={() => setActiveImgIdx(idx)}
+                  aria-label={`Show photo ${idx + 1}`}
                 >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} />
+                  <img src={img} alt="" />
                 </button>
               ))}
             </div>
