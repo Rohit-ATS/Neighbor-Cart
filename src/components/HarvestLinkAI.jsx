@@ -127,6 +127,7 @@ export default function HarvestLinkAI({ onClose, onSelectPlace, onShowMatches })
 
   const isConversationOnly = (text) => /^(hi|hello|hey|thanks|thank you|good (morning|afternoon|evening))[!.\s]*$/i.test(text.trim());
   const isPlaceSearchIntent = (text) => /\b(where|find|suggest|recommend|show|near|nearby|location|place|pantry|food bank|foodbank|open now|open today|options|hot meal|meal site|get food)\b/i.test(text);
+  const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 
   const handleAsk = async (queryText) => {
     const q = (queryText || '').trim();
@@ -282,6 +283,15 @@ export default function HarvestLinkAI({ onClose, onSelectPlace, onShowMatches })
 
     // Refusal when information is unavailable
     if (matchedPlaces.length === 0) {
+      if (!hasLocation(query)) {
+        return {
+          sender: 'ai',
+          text: 'I can help with that. I’ve noted your bean allergy, and I’ll look for places with published ingredient or accommodation information. What city or ZIP code should I search near? Please also confirm ingredients and cross-contact practices directly with the provider before you go.',
+          citations: [],
+          warning: null,
+          timestamp: nowTime
+        };
+      }
       return {
         sender: 'ai',
         text: `I could not locate verified food assistance records matching "${query}" in our verified national registry. To prevent sending anyone to an inactive site, I only return confirmed providers. You can try searching by City (e.g. Chicago, New York, Des Moines), ZIP code, or browsing our full Places map.`,

@@ -590,6 +590,7 @@ def bedrock_chat(payload: dict) -> dict:
         "hours, inventory, eligibility rule, or availability. Do not make medical or eligibility decisions. "
         "For greetings or general small talk, return an empty placeIds list and warmly ask what food help is needed. "
         "When a customer only shares a requirement (for example a diet, budget, no-car need, language, children, or ID concern) without asking to find or suggest a place, acknowledge that you will remember it and return an empty placeIds list. Recommend locations only after an explicit request to find, show, suggest, or recommend food options. "
+        "When the customer asks to find food but has not provided a city, neighborhood, or ZIP code, ask for that location first and return an empty placeIds list rather than guessing. "
         "Return ONLY JSON: {\"reply\":\"...\",\"placeIds\":[\"verified-id\"],\"warning\":\"optional\","
         "\"followUps\":[\"...\"]}. Include at most three place IDs.\n\nVERIFIED_CATALOG:\n"
         + json.dumps(catalog, separators=(",", ":"))

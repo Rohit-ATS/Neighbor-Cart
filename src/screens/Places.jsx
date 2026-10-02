@@ -25,7 +25,6 @@ export default function Places({ onNavigateHome }) {
   const [selectedDiet, setSelectedDiet] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedEligibility, setSelectedEligibility] = useState('all');
-  const [lowBandwidthMode, setLowBandwidthMode] = useState(false);
   const [activePlace, setActivePlace] = useState(null);
   const [placeToReserve, setPlaceToReserve] = useState(null);
   const [mobileTab, setMobileTab] = useState('both');
@@ -138,25 +137,6 @@ export default function Places({ onNavigateHome }) {
       <header className="places-topbar">
         <div className="places-topbar-inner">
           <div className="topbar-brand-group">
-            {/* Retractable Sidebar Toggle (Desktop) */}
-            <button 
-              type="button" 
-              className="lexis-rail-toggle-btn desktop-only"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <line x1="9" y1="3" x2="9" y2="21" />
-                {sidebarCollapsed ? (
-                  <polyline points="13 9 16 12 13 15" />
-                ) : (
-                  <polyline points="15 9 12 12 15 15" />
-                )}
-              </svg>
-            </button>
-
             {/* Mobile Drawer Trigger (Mobile only) */}
             <button 
               type="button" 
@@ -436,34 +416,6 @@ export default function Places({ onNavigateHome }) {
             </div>
           </nav>
 
-          {/* Recent Centers (LexisGuide 'Recent documents') */}
-          <div className="lexis-recent-box">
-            <span className="lexis-rail-label">Featured Centers</span>
-            <div className="lexis-recent-list">
-              {PLACES.slice(0, 4).map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="lexis-recent-item"
-                  onClick={() => {
-                    setActivePlace(p);
-                    setMobileMenuOpen(false);
-                  }}
-                  title={p.name}
-                >
-                  <span className="lri-icon">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </span>
-                  <span className="lri-title">{p.name}</span>
-                  <em className="lri-status">✓</em>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Footer Settings & Language */}
           <div className="lexis-side-foot">
             <button 
@@ -525,13 +477,6 @@ export default function Places({ onNavigateHome }) {
                 onClick={() => setShowIntake(true)}
               >
                 📋 Build My Custom Food Plan
-              </button>
-              <button 
-                type="button" 
-                className={`hero-action-pill ${lowBandwidthMode ? 'active-bandwidth' : ''}`}
-                onClick={() => setLowBandwidthMode(!lowBandwidthMode)}
-              >
-                ⚡ {lowBandwidthMode ? 'Standard Rich View' : 'Low-Bandwidth List Mode'}
               </button>
             </div>
           </div>
@@ -691,30 +636,28 @@ export default function Places({ onNavigateHome }) {
       </section>
 
       {/* Mobile Switcher (List vs Map) */}
-      {!lowBandwidthMode && (
-        <div className="mobile-view-tabs">
-          <button 
-            type="button" 
-            className={`mobile-tab-btn ${mobileTab !== 'map' ? 'is-active' : ''}`}
-            onClick={() => setMobileTab('list')}
-          >
-            📋 List View ({filteredPlaces.length})
-          </button>
-          <button 
-            type="button" 
-            className={`mobile-tab-btn ${mobileTab === 'map' ? 'is-active' : ''}`}
-            onClick={() => setMobileTab('map')}
-          >
-            🗺 Interactive Map
-          </button>
-        </div>
-      )}
+      <div className="mobile-view-tabs">
+        <button 
+          type="button" 
+          className={`mobile-tab-btn ${mobileTab !== 'map' ? 'is-active' : ''}`}
+          onClick={() => setMobileTab('list')}
+        >
+          📋 List View ({filteredPlaces.length})
+        </button>
+        <button 
+          type="button" 
+          className={`mobile-tab-btn ${mobileTab === 'map' ? 'is-active' : ''}`}
+          onClick={() => setMobileTab('map')}
+        >
+          🗺 Interactive Map
+        </button>
+      </div>
 
       {/* Main Grid: Interactive Map + Place Cards List */}
       <main className="places-main-content shell-contained">
-        <div className={`places-split-layout ${lowBandwidthMode ? 'is-low-bandwidth' : ''}`}>
+        <div className="places-split-layout">
           {/* List Panel */}
-          <div className={`places-cards-column ${mobileTab === 'map' && !lowBandwidthMode ? 'mobile-hidden' : ''}`}>
+          <div className={`places-cards-column ${mobileTab === 'map' ? 'mobile-hidden' : ''}`}>
             {filteredPlaces.length === 0 ? (
               <div className="no-results-box">
                 <span className="no-results-emoji">🌾</span>
@@ -749,15 +692,13 @@ export default function Places({ onNavigateHome }) {
                       className={`place-card-item ${isSelected ? 'is-selected' : ''}`}
                       onClick={() => setActivePlace(place)}
                     >
-                      {!lowBandwidthMode && (
-                        <div className="card-thumb-wrap">
-                          <img src={place.images[0]} alt={place.name} className="card-thumb-img" />
-                          <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
-                            {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
-                          </span>
-                          <span className="type-badge-float">{place.typeLabel.split(' ')[0]}</span>
-                        </div>
-                      )}
+                      <div className="card-thumb-wrap">
+                        <img src={place.images[0]} alt={place.name} className="card-thumb-img" />
+                        <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
+                          {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
+                        </span>
+                        <span className="type-badge-float">{place.typeLabel.split(' ')[0]}</span>
+                      </div>
 
                       <div className="card-info-wrap">
                         <div className="card-top-row">
@@ -831,18 +772,15 @@ export default function Places({ onNavigateHome }) {
             )}
           </div>
 
-          {/* Interactive Map Panel (Hidden in Low Bandwidth mode) */}
-          {!lowBandwidthMode && (
-            <div className={`places-map-column ${mobileTab === 'list' ? 'mobile-hidden' : ''}`}>
-              <div className="sticky-map-frame">
-                <MapView
-                  places={filteredPlaces}
-                  activeId={activePlace?.id}
-                  onSelectPlace={(p) => setActivePlace(p)}
-                />
-              </div>
+          <div className={`places-map-column ${mobileTab === 'list' ? 'mobile-hidden' : ''}`}>
+            <div className="sticky-map-frame">
+              <MapView
+                places={filteredPlaces}
+                activeId={activePlace?.id}
+                onSelectPlace={(p) => setActivePlace(p)}
+              />
             </div>
-          )}
+          </div>
         </div>
       </main>
 
