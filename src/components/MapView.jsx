@@ -1,172 +1,171 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-/* Two renderers behind one component.
+const DEFAULT_CENTER = [41.595, -93.625];
+const DEFAULT_ZOOM = 12;
 
-   Today this draws with Leaflet and OpenStreetMap tiles, which need no key.
-   Set VITE_GOOGLE_MAPS_API_KEY in .env.local and it switches to Google Maps
-   instead — the props below do not change. The Google loader is the async
-   bootstrap pattern ported from DOCKET's lib/google-maps.ts. */
-const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const ICONS = {
+  'food-bank': '🥫',
+  'pantry': '🧺',
+  'hot-meal': '🍲',
+  'community-fridge': '🧊'
+};
 
-let googleLoading;
-function loadGoogleMaps(apiKey, onAuthFailure) {
-  window.gm_authFailure = onAuthFailure;
-  if (typeof google !== 'undefined' && google.maps) return Promise.resolve();
-  googleLoading ??= new Promise((resolve, reject) => {
-    window.__ncMapsReady = () => resolve();
-    const params = new URLSearchParams({ key: apiKey, v: 'weekly', loading: 'async', callback: '__ncMapsReady' });
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?${params}`;
-    script.async = true;
-    script.onerror = () => {
-      googleLoading = undefined;
-      script.remove();
-      reject(new Error("Google Maps couldn't load. Check your connection and try again."));
-    };
-    document.head.append(script);
-  });
-  return googleLoading;
-}
-
-// Boundaries are stored [lng, lat] (GeoJSON order) while Leaflet wants [lat, lng].
-const toLatLng = (ring) => ring.map(([lng, lat]) => [lat, lng]);
-const NO_POINTS = [];
+const COLORS = {
+  'food-bank': '#e65100',
+  'pantry': '#2e7d32',
+  'hot-meal': '#c2185b',
+  'community-fridge': '#0288d1'
+};
 
 export default function MapView({
-  label,
-  boundary,
-  points = NO_POINTS,
-  activeId,
-  radiusM = null,
+  places = [],
+  activeId = null,
+  onSelectPlace,
   className = '',
-  interactive = true,
-  onSelect,
 }) {
-  const container = useRef(null);
-  const leaflet = useRef(null);
+  const containerRef = useRef(null);
   const mapRef = useRef(null);
-  const markers = useRef(new Map());
-  const ring = useRef(null);
-  const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
-  // read the handler through a ref so a new one doesn't tear the map down
-  const select = useRef(onSelect);
-  select.current = onSelect;
+  const markersRef = useRef(new Map());
+  const leafletRef = useRef(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  /* Build once; the active site is applied by the effect below. */
   useEffect(() => {
     let cancelled = false;
-    let map;
 
-    // Leaflet touches window on import, so load it only in the browser.
-    import('leaflet')
-      .then((mod) => {
-        const L = mod.default ?? mod;
-        if (cancelled || !container.current) return;
-        leaflet.current = L;
-        map = L.map(container.current, {
-          scrollWheelZoom: false,
-          dragging: interactive,
-          zoomControl: interactive,
-          keyboard: interactive,
-          doubleClickZoom: interactive,
-          touchZoom: interactive,
-        });
-        mapRef.current = map;
+    import('leaflet').then((mod) => {
+      if (cancelled || !containerRef.current) return;
+      const L = mod.default ?? mod;
+      leafletRef.current = L;
 
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          className: 'nc-tiles',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(map);
+      // Clean up if already exists
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
 
-        let bounds;
-        const extend = (b) => (bounds = bounds ? bounds.extend(b) : b);
+      const map = L.map(containerRef.current, {
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        zoomControl: true,
+        scrollWheelZoom: true,
+      });
+      mapRef.current = map;
 
-        if (boundary) {
-          const layer = L.polygon(toLatLng(boundary), {
-            color: '#2b5247',
-            weight: 3,
-            dashArray: '7 6',
-            fillColor: '#5a9a4c',
-            fillOpacity: 0.12,
-          }).addTo(map);
-          extend(layer.getBounds());
-        }
+      // High-quality OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
 
-        for (const site of points) {
-          const marker = L.marker([site.lat, site.lng], {
-            title: site.name,
-            keyboard: false,
-            icon: L.divIcon({ className: 'nc-pin', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] }),
-          })
-            .bindTooltip(site.name, { direction: 'top', offset: [0, -14] })
-            .addTo(map);
-          marker.on('click', () => select.current?.(site.id));
-          markers.current.set(site.id, marker);
-          extend(L.latLngBounds([site.lat, site.lng], [site.lat, site.lng]));
-        }
-
-        if (bounds) map.fitBounds(bounds, { padding: [34, 34], maxZoom: 15 });
-        else map.setView([37.5485, -121.9886], 12);
-        setReady(true);
-      })
-      .catch(() => setFailed(true));
+      setMapLoaded(true);
+    }).catch((err) => {
+      console.error('Failed to load Leaflet:', err);
+    });
 
     return () => {
       cancelled = true;
-      setReady(false);
-      markers.current.clear();
-      ring.current = null;
-      mapRef.current = null;
-      map?.remove();
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
-  }, [boundary, points, interactive]);
+  }, []);
 
-  /* Move the highlight, the range ring and the view to the active site. */
+  // Update markers whenever places change or map finishes loading
   useEffect(() => {
-    const L = leaflet.current;
+    const L = leafletRef.current;
     const map = mapRef.current;
-    if (!L || !map) return;
+    if (!L || !map || !mapLoaded) return;
 
-    for (const [id, marker] of markers.current) {
-      marker.getElement()?.classList.toggle('is-active', id === activeId);
-    }
+    // Clear old markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current.clear();
 
-    ring.current?.remove();
-    ring.current = null;
+    const bounds = L.latLngBounds([]);
 
-    const marker = markers.current.get(activeId);
-    if (!marker) return;
+    places.forEach((place) => {
+      const emoji = ICONS[place.type] || '📍';
+      const color = COLORS[place.type] || '#18352d';
+      const isActive = place.id === activeId;
 
-    if (radiusM) {
-      ring.current = L.circle(marker.getLatLng(), {
-        radius: radiusM,
-        color: '#d4603c',
-        weight: 2,
-        fillColor: '#d4603c',
-        fillOpacity: 0.09,
+      const iconHtml = `
+        <div class="custom-map-pin ${isActive ? 'is-active' : ''}" style="--pin-color: ${color};">
+          <span class="pin-symbol">${emoji}</span>
+          <div class="pin-pulse"></div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: iconHtml,
+        iconSize: [36, 46],
+        iconAnchor: [18, 42],
+        popupAnchor: [0, -40],
+      });
+
+      const marker = L.marker([place.lat, place.lng], {
+        icon: customIcon,
+        title: place.name,
       }).addTo(map);
-    }
-    map.panTo(marker.getLatLng(), { animate: true, duration: 0.6 });
-  }, [activeId, radiusM, points, ready]);
 
-  if (failed) {
-    return (
-      <div className={`map-frame map-failed ${className}`} role="region" aria-label={label}>
-        <p>The map couldn't load. The list below has every address and directions link.</p>
-      </div>
-    );
-  }
+      // Popup
+      const popupContent = `
+        <div class="map-popup-card">
+          <img src="${place.images[0]}" alt="${place.name}" class="map-popup-img" />
+          <div class="map-popup-info">
+            <span class="map-popup-badge" style="background: ${color}20; color: ${color};">${place.typeLabel}</span>
+            <h4 class="map-popup-title">${place.name}</h4>
+            <p class="map-popup-addr">${place.address}, ${place.cityStateZip}</p>
+            <p class="map-popup-hours">⏱ ${place.hoursSummary}</p>
+            <button class="map-popup-btn" id="popup-btn-${place.id}">View Details & Inventory</button>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent, { maxWidth: 280, className: 'neighbor-cart-popup' });
+
+      marker.on('popupopen', () => {
+        const btn = document.getElementById(`popup-btn-${place.id}`);
+        if (btn) {
+          btn.onclick = () => onSelectPlace?.(place);
+        }
+      });
+
+      marker.on('click', () => {
+        onSelectPlace?.(place);
+      });
+
+      markersRef.current.set(place.id, marker);
+      bounds.extend([place.lat, place.lng]);
+    });
+
+    if (places.length > 0 && !activeId) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
+  }, [places, mapLoaded]);
+
+  // Handle activeId changes (fly to selected marker)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !activeId) return;
+
+    const marker = markersRef.current.get(activeId);
+    if (marker) {
+      const latLng = marker.getLatLng();
+      map.flyTo(latLng, 14, { duration: 1.2 });
+      marker.openPopup();
+    }
+  }, [activeId]);
 
   return (
-    <div className={`map-frame ${className}`}>
-      <div ref={container} role="region" aria-label={label} className="map-canvas" />
-      {!ready && <div className="map-loading" aria-hidden="true"><span /><span /><span /></div>}
-      {GOOGLE_KEY && <span className="sr-only">Google Maps key detected</span>}
+    <div className={`map-view-wrapper ${className}`}>
+      <div ref={containerRef} className="real-map-container" />
+      <div className="map-legend">
+        <span><b style={{ color: '#e65100' }}>🥫</b> Food Bank</span>
+        <span><b style={{ color: '#2e7d32' }}>🧺</b> Pantry</span>
+        <span><b style={{ color: '#c2185b' }}>🍲</b> Hot Meals</span>
+        <span><b style={{ color: '#0288d1' }}>🧊</b> 24/7 Fridge</span>
+      </div>
     </div>
   );
 }
-
-export { loadGoogleMaps, GOOGLE_KEY };

@@ -4,7 +4,7 @@ import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const publicRoot = join(root, 'frontend', 'dist');
+const publicRoot = join(root, 'dist');
 const port = Number(process.env.PORT || 8080);
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4' };
 
@@ -14,16 +14,23 @@ function json(response, status, body) {
 }
 
 async function staticFile(response, pathname) {
-  const relative = pathname === '/' ? '/harvestlink.html' : pathname;
-  const file = normalize(join(publicRoot, relative));
-  if (!file.startsWith(publicRoot + sep)) return json(response, 400, { error: 'Bad path' });
+  const relative = pathname === '/' ? '/index.html' : pathname;
+  let file = normalize(join(publicRoot, relative));
+  if (!file.startsWith(publicRoot + sep) && file !== publicRoot) return json(response, 400, { error: 'Bad path' });
   try {
     const info = await stat(file);
-    if (!info.isFile()) throw new Error('Not a file');
+    if (info.isDirectory()) file = join(file, 'index.html');
     response.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream' });
     response.end(await readFile(file));
   } catch {
-    json(response, 404, { error: 'Not found' });
+    // SPA fallback
+    try {
+      const fallback = join(publicRoot, 'index.html');
+      response.writeHead(200, { 'Content-Type': types['.html'] });
+      response.end(await readFile(fallback));
+    } catch {
+      json(response, 404, { error: 'Not found' });
+    }
   }
 }
 

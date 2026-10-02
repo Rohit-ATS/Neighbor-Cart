@@ -1,286 +1,157 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from '../app/router.jsx';
-import { PLACES } from '../data/catalog.js';
-import FoodArt from '../components/FoodArt.jsx';
-import CartMark from '../components/CartMark.jsx';
-import { Button, Icon, Rating, SafetyNote, SectionHead, Skeleton, Tag } from '../components/ui.jsx';
+import React from 'react';
+import Cart from '../components/Cart.jsx';
 
-const PREVIEW = PLACES.slice(0, 3);
+const Arrow = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.3">
+    <path d="M5 12h13M13 6l6 6-6 6" />
+  </svg>
+);
 
-/* The hero preview types itself out, then "thinks", then answers. It restarts
-   on click so a demo can replay it on demand. */
-function SearchPreview() {
-  const prompt = "I'm allergic to peanuts and lactose intolerant. What can I eat near me tonight?";
-  const [typed, setTyped] = useState('');
-  const [phase, setPhase] = useState('typing');
-  const [run, setRun] = useState(0);
-
-  useEffect(() => {
-    setTyped('');
-    setPhase('typing');
-    let i = 0;
-    const type = setInterval(() => {
-      i += 1;
-      setTyped(prompt.slice(0, i));
-      if (i >= prompt.length) {
-        clearInterval(type);
-        setPhase('thinking');
-      }
-    }, 34);
-    return () => clearInterval(type);
-  }, [run]);
-
-  useEffect(() => {
-    if (phase !== 'thinking') return;
-    const t = setTimeout(() => setPhase('answered'), 1100);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  return (
-    <div className="preview">
-      <div className="preview-bar">
-        <span className="preview-dot" /><span className="preview-dot" /><span className="preview-dot" />
-        <span className="mono preview-title">Neighbor Cart · AI Food Guide</span>
-        <button type="button" className="preview-replay" onClick={() => setRun((n) => n + 1)}>Replay</button>
-      </div>
-
-      <div className="preview-body">
-        <p className="bubble bubble-user">
-          {typed}
-          {phase === 'typing' && <i className="caret" aria-hidden="true" />}
-        </p>
-
-        {phase === 'thinking' && (
-          <div className="bubble bubble-ai is-thinking" aria-label="Thinking">
-            <Skeleton lines={2} />
-          </div>
-        )}
-
-        {phase === 'answered' && (
-          <>
-            <p className="bubble bubble-ai">
-              Three places near you list peanut-free and dairy-free dishes tonight. Please confirm
-              preparation and cross-contact directly with the restaurant before you order.
-            </p>
-            <ul className="preview-results">
-              {PREVIEW.map((p, i) => (
-                <li key={p.id} style={{ '--i': i }}>
-                  <Link to={`/place/${p.id}`} className="mini-card">
-                    <FoodArt art={p.art} className="mini-art" />
-                    <span className="mini-body">
-                      <b>{p.name}</b>
-                      <span className="mini-meta">{p.distance} mi · {p.price} · {p.cuisine}</span>
-                      <span className="mini-tags">
-                        {p.allergens.slice(0, 2).map((a) => (
-                          <i key={a.name} className={`dot dot-${a.status}`}>{a.name}</i>
-                        ))}
-                      </span>
-                    </span>
-                    <Rating value={p.rating} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <p className="preview-foot">
-              <Icon name="info" size={14} />
-              Confidence reflects published ingredient data, not a medical guarantee.
-            </p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const TRUST = [
-  { icon: 'spark', title: 'Personalized guidance', body: 'Answers shaped by your profile, not a generic search index.' },
-  { icon: 'pin', title: 'Local food discovery', body: 'Restaurants, supermarkets and products inside your own radius.' },
-  { icon: 'check', title: 'Ingredient-aware', body: 'Suggestions reference published ingredients and flag what is missing.' },
-  { icon: 'user', title: 'Privacy-first', body: 'You decide what to share. Your profile stays yours.' },
-];
-
-const STEPS = [
-  { n: '01', title: 'Tell us about yourself', body: 'Allergies, dietary goals, budget and how far you are willing to go. Takes about two minutes.', art: 'produce' },
-  { n: '02', title: 'Chat with your food AI', body: 'Ask in plain language. Get ingredients explained without the jargon.', art: 'chat' },
-  { n: '03', title: 'Discover food you feel good about', body: 'Nearby meals and groceries that match, each one explaining why it fits.', art: 'grainbowl' },
-];
-
-const FEATURES = [
-  { title: 'AI food chat', body: 'Ingredients and nutrition explained in plain language, with the reasoning shown.' },
-  { title: 'Allergy and diet profiles', body: 'Set it once. Every recommendation respects it, including a serious-allergy mode.' },
-  { title: 'Restaurant and supermarket matching', body: 'Menus and aisles matched against what you can actually eat.' },
-  { title: 'Grocery item alternatives', body: 'Safe swaps for the things you cannot have, at a comparable price.' },
-  { title: 'Favorites and your food map', body: 'Save what works and build a personal map of your neighborhood.' },
-  { title: 'Budget and distance filters', body: 'Keep results inside what you want to spend and how far you will travel.' },
-];
-
-const LIFESTYLE = ['Halal', 'Vegetarian', 'Vegan', 'Gluten-free', 'Low sodium', 'High protein', 'Family-friendly', 'Kosher', 'Pescatarian'];
-
-export default function Landing() {
+export default function Landing({ onNavigatePlaces }) {
   return (
     <>
-      <section className="hero">
-        <div className="shell hero-grid">
+      <section className="page-shell">
+        {/* Topbar created by David */}
+        <nav className="topbar">
+          <a className="brand" href="#top" aria-label="Neighbor Cart home">
+            <span className="brand-mark"><i /><b /></span>
+            <span>neighbor<b>cart</b></span>
+          </a>
+          <div className="links">
+            <button type="button" className="nav-link-btn" onClick={onNavigatePlaces}>Places & Map</button>
+            <a href="#how">How it works</a>
+            <a href="#features">Features</a>
+            <a href="#about">About us</a>
+          </div>
+          <div className="nav-actions">
+            <button type="button" className="button small" onClick={onNavigatePlaces}>
+              Find Food Near You
+            </button>
+          </div>
+        </nav>
+
+        {/* Hero Section */}
+        <div className="hero" id="top">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="pulse" aria-hidden="true" />Food discovery, built around you</p>
-            <h1>Food that fits <em className="serif">your life.</em></h1>
+            <div className="eyebrow">
+              <span className="pulse" />Food access, with follow-through
+            </div>
+            <h1>
+              FOOD SUPPORT<br />
+              <em>THAT STAYS WITH YOU.</em>
+            </h1>
             <p className="lede">
-              Tell Neighbor Cart about your allergies, dietary goals, and food preferences. Our personal
-              AI helps you discover nearby meals and groceries that work for you.
+              Connecting neighbors to verified local food banks, pantries, free hot meal programs, 
+              and 24/7 community fridges—with live inventory, open hours, one-click directions, 
+              and dignified pickup reservations.
             </p>
             <div className="hero-actions">
-              <Button as={Link} to="/onboarding" variant="primary" size="lg" icon="spark">Find food for me</Button>
-              <a href="#how" className="text-link">See how it works <Icon name="arrow" size={16} /></a>
+              <button type="button" className="button" onClick={onNavigatePlaces}>
+                Find Food Places & Map <Arrow />
+              </button>
+              <a href="#how" className="text-link">See how it works <span>↓</span></a>
             </div>
-            <ul className="meta-row">
-              <li><Icon name="check" size={16} />Every suggestion says why it fits</li>
-              <li><Icon name="alert" size={16} />Missing allergen data is flagged</li>
-              <li><Icon name="user" size={16} />Private to your profile</li>
-              <li><Icon name="info" size={16} />Food information, not medical advice</li>
-            </ul>
           </div>
 
-          <div className="hero-preview">
-            <SearchPreview />
-          </div>
+          {/* David's 3D Perspective Cart with Launching Groceries */}
+          <Cart />
         </div>
-      </section>
 
-      <section className="trust">
-        <div className="shell">
-          <p className="trust-line">
-            Built for real life: <em className="serif">allergies, dietary restrictions, busy schedules,</em> and
-            everyday food questions.
-          </p>
-          <ul className="trust-grid">
-            {TRUST.map((t) => (
-              <li key={t.title}>
-                <span className="trust-icon" aria-hidden="true"><Icon name={t.icon} size={19} /></span>
-                <h3>{t.title}</h3>
-                <p>{t.body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="how" id="how">
-        <div className="shell">
-          <SectionHead eyebrow="How it works" title="Three steps to a confident meal." />
-          <ol className="steps">
-            {STEPS.map((s) => (
-              <li key={s.n}>
-                <FoodArt art={s.art} className="step-art" />
-                <span className="mono step-n">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="features">
-        <div className="shell">
-          <SectionHead eyebrow="Features" title="Your food profile, finally useful." />
-          <ul className="feature-grid">
-            {FEATURES.map((f) => (
-              <li key={f.title}>
-                <h3>{f.title}</h3>
-                <p>{f.body}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="lifestyle">
-            <p className="mono">Optional cultural and lifestyle preferences</p>
-            <ul className="tag-row">
-              {LIFESTYLE.map((l) => <li key={l}><Tag tone="green">{l}</Tag></li>)}
-            </ul>
+        {/* Trust Row */}
+        <div className="trust-row" id="how">
+          <p><b>Designed for real life.</b> Dignity-first support for families, neighbors, and communities.</p>
+          <div className="trust-items">
+            <span>Private by design</span><span>•</span>
+            <span>Always 100% Free</span><span>•</span>
+            <span>No paperwork or ID required</span>
           </div>
         </div>
       </section>
 
-      <section className="impact">
-        <div className="shell impact-grid">
-          <div>
-            <h2>Less second-guessing. <em className="serif">More confident meals.</em></h2>
-            <ul className="stat-row">
-              <li><b>2 min</b><span>to set up a full food profile</span></li>
-              <li><b>4 in 5</b><span>results explain exactly why they fit</span></li>
-              <li><b>Every card</b><span>shows when allergen data is missing</span></li>
-            </ul>
-            <p className="impact-foot">Illustrative figures from our demo dataset.</p>
+      {/* Support Features Strip */}
+      <section className="support-strip" id="features">
+        <div className="shell-contained">
+          <p className="section-label">YOUR COMMUNITY, MADE STRONGER</p>
+          <h2>Less searching. More <em>showing up.</em></h2>
+          
+          <div className="feature-grid">
+            <article>
+              <span className="feature-icon">⌖</span>
+              <h3>Find food for today</h3>
+              <p>Explore an interactive real map of open meal sites, food banks, pantries, and 24/7 mutual aid fridges near you.</p>
+              <button type="button" className="feature-link-btn" onClick={onNavigatePlaces}>
+                Open Interactive Map →
+              </button>
+            </article>
+            <article>
+              <span className="feature-icon">📦</span>
+              <h3>Check live inventory</h3>
+              <p>Know what's on the shelves before traveling. View fresh produce, dairy, protein, baby formula, and culturally familiar foods.</p>
+              <button type="button" className="feature-link-btn" onClick={onNavigatePlaces}>
+                View Real Inventory →
+              </button>
+            </article>
+            <article>
+              <span className="feature-icon">🤝</span>
+              <h3>Reserve with dignity</h3>
+              <p>Discreetly book a pickup timeslot or food box for your family with no judgment, zero proof of income, and instant confirmation passes.</p>
+              <button type="button" className="feature-link-btn" onClick={onNavigatePlaces}>
+                Start a Free Reservation →
+              </button>
+            </article>
           </div>
-          <figure className="testimonial">
-            <p className="mono">Example story</p>
-            <blockquote>
-              “I stopped calling three restaurants before dinner. I ask once, I see what is actually safe
-              to ask about, and I go.”
-            </blockquote>
-            <figcaption>
-              <span className="avatar avatar-lg" aria-hidden="true">M</span>
-              <span><b>Maya K.</b><span>Fremont, CA · peanut allergy, lactose intolerant</span></span>
-            </figcaption>
-            <p className="testimonial-label">Fictional user, shown as an example.</p>
-          </figure>
         </div>
       </section>
 
-      <section className="closer">
-        <div className="shell closer-inner">
-          <h2>Know what works for your body, then know exactly where to get it.</h2>
-          <div className="hero-actions">
-            <Button as={Link} to="/onboarding" variant="light" size="lg" icon="arrow">Find food for me</Button>
-            <Link to="/chat" className="text-link on-dark">Try the AI Food Guide <Icon name="arrow" size={16} /></Link>
+      {/* Community Impact Row */}
+      <section className="community-stat-strip" id="about">
+        <div className="shell-contained community-stat-inner">
+          <div className="comm-col">
+            <span className="comm-num">8+</span>
+            <span className="comm-label">Verified Regional Locations</span>
+            <p className="comm-desc">Food Bank of Iowa, DMARC Central, CISS Free Kitchen, Little Free Pantries & more.</p>
           </div>
-          <SafetyNote tone="dark">
-            Neighbor Cart provides food information, not medical advice. For a serious allergy, always
-            verify ingredients and preparation directly with the restaurant or manufacturer.
-          </SafetyNote>
+          <div className="comm-col">
+            <span className="comm-num">100%</span>
+            <span className="comm-label">Free Food Access</span>
+            <p className="comm-desc">Every resource listed is free of charge for anyone experiencing food insecurity.</p>
+          </div>
+          <div className="comm-col">
+            <span className="comm-num">0</span>
+            <span className="comm-label">Barriers & Paperwork</span>
+            <p className="comm-desc">No social security numbers, ID checks, or humiliating intake forms.</p>
+          </div>
         </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="shell footer-grid">
-          <div>
-            <Link to="/" className="brand"><CartMark /><span className="brand-word">Neighbor<span>Cart</span></span></Link>
-            <p className="footer-tag">Food information for real neighborhoods.</p>
-          </div>
-          <nav aria-label="Footer" className="footer-nav">
-            <div>
-              <h4>Product</h4>
-              <ul>
-                <li><Link to="/app">Dashboard</Link></li>
-                <li><Link to="/explore">Explore</Link></li>
-                <li><Link to="/chat">AI Food Guide</Link></li>
-                <li><Link to="/saved">Saved</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Safety</h4>
-              <ul>
-                <li><Link to="/safety">How we handle allergens</Link></li>
-                <li><Link to="/safety">Questions to ask a provider</Link></li>
-                <li><Link to="/safety">Report wrong information</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Privacy &amp; help</h4>
-              <ul>
-                <li><Link to="/profile">Your data</Link></li>
-                <li><Link to="/safety">Privacy</Link></li>
-                <li><Link to="/safety">Help centre</Link></li>
-                <li><Link to="/safety">Contact</Link></li>
-              </ul>
-            </div>
-          </nav>
+      {/* Call to action closer */}
+      <section className="landing-cta-banner">
+        <div className="shell-contained cta-banner-inner">
+          <h2>Hungry or looking to help a neighbor?</h2>
+          <p>Find open locations with directions, real photos, contact details, and fresh supplies right now.</p>
+          <button type="button" className="button large" onClick={onNavigatePlaces}>
+            Explore Food Banks & Pantries Map <Arrow />
+          </button>
         </div>
-        <div className="shell footer-note">
-          <p>
-            Neighbor Cart provides food information, not medical advice. Always verify allergens and
-            ingredients directly with the provider. Restaurants, products and reviews shown here are
-            illustrative demo data.
-          </p>
+      </section>
+
+      {/* Footer */}
+      <footer className="landing-site-footer">
+        <div className="shell-contained footer-content-row">
+          <div className="footer-brand-side">
+            <span className="brand-mark"><i /><b /></span>
+            <span className="brand-text">neighbor<b>cart</b></span>
+            <p className="footer-motto">Dignified, open food access for real neighborhoods.</p>
+          </div>
+          <div className="footer-links-side">
+            <button type="button" className="footer-nav-link" onClick={onNavigatePlaces}>Places & Map</button>
+            <a href="#how" className="footer-nav-link">How it Works</a>
+            <a href="#features" className="footer-nav-link">Features</a>
+            <a href="#about" className="footer-nav-link">Community Partners</a>
+          </div>
+        </div>
+        <div className="shell-contained footer-bottom-row">
+          <p>© {new Date().getFullYear()} Neighbor Cart · Open Access Food Network. Community-verified data.</p>
         </div>
       </footer>
     </>

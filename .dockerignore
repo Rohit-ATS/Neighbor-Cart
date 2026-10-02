@@ -1,8 +1,0 @@
-**/node_modules
-**/dist
-.git
-.github
-stage-1
-stage-2
-pytest-cache-files-*
-*.log

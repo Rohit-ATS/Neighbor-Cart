@@ -1,0 +1,463 @@
+export const PLACE_CATEGORIES = [
+  { id: 'all', label: 'All Places', icon: '📍' },
+  { id: 'food-bank', label: 'Food Banks', icon: '🥫' },
+  { id: 'pantry', label: 'Food Pantries', icon: '🧺' },
+  { id: 'hot-meal', label: 'Hot Meals & Kitchens', icon: '🍲' },
+  { id: 'community-fridge', label: 'Community Fridges', icon: '🧊' },
+];
+
+export const PLACES = [
+  {
+    id: 'food-bank-iowa',
+    name: 'Food Bank of Iowa',
+    type: 'food-bank',
+    typeLabel: 'Regional Food Bank & Distribution Hub',
+    tagline: 'Leading hunger relief across 55 Iowa counties with fresh produce and emergency boxes.',
+    neighborhood: 'Northeast Des Moines',
+    address: '2220 E 17th St',
+    cityStateZip: 'Des Moines, IA 50316',
+    lat: 41.6094,
+    lng: -93.5878,
+    phone: '(515) 564-0330',
+    email: 'contact@foodbankiowa.org',
+    website: 'https://foodbankiowa.org',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=2220+E+17th+St,+Des+Moines,+IA+50316',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'No ID, income verification, or social security number required. Open to anyone who needs food.',
+    images: [
+      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80', // produce packing
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80', // fresh fruits & grocery
+      'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=80', // grocery aisles
+    ],
+    hoursSummary: 'Mon – Fri: 8:00 AM – 4:30 PM',
+    weeklyHours: [
+      { day: 'Monday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
+      { day: 'Tuesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
+      { day: 'Wednesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
+      { day: 'Thursday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
+      { day: 'Friday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
+      { day: 'Saturday', hours: 'Closed (Emergency boxes via hotline)', open: 0, close: 0 },
+      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    ],
+    services: [
+      'Direct emergency box pick-up',
+      'Curbside trunk loading',
+      'Wheelchair accessible entrance',
+      'Bilingual staff (English / Spanish)',
+      'Free parking on site'
+    ],
+    inventory: [
+      { category: 'Fresh Produce', item: 'Honeycrisp Apples & Navel Oranges (5 lb bags)', stock: 'high', note: 'Restocked this morning' },
+      { category: 'Fresh Produce', item: 'Carrots, Russet Potatoes & Yellow Onions', stock: 'high', note: 'Abundant supply' },
+      { category: 'Dairy & Eggs', item: 'Grade-A 1% Milk (Gallons) & Fresh Eggs', stock: 'medium', note: 'Kept refrigerated' },
+      { category: 'Dairy & Eggs', item: 'Cheddar & Mozzarella Cheese blocks', stock: 'medium', note: 'Limit 2 per household' },
+      { category: 'Pantry Staples', item: 'Long Grain White Rice (5 lb) & Pinto Beans', stock: 'high', note: 'Shelf-stable' },
+      { category: 'Pantry Staples', item: 'Canned Tuna, Chunk Chicken & Peanut Butter', stock: 'high', note: 'High protein staples' },
+      { category: 'Baby & Infant', item: 'Enfamil Infant Formula (Gentlease & Standard)', stock: 'low', note: 'Limited quantity available' },
+      { category: 'Baby & Infant', item: 'Diapers (Sizes 2, 4, 5, 6) & Gentle Wipes', stock: 'medium', note: 'Ask at check-in' },
+      { category: 'Special Dietary', item: 'Gluten-Free Rolled Oats & Rice Flour', stock: 'medium', note: 'Marked allergen-friendly' },
+      { category: 'Personal Hygiene', item: 'Soap, Shampoo & Dental Care Kits', stock: 'high', note: 'Full hygiene boxes' }
+    ],
+    acceptsReservations: true,
+    reservationWindows: [
+      '9:00 AM – 10:30 AM',
+      '11:00 AM – 12:30 PM',
+      '1:30 PM – 3:00 PM',
+      '3:00 PM – 4:15 PM'
+    ]
+  },
+  {
+    id: 'dmarc-pantry',
+    name: 'DMARC Central Food Pantry',
+    type: 'pantry',
+    typeLabel: 'Choice Community Food Pantry',
+    tagline: 'Des Moines Area Religious Council network providing healthy choice-based grocery access.',
+    neighborhood: 'South Side Des Moines',
+    address: '100 Army Post Rd',
+    cityStateZip: 'Des Moines, IA 50315',
+    lat: 41.5262,
+    lng: -93.6190,
+    phone: '(515) 277-6969',
+    email: 'info@dmarcunited.org',
+    website: 'https://dmarcunited.org',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=100+Army+Post+Rd,+Des+Moines,+IA+50315',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'Choice pantry model. You pick what your family eats. Bring your own bags if possible (totes provided if not).',
+    images: [
+      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80', // pantry shelves
+      'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80', // fresh vegetables
+      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80', // shopping cart goods
+    ],
+    hoursSummary: 'Mon – Thu: 9:00 AM – 4:00 PM · Fri: 9:00 AM – 1:00 PM',
+    weeklyHours: [
+      { day: 'Monday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Tuesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Wednesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Thursday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Friday', hours: '9:00 AM – 1:00 PM', open: 9, close: 13 },
+      { day: 'Saturday', hours: 'Closed', open: 0, close: 0 },
+      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    ],
+    services: [
+      'Self-select choice grocery model',
+      'Mobile food truck stops',
+      'Public transit accessible (DART Route 7)',
+      'Vegetarian and culturally familiar foods',
+      'Formula and toddler nutritional packs'
+    ],
+    inventory: [
+      { category: 'Fresh Produce', item: 'Fresh Spinach, Romaine & Sweet Peppers', stock: 'high', note: 'Locally grown surplus' },
+      { category: 'Fresh Produce', item: 'Watermelon, Cantaloupe & Bananas', stock: 'high', note: 'Freshly cut & whole' },
+      { category: 'Dairy & Eggs', item: 'Whole Milk, Skim Milk & Plant-Based Oat Milk', stock: 'high', note: 'Dairy alternatives in stock' },
+      { category: 'Dairy & Eggs', item: 'Farm Fresh Brown Eggs (Dozen)', stock: 'medium', note: '1 carton per family' },
+      { category: 'Pantry Staples', item: 'Whole Wheat Pasta, Tomato Basil Sauce & Rice', stock: 'high', note: 'Family size boxes' },
+      { category: 'Pantry Staples', item: 'Low-Sodium Soups & Canned Vegetables', stock: 'high', note: 'Healthy heart selection' },
+      { category: 'Special Dietary', item: 'Halal Certified Canned Beans & Poultry', stock: 'high', note: 'Dedicated Halal section' },
+      { category: 'Special Dietary', item: 'Diabetic-Friendly Low Sugar Cereals', stock: 'medium', note: 'Clearly marked' },
+      { category: 'Personal Hygiene', item: 'Dish Soap, Paper Towels & Toilet Paper', stock: 'medium', note: 'Household basics' }
+    ],
+    acceptsReservations: true,
+    reservationWindows: [
+      '9:30 AM – 10:30 AM',
+      '11:00 AM – 12:00 PM',
+      '1:00 PM – 2:00 PM',
+      '2:30 PM – 3:30 PM'
+    ]
+  },
+  {
+    id: 'st-vincent-pantry',
+    name: 'St. Vincent de Paul Community Pantry',
+    type: 'pantry',
+    typeLabel: 'Neighborhood Community Food Pantry',
+    tagline: 'Compassionate neighbor-to-neighbor food assistance in the historic 6th Avenue corridor.',
+    neighborhood: 'River Bend / 6th Ave',
+    address: '1426 6th Ave',
+    cityStateZip: 'Des Moines, IA 50314',
+    lat: 41.6045,
+    lng: -93.6247,
+    phone: '(515) 282-8327',
+    email: 'help@svdpdesmoines.org',
+    website: 'https://svdpdesmoines.org',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1426+6th+Ave,+Des+Moines,+IA+50314',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'Everyone welcome regardless of background or residency. Walk in during pantry hours.',
+    images: [
+      'https://images.unsplash.com/photo-1584727638096-042c45049ebe?auto=format&fit=crop&w=900&q=80', // community food pantry
+      'https://images.unsplash.com/photo-1506484381205-f7945653044d?auto=format&fit=crop&w=900&q=80', // organic produce
+      'https://images.unsplash.com/photo-1607349913338-fca6f7429606?auto=format&fit=crop&w=900&q=80', // packed essentials
+    ],
+    hoursSummary: 'Mon – Fri: 9:00 AM – 4:00 PM · Sat: 9:00 AM – 12:00 PM',
+    weeklyHours: [
+      { day: 'Monday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Tuesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Wednesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Thursday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Friday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
+      { day: 'Saturday', hours: '9:00 AM – 12:00 PM', open: 9, close: 12 },
+      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    ],
+    services: [
+      'Walk-in food box pick-up',
+      'Fresh bakery & sliced bread',
+      'Clothing closet vouchers',
+      'Emergency personal hygiene products',
+      'Weekend Saturday hours'
+    ],
+    inventory: [
+      { category: 'Fresh Produce', item: 'Yellow Squash, Green Cabbage & Sweet Onions', stock: 'high', note: 'Farm rescue shipment' },
+      { category: 'Fresh Produce', item: 'Fresh Red Apples & Pears', stock: 'high', note: 'Fresh condition' },
+      { category: 'Pantry Staples', item: 'Beef Ravioli, Chunky Chili & Hearty Soups', stock: 'high', note: 'Easy pull-tab options' },
+      { category: 'Pantry Staples', item: 'Spaghetti Pasta & Rich Marinara', stock: 'high', note: 'Ample supply' },
+      { category: 'Dairy & Eggs', item: '2% Milk & Butter spread', stock: 'medium', note: 'Keep cold' },
+      { category: 'Bakery', item: 'Artisan Sourdough, Bagels & Sandwich Bread', stock: 'high', note: 'Delivered daily by bakeries' },
+      { category: 'Personal Hygiene', item: 'Full Size Deodorant, Bar Soap & Toothpaste', stock: 'high', note: 'Hygiene bag included' }
+    ],
+    acceptsReservations: true,
+    reservationWindows: [
+      '10:00 AM – 11:30 AM',
+      '1:00 PM – 2:30 PM',
+      '2:30 PM – 3:45 PM'
+    ]
+  },
+  {
+    id: 'ciss-kitchen',
+    name: 'Central Iowa Shelter Free Kitchen & Community Meal',
+    type: 'hot-meal',
+    typeLabel: 'Free Hot Meal Program & Community Kitchen',
+    tagline: 'Serving three hot, nutritious meals every single day to anyone who is hungry. No questions asked.',
+    neighborhood: 'Downtown Des Moines',
+    address: '1420 Mulberry St',
+    cityStateZip: 'Des Moines, IA 50309',
+    lat: 41.5833,
+    lng: -93.6358,
+    phone: '(515) 284-5719',
+    email: 'meals@centraliowashelter.org',
+    website: 'https://centraliowashelter.org',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1420+Mulberry+St,+Des+Moines,+IA+50309',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'Completely free hot meals served 3 times daily. Anyone hungry can walk right in and eat.',
+    images: [
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80', // hot meal stew
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80', // dining meal
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80', // nutritious salad
+    ],
+    hoursSummary: 'Every Day (7 Days / Wk): Breakfast 7–8am · Lunch 12–1pm · Dinner 5–6:30pm',
+    weeklyHours: [
+      { day: 'Monday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Tuesday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Wednesday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Thursday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Friday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Saturday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+      { day: 'Sunday', hours: '7:00 AM – 8:00 AM, 12:00 PM – 1:00 PM, 5:00 PM – 6:30 PM', open: 7, close: 18.5 },
+    ],
+    services: [
+      'Chef-prepared hot sit-down meals',
+      'Take-away lunch boxes for working guests',
+      'Clean dining space with water & coffee',
+      'Warm shelter & emergency warming site',
+      'Grab-and-go non-perishable snack packs'
+    ],
+    inventory: [
+      { category: 'Hot Prepared Meals', item: 'Roasted Herb Chicken, Mashed Potatoes & Gravy', stock: 'high', note: 'Hot dinner service today' },
+      { category: 'Hot Prepared Meals', item: 'Vegetable Rice Pilaf & Steamed Green Beans', stock: 'high', note: 'Vegetarian option ready' },
+      { category: 'Grab-and-Go', item: 'Turkey & Cheddar Deli Sandwiches', stock: 'high', note: 'Packaged with fruit & chips' },
+      { category: 'Beverages', item: 'Fresh Brewed Coffee, Cold Tea & Bottled Water', stock: 'high', note: 'Always available' },
+      { category: 'Weather Gear', item: 'Hand warmers, Wool socks & Emergency blankets', stock: 'medium', note: 'Seasonal distribution' }
+    ],
+    acceptsReservations: false,
+    reservationWindows: []
+  },
+  {
+    id: 'dsm-community-fridge',
+    name: 'Des Moines Downtown Community Fridge & Mutual Aid',
+    type: 'community-fridge',
+    typeLabel: '24/7 Community Fridge & Free Pantry',
+    tagline: '“Take what you need, leave what you can.” Free food accessible 24 hours a day, 7 days a week.',
+    neighborhood: 'Downtown Western Gateway',
+    address: '1300 Locust St',
+    cityStateZip: 'Des Moines, IA 50309',
+    lat: 41.5868,
+    lng: -93.6335,
+    phone: '(515) 346-8800',
+    email: 'dsmcommunityfridge@gmail.com',
+    website: 'https://instagram.com/dsmcommunityfridge',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1300+Locust+St,+Des+Moines,+IA+50309',
+    verifiedDate: 'Checked 2 hours ago by community volunteers',
+    requirements: '100% free, anonymous, open 24/7. No barrier, no paperwork, no questions. Take whatever you need.',
+    images: [
+      'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?auto=format&fit=crop&w=900&q=80', // community fridge
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=80', // fresh greens
+      'https://images.unsplash.com/photo-1579113800032-c38bd7635818?auto=format&fit=crop&w=900&q=80', // fresh fruits
+    ],
+    hoursSummary: 'Open 24 Hours / 7 Days a Week (Always Accessible)',
+    weeklyHours: [
+      { day: 'Monday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Tuesday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Wednesday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Thursday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Friday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Saturday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Sunday', hours: '24 Hours Open', open: 0, close: 24 },
+    ],
+    services: [
+      'Completely anonymous 24/7 access',
+      'Insulated refrigerated food compartment',
+      'Dry pantry cupboard for shelf-stable food',
+      'No registration or signup required',
+      'Community drop-off location'
+    ],
+    inventory: [
+      { category: 'Refrigerated Items', item: 'Fresh Bagels, Whole Wheat Bread & Butter', stock: 'medium', note: 'Stocked 3 hours ago' },
+      { category: 'Refrigerated Items', item: 'Cheddar Cheese Sticks, Yogurt & Fresh Apples', stock: 'high', note: 'Great grab-and-go' },
+      { category: 'Dry Goods', item: 'Peanut Butter, Jelly & Saltine Crackers', stock: 'high', note: 'In dry pantry box' },
+      { category: 'Dry Goods', item: 'Canned Soups with Pull-Tab Lids (No opener needed)', stock: 'high', note: 'Ready to eat' },
+      { category: 'Beverages', item: 'Orange Juice Bottles & 100% Apple Juice Boxes', stock: 'medium', note: 'Cold in fridge' },
+      { category: 'Hygiene & Extras', item: 'Reusable grocery bags & plastic silverware sets', stock: 'high', note: 'In side bin' }
+    ],
+    acceptsReservations: false,
+    reservationWindows: []
+  },
+  {
+    id: 'bidwell-riverside-pantry',
+    name: 'Bidwell Riverside Center Food Pantry',
+    type: 'pantry',
+    typeLabel: 'Full-Service Client-Choice Pantry',
+    tagline: 'Supporting South Des Moines families with fresh meat, produce, baby supplies, and dignified grocery choice.',
+    neighborhood: 'South Des Moines / Hartford',
+    address: '1203 Hartford Ave',
+    cityStateZip: 'Des Moines, IA 50315',
+    lat: 41.5694,
+    lng: -93.6293,
+    phone: '(515) 244-6251',
+    email: 'pantry@bidwellriverside.org',
+    website: 'https://bidwellriverside.org',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1203+Hartford+Ave,+Des+Moines,+IA+50315',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'Choice pantry model. Friendly staff assists with shopping carts and loading.',
+    images: [
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80', // grocery produce
+      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80', // market cart
+      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80', // food shelves
+    ],
+    hoursSummary: 'Mon – Fri: 10:00 AM – 4:00 PM · Sat: 9:00 AM – 1:00 PM',
+    weeklyHours: [
+      { day: 'Monday', hours: '10:00 AM – 4:00 PM', open: 10, close: 16 },
+      { day: 'Tuesday', hours: '10:00 AM – 4:00 PM', open: 10, close: 16 },
+      { day: 'Wednesday', hours: '10:00 AM – 4:00 PM', open: 10, close: 16 },
+      { day: 'Thursday', hours: '10:00 AM – 4:00 PM', open: 10, close: 16 },
+      { day: 'Friday', hours: '10:00 AM – 4:00 PM', open: 10, close: 16 },
+      { day: 'Saturday', hours: '9:00 AM – 1:00 PM', open: 9, close: 13 },
+      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    ],
+    services: [
+      'Full client-choice market aisles',
+      'Frozen poultry, beef & vegetarian meat alternatives',
+      'Comprehensive diaper pantry (newborn to size 7)',
+      'Free community book and recipe station',
+      'Assistance with SNAP applications'
+    ],
+    inventory: [
+      { category: 'Meat & Protein', item: 'Frozen Chicken Drumsticks & Ground Beef', stock: 'medium', note: 'Frozen meat packages' },
+      { category: 'Meat & Protein', item: 'Black Beans, Garbanzo Beans & Canned Tuna', stock: 'high', note: 'High supply' },
+      { category: 'Fresh Produce', item: 'Carrots, Russet Potatoes, Sweet Corn & Broccoli', stock: 'high', note: 'Restocked daily' },
+      { category: 'Dairy & Eggs', item: 'Whole Milk, Skim Milk & Cheddar Cheese', stock: 'high', note: 'Cold cases' },
+      { category: 'Baby Supplies', item: 'Diapers (All sizes) & Hypoallergenic Wipes', stock: 'high', note: 'One package per child' },
+      { category: 'Special Dietary', item: 'Gluten-Free Cereal & Rice Pasta', stock: 'medium', note: 'Dedicated dietary area' }
+    ],
+    acceptsReservations: true,
+    reservationWindows: [
+      '10:30 AM – 11:45 AM',
+      '1:15 PM – 2:30 PM',
+      '2:45 PM – 3:45 PM'
+    ]
+  },
+  {
+    id: 'food-at-first-ames',
+    name: 'Food at First Free Meal Program & Market',
+    type: 'hot-meal',
+    typeLabel: 'Free Hot Meal & Perishable Rescue Market',
+    tagline: 'Serving hot evening and lunch meals every single day in Story County, plus a free community grocery market.',
+    neighborhood: 'Downtown Ames',
+    address: '611 Clark Ave',
+    cityStateZip: 'Ames, IA 50010',
+    lat: 42.0253,
+    lng: -93.6166,
+    phone: '(515) 344-4357',
+    email: 'info@foodatfirst.net',
+    website: 'https://foodatfirst.net',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=611+Clark+Ave,+Ames,+IA+50010',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: 'Free hot meals served daily. Free grocery market open Mondays and Thursdays. All are welcome.',
+    images: [
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80', // hot meal
+      'https://images.unsplash.com/photo-1506484381205-f7945653044d?auto=format&fit=crop&w=900&q=80', // organic vegetable
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80', // market produce
+    ],
+    hoursSummary: 'Free Meals: Daily 5:45–6:30pm (Lunch Sun-Fri 11:30am–1pm) · Market: Mon & Thu 4:30–5:30pm',
+    weeklyHours: [
+      { day: 'Monday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM (Market 4:30 PM – 5:30 PM)', open: 11.5, close: 18.5 },
+      { day: 'Tuesday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM', open: 11.5, close: 18.5 },
+      { day: 'Wednesday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM', open: 11.5, close: 18.5 },
+      { day: 'Thursday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM (Market 4:30 PM – 5:30 PM)', open: 11.5, close: 18.5 },
+      { day: 'Friday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM', open: 11.5, close: 18.5 },
+      { day: 'Saturday', hours: '11:30 AM – 1:00 PM & 5:45 PM – 6:30 PM', open: 11.5, close: 18.5 },
+      { day: 'Sunday', hours: '5:45 PM – 6:30 PM', open: 17.75, close: 18.5 },
+    ],
+    services: [
+      'Free freshly cooked hot meals twice daily',
+      'Perishable grocery rescue distribution',
+      'Artisan bakery bread & pastries',
+      'Vegetarian and vegan meals available daily',
+      'Friendly community volunteer dining room'
+    ],
+    inventory: [
+      { category: 'Hot Meals', item: 'Beef & Vegetable Stew, Warm Rolls & Fresh Garden Salad', stock: 'high', note: 'Prepared fresh' },
+      { category: 'Hot Meals', item: 'Vegetarian Lentil Curry with Jasmine Rice', stock: 'high', note: 'Special dietary option' },
+      { category: 'Market Produce', item: 'Tomatoes, Bell Peppers, Zucchini & Cucumbers', stock: 'high', note: 'Rescued produce market' },
+      { category: 'Bakery', item: 'Baguettes, Whole Grain Sliced Loaves & Muffins', stock: 'high', note: 'Rescued from local bakeries' },
+      { category: 'Beverages', item: 'Hot Tea, Fresh Coffee, Lemonade & Milk', stock: 'high', note: 'With each meal' }
+    ],
+    acceptsReservations: true,
+    reservationWindows: [
+      'Market Express Slot: 4:30 PM – 5:00 PM',
+      'Market Express Slot: 5:00 PM – 5:30 PM'
+    ]
+  },
+  {
+    id: 'urban-food-ministry',
+    name: 'Urban Bicycle Food Ministry & University Little Pantry',
+    type: 'community-fridge',
+    typeLabel: 'Street Outreach Pantry & Mobile Food Ministry',
+    tagline: 'Delivering direct food access to street neighbors and maintaining a 24/7 dry food and hygiene box.',
+    neighborhood: 'Drake University District',
+    address: '2300 University Ave',
+    cityStateZip: 'Des Moines, IA 50311',
+    lat: 41.6003,
+    lng: -93.6527,
+    phone: '(515) 271-2000',
+    email: 'info@ubfmdsm.com',
+    website: 'https://ubfmdsm.com',
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=2300+University+Ave,+Des+Moines,+IA+50311',
+    verifiedDate: 'Updated today · Verified partner',
+    requirements: '24/7 Free street pantry. Walk up anytime. Bicycle delivery routes run Tuesday & Thursday nights.',
+    images: [
+      'https://images.unsplash.com/photo-1607349913338-fca6f7429606?auto=format&fit=crop&w=900&q=80', // food packs
+      'https://images.unsplash.com/photo-1584727638096-042c45049ebe?auto=format&fit=crop&w=900&q=80', // pantry items
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80', // fresh foods
+    ],
+    hoursSummary: 'Pantry: 24/7 Outdoor Access · Mobile Delivery: Tue & Thu 6:30 PM – 8:30 PM',
+    weeklyHours: [
+      { day: 'Monday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Tuesday', hours: '24 Hours Open (Bike Delivery 6:30–8:30pm)', open: 0, close: 24 },
+      { day: 'Wednesday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Thursday', hours: '24 Hours Open (Bike Delivery 6:30–8:30pm)', open: 0, close: 24 },
+      { day: 'Friday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Saturday', hours: '24 Hours Open', open: 0, close: 24 },
+      { day: 'Sunday', hours: '24 Hours Open', open: 0, close: 24 },
+    ],
+    services: [
+      '24/7 Outdoor wooden pantry cabinet',
+      'Mobile bicycle outreach across downtown & parks',
+      'Burritos, sandwiches and hot coffee delivered',
+      'Warm clothing, hats, gloves, socks in winter',
+      'Harm reduction and first aid kits'
+    ],
+    inventory: [
+      { category: 'Ready-to-Eat', item: 'Warm Breakfast & Bean Burritos (Outreach nights)', stock: 'high', note: 'Freshly prepared' },
+      { category: 'Ready-to-Eat', item: 'Peanut Butter & Jelly Sandwiches, Granola Bars', stock: 'high', note: 'Individually wrapped' },
+      { category: 'Pantry Staples', item: 'Easy-Open Pull-Tab Canned Soups & Ravioli', stock: 'high', note: 'No can opener required' },
+      { category: 'Pantry Staples', item: 'Instant Oatmeal Packets & Tuna Snack Kits', stock: 'high', note: 'High protein' },
+      { category: 'Personal Hygiene', item: 'Travel size toothpaste, wet wipes & bandages', stock: 'medium', note: 'In lower dry cabinet' }
+    ],
+    acceptsReservations: false,
+    reservationWindows: []
+  }
+];
+
+export function getIsOpenNow(place) {
+  if (place.type === 'community-fridge') return { isOpen: true, text: 'Open 24/7' };
+  
+  const now = new Date();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const todayName = days[now.getDay()];
+  const currentHour = now.getHours() + now.getMinutes() / 60;
+  
+  const todaySchedule = place.weeklyHours?.find((h) => h.day === todayName);
+  if (!todaySchedule || todaySchedule.open === 0) {
+    return { isOpen: false, text: 'Closed today · Check schedule' };
+  }
+  
+  if (currentHour >= todaySchedule.open && currentHour <= todaySchedule.close) {
+    const closeHours = Math.floor(todaySchedule.close);
+    const closeMinutes = Math.round((todaySchedule.close - closeHours) * 60);
+    const ampm = closeHours >= 12 ? 'PM' : 'AM';
+    const displayHour = closeHours > 12 ? closeHours - 12 : closeHours === 0 ? 12 : closeHours;
+    const displayMin = closeMinutes > 0 ? `:${closeMinutes.toString().padStart(2, '0')}` : ':00';
+    return { isOpen: true, text: `Open now · Closes at ${displayHour}${displayMin} ${ampm}` };
+  } else if (currentHour < todaySchedule.open) {
+    return { isOpen: false, text: `Closed now · Opens at ${todaySchedule.open}:00 AM` };
+  } else {
+    return { isOpen: false, text: 'Closed for the day' };
+  }
+}
