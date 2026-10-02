@@ -1,17 +1,21 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useInView, useReducedMotion, useScroll, useSpring } from 'framer-motion';
 import '../styles/freshbox.css';
 
 /* Photography comes from Unsplash, the source this project already uses for
-   place imagery, so nothing here depends on another site's assets. */
+   place imagery. The motion loop in public/media was generated with
+   Higgsfield (Cinema Studio Video 3.0) and boomeranged locally so it cycles
+   without a visible seam. */
 const IMG = (id, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
 
-const HERO_DISH = IMG('1546069901-ba9599a7e63c', 1200);
+const LOOP = '/media/food-loop.mp4';
+const LOOP_POSTER = '/media/food-poster.jpg';
+
 const FLOATERS = [
-  { cls: 'fb-f1', src: IMG('1565299624946-b28f40a0ae38', 400), alt: '' },
-  { cls: 'fb-f2', src: IMG('1540420773420-3366772f4999', 400), alt: '' },
-  { cls: 'fb-f3', src: IMG('1568901346375-23c9450c58cd', 400), alt: '' },
-  { cls: 'fb-f4', src: IMG('1512621776951-a57141f2eefd', 400), alt: '' },
+  { cls: 'fb-f1', src: IMG('1565299624946-b28f40a0ae38', 400), depth: 26 },
+  { cls: 'fb-f2', src: IMG('1540420773420-3366772f4999', 400), depth: -18 },
+  { cls: 'fb-f3', src: IMG('1568901346375-23c9450c58cd', 400), depth: -30 },
+  { cls: 'fb-f4', src: IMG('1512621776951-a57141f2eefd', 400), depth: 22 },
 ];
 
 const STEPS = [
@@ -20,20 +24,43 @@ const STEPS = [
   { n: '03', title: 'Go, or reserve ahead', body: 'One-click directions, or hold a dignified pickup slot so your food is waiting for you.' },
 ];
 
+/* The reel reuses the one generated loop, but each tile starts at a different
+   point in the 8s cycle and runs at its own rate, so the band reads as three
+   separate shots rather than the same frame printed three times. */
+const REEL = [
+  { title: 'Fresh produce', body: 'Picked up from farms and grocers the same morning.', rate: 1, start: 0, pos: '50% 50%' },
+  { title: 'Hot meals', body: 'Kitchens serving a plate, no questions asked.', rate: 0.65, start: 2.7, pos: '32% 22%' },
+  { title: '24/7 fridges', body: 'Community fridges you can open at any hour.', rate: 1.35, start: 5.4, pos: '70% 78%' },
+];
+
 const PLACES = [
-  { name: 'Food Bank of Iowa', city: 'Des Moines, IA', img: IMG('1593113598332-cd288d649433'), pill: 'Open now', tags: ['Fresh produce', 'No ID required'] },
-  { name: 'Community Fridge', city: 'Chicago, IL', img: IMG('1542838132-92c53300491e'), pill: 'Open 24/7', tags: ['Self-serve', 'Halal options'] },
-  { name: "St. Mary's Hot Meals", city: 'Brooklyn, NY', img: IMG('1555396273-367ea4eb4db5'), pill: 'Serving today', tags: ['Hot meals', 'Family friendly'] },
+  { name: 'Food Bank of Iowa', city: 'Des Moines, IA', img: IMG('1593113598332-cd288d649433'), pill: 'Open now', live: true, tags: ['Fresh produce', 'No ID required'] },
+  { name: 'Community Fridge', city: 'Chicago, IL', img: IMG('1542838132-92c53300491e'), pill: 'Open 24/7', live: true, tags: ['Self-serve', 'Halal options'] },
+  { name: "St. Mary's Hot Meals", city: 'Brooklyn, NY', img: IMG('1555396273-367ea4eb4db5'), pill: 'Serving today', live: false, tags: ['Hot meals', 'Family friendly'] },
 ];
 
 const STATS = [
-  { n: '2,400+', label: 'Verified locations nationwide' },
-  { n: '100%', label: 'Free to use, always' },
-  { n: '0', label: 'Documents required to start' },
-  { n: '24/7', label: 'Community fridges listed' },
+  { to: 2400, suffix: '+', label: 'Verified locations nationwide' },
+  { to: 100, suffix: '%', label: 'Free to use, always' },
+  { to: 0, suffix: '', label: 'Documents required to start' },
+  { to: 24, suffix: '/7', label: 'Community fridges listed' },
 ];
 
 const MARQUEE = ['Fresh produce', 'Hot meals', 'No ID required', 'Open late', 'Halal & kosher', 'Baby formula', 'Free delivery', 'Pickup slots'];
+
+const SECTIONS = [
+  { id: 'top', label: 'Home' },
+  { id: 'how', label: 'How it works' },
+  { id: 'reel', label: 'What you find' },
+  { id: 'places', label: 'Places' },
+  { id: 'about', label: 'About' },
+];
+
+const FOOTER_COLS = [
+  { head: 'Find food', links: ['Places & map', 'Open right now', 'Community fridges'] },
+  { head: 'Get involved', links: ['Volunteer', 'Food rescue', 'For nonprofits'] },
+  { head: 'About', links: ['Our data', 'Privacy', 'Contact'] },
+];
 
 /* One reveal used everywhere, so the whole page moves with one rhythm. */
 const reveal = {
@@ -42,44 +69,277 @@ const reveal = {
 };
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.11 } } };
 
-const Reveal = ({ children, className = '', as: As = 'div' }) => {
+const Reveal = ({ children, className = '', as: As = 'div', ...rest }) => {
   const M = motion[As] ?? motion.div;
   return (
-    <M className={className} variants={reveal} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }}>
+    <M className={className} variants={reveal} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }} {...rest}>
       {children}
     </M>
   );
 };
 
 const Arrow = () => (
-  <svg className="fb-arrow" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="fb-arrow" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M7 17 17 7M9 7h8v8" />
   </svg>
 );
 
+const scrollToId = (id) => {
+  if (id === 'top') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+};
+
+/* ---------------------------------------------------------------- pieces */
+
+/* The headline rises word by word, each word masked by its own clip box. */
+function Headline({ text }) {
+  const reduce = useReducedMotion();
+  return (
+    <h1>
+      {text.split(' ').map((word, i) => (
+        <span className="fb-word" key={`${word}-${i}`}>
+          <motion.span
+            initial={reduce ? { y: 0 } : { y: '110%' }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.85, delay: 0.1 + i * 0.07, ease: [0.22, 0.9, 0.3, 1] }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </h1>
+  );
+}
+
+/* Stats tick up the first time the band scrolls into view. */
+function Counter({ to, suffix }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const reduce = useReducedMotion();
+  const [n, setN] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return undefined;
+    if (reduce || to === 0) {
+      setN(to);
+      return undefined;
+    }
+    const start = performance.now();
+    const ms = 1500;
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, (now - start) / ms);
+      setN(Math.round(to * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [inView, to, reduce]);
+
+  return <b ref={ref}>{n.toLocaleString()}{suffix}</b>;
+}
+
+/* A muted, looping decorative clip. Kept out of the a11y tree, and skipped
+   entirely when the visitor has asked for reduced motion — they get the
+   poster frame instead, which is the same image without the movement. */
+function Loop({ className, rate = 1, start = 0, objectPosition, poster = LOOP_POSTER }) {
+  const ref = useRef(null);
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    if (rate !== 1) el.playbackRate = rate;
+
+    /* Seeking before metadata lands throws, so wait for a duration. */
+    const seek = () => { el.currentTime = Math.min(start, el.duration || start); };
+    if (start) {
+      if (el.readyState >= 1) seek();
+      else el.addEventListener('loadedmetadata', seek, { once: true });
+    }
+
+    /* The page runs six copies of this loop. Decoding all of them at once is
+       wasted work on a laptop and real battery on a phone, so each one only
+       runs while it is near the viewport. */
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: '200px' },
+    );
+    io.observe(el);
+
+    return () => {
+      el.removeEventListener('loadedmetadata', seek);
+      io.disconnect();
+    };
+  }, [rate, start]);
+
+  if (reduce) {
+    return <img className={className} src={poster} alt="" style={{ objectPosition }} aria-hidden="true" />;
+  }
+  return (
+    <video
+      ref={ref}
+      className={className}
+      style={{ objectPosition }}
+      src={LOOP}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+      tabIndex={-1}
+    />
+  );
+}
+
+/* ----------------------------------------------------------------- page */
+
 export default function Landing({ onNavigatePlaces }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [stuck, setStuck] = useState(false);
+  const [active, setActive] = useState('top');
+  const heroRef = useRef(null);
+  const reduce = useReducedMotion();
+
+  const { scrollYProgress } = useScroll();
+  const rail = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
+
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  /* Scroll-spy: the nav underline follows the section actually on screen
+     instead of being pinned to "Home" forever. */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActive(visible.target.id);
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 1] },
+    );
+    SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  /* Parallax on the hero cut-outs, driven by pointer position. Pointer-only,
+     so touch devices are untouched and nothing fires for reduced motion. */
+  useEffect(() => {
+    if (reduce) return undefined;
+    const hero = heroRef.current;
+    if (!hero || !window.matchMedia('(pointer: fine)').matches) return undefined;
+
+    let raf = 0;
+    const onMove = (e) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const { width, height, top } = hero.getBoundingClientRect();
+        const x = (e.clientX / width - 0.5) * 2;
+        const y = ((e.clientY - top) / height - 0.5) * 2;
+        hero.style.setProperty('--mx', x.toFixed(3));
+        hero.style.setProperty('--my', y.toFixed(3));
+      });
+    };
+    hero.addEventListener('pointermove', onMove);
+    return () => {
+      hero.removeEventListener('pointermove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [reduce]);
+
+  /* Close the drawer on Escape and whenever the viewport grows past the
+     breakpoint that hides it. */
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    const mq = window.matchMedia('(min-width: 861px)');
+    const onChange = () => { if (mq.matches) setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    mq.addEventListener('change', onChange);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      mq.removeEventListener('change', onChange);
+    };
+  }, [menuOpen]);
+
+  const go = (id) => { setMenuOpen(false); scrollToId(id); };
+  const findFood = () => { setMenuOpen(false); onNavigatePlaces(); };
+
   return (
     <div className="fb">
-      <div className="fb-nav-wrap">
+      <a className="fb-skip" href="#how">Skip to content</a>
+      <motion.div className="fb-rail" style={{ scaleX: rail }} aria-hidden="true" />
+
+      <div className={`fb-nav-wrap${stuck ? ' is-stuck' : ''}`}>
         <div className="fb-shell">
           <nav className="fb-nav" aria-label="Main">
-            <a className="fb-logo" href="#top">NeighborCart</a>
+            <a className="fb-logo" href="#top" onClick={(e) => { e.preventDefault(); go('top'); }}>
+              <span className="fb-logo-dot" aria-hidden="true" />NeighborCart
+            </a>
+
             <div className="fb-nav-links">
-              <button type="button" className="is-on" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button>
-              <button type="button" onClick={onNavigatePlaces}>Find food</button>
-              <button type="button" onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}>How it works</button>
-              <button type="button" onClick={() => document.getElementById('places')?.scrollIntoView({ behavior: 'smooth' })}>Places</button>
-              <button type="button" onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}>About</button>
+              {SECTIONS.map(({ id, label }) => (
+                <button key={id} type="button" aria-current={active === id} onClick={() => go(id)}>{label}</button>
+              ))}
             </div>
-            <button type="button" className="fb-btn" onClick={onNavigatePlaces}>Find food near you <Arrow /></button>
+
+            <button type="button" className="fb-btn" onClick={findFood}>Find food near you <Arrow /></button>
+
+            <button
+              type="button"
+              className="fb-burger"
+              aria-expanded={menuOpen}
+              aria-controls="fb-drawer"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span /><span /><span />
+            </button>
           </nav>
+
+          {menuOpen && (
+            <motion.div
+              className="fb-drawer"
+              id="fb-drawer"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              transition={{ duration: 0.3, ease: [0.22, 0.9, 0.3, 1] }}
+            >
+              {SECTIONS.map(({ id, label }) => (
+                <button key={id} type="button" onClick={() => go(id)}>{label}</button>
+              ))}
+              <button type="button" className="fb-btn" onClick={findFood}>Find food near you <Arrow /></button>
+            </motion.div>
+          )}
         </div>
       </div>
 
       {/* ------------------------------------------------------------ hero */}
-      <header className="fb-hero" id="top">
+      <header className="fb-hero" id="top" ref={heroRef}>
+        <Loop className="fb-hero-video" />
+        <div className="fb-hero-scrim" aria-hidden="true" />
+        <div className="fb-hero-grain" aria-hidden="true" />
+
         {FLOATERS.map((f) => (
-          <span key={f.cls} className={`fb-float ${f.cls}`} aria-hidden="true">
+          <span
+            key={f.cls}
+            className={`fb-float ${f.cls}`}
+            aria-hidden="true"
+            style={{ translate: `calc(var(--mx, 0) * ${f.depth}px) calc(var(--my, 0) * ${f.depth}px)` }}
+          >
             <img src={f.src} alt="" loading="lazy" />
           </span>
         ))}
@@ -89,39 +349,39 @@ export default function Landing({ onNavigatePlaces }) {
             <i />Fresh <i />Free <i />Nearby
           </motion.p>
 
-          <motion.h1
-            className="fb-display"
-            initial={{ opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 0.9, 0.3, 1] }}
-          >
-            Good food, close by, free for everyone
-          </motion.h1>
+          <Headline text="Good food, close by, free for everyone" />
 
-          <motion.p className="fb-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.26 }}>
+          <motion.p className="fb-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.5 }}>
             Neighbor Cart maps verified food banks, pantries, hot meal programs and 24/7 community
             fridges — with live inventory, real open hours and zero paperwork.
           </motion.p>
 
-          <motion.div className="fb-hero-actions" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.36 }}>
-            <button type="button" className="fb-btn fb-btn-amber" onClick={onNavigatePlaces}>Find food near you <Arrow /></button>
-            <button type="button" className="fb-btn fb-btn-ghost" onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}>
-              How it works
-            </button>
+          <motion.div className="fb-hero-actions" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.6 }}>
+            <button type="button" className="fb-btn fb-btn-amber" onClick={findFood}>Find food near you <Arrow /></button>
+            <button type="button" className="fb-btn fb-btn-ghost" onClick={() => go('how')}>How it works</button>
+          </motion.div>
+
+          <motion.div className="fb-hero-trust" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.75 }}>
+            <span><i className="fb-live" aria-hidden="true" />Live hours, updated daily</span>
+            <span>No account needed</span>
+            <span>Always free</span>
           </motion.div>
         </div>
 
-        <motion.div
-          className="fb-dish-wrap"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 0.9, 0.3, 1] }}
-        >
+        <div className="fb-dish-wrap">
           <span className="fb-dish-ring" aria-hidden="true" />
-          <div className="fb-dish">
-            <img src={HERO_DISH} alt="A prepared meal, photographed from above" />
-          </div>
-        </motion.div>
+          <motion.div
+            className="fb-dish"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 0.9, 0.3, 1] }}
+          >
+            <Loop rate={0.75} start={3.4} />
+          </motion.div>
+          <span className="fb-dish-badge" aria-hidden="true">Open<br />right<br />now</span>
+        </div>
+
+        <div className="fb-cue" aria-hidden="true"><i />Scroll</div>
 
         <div className="fb-wave" aria-hidden="true">
           <svg viewBox="0 0 1440 140" preserveAspectRatio="none">
@@ -134,7 +394,7 @@ export default function Landing({ onNavigatePlaces }) {
       <div className="fb-marquee" aria-hidden="true">
         <div className="fb-marquee-track">
           {[0, 1].map((dup) => (
-            <span key={dup} className="fb-display">
+            <span key={dup}>
               {MARQUEE.map((m) => <React.Fragment key={m}>{m}<i /></React.Fragment>)}
             </span>
           ))}
@@ -146,7 +406,7 @@ export default function Landing({ onNavigatePlaces }) {
         <div className="fb-shell">
           <Reveal className="fb-section-head">
             <span className="fb-kicker">How it works</span>
-            <h2 className="fb-display">Three steps to a <em>full table</em></h2>
+            <h2>Three steps to a <em>full table</em></h2>
             <p className="fb-section-sub">
               No eligibility maze, no judgement. Everything below works whether you need food once or every week.
             </p>
@@ -164,12 +424,34 @@ export default function Landing({ onNavigatePlaces }) {
         </div>
       </section>
 
+      {/* ------------------------------------------------------- video reel */}
+      <section className="fb-reel" id="reel">
+        <div className="fb-shell">
+          <Reveal className="fb-section-head">
+            <span className="fb-kicker">What you find</span>
+            <h2>Real food, <em>real portions</em></h2>
+            <p className="fb-section-sub">
+              Not a shelf of dented cans. Produce, protein, bread and prepared meals, listed with what is actually in stock.
+            </p>
+          </Reveal>
+
+          <motion.div className="fb-reel-grid" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}>
+            {REEL.map((r) => (
+              <motion.figure key={r.title} className="fb-reel-item" variants={reveal}>
+                <Loop rate={r.rate} start={r.start} objectPosition={r.pos} />
+                <figcaption>{r.title}<small>{r.body}</small></figcaption>
+              </motion.figure>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ----------------------------------------------------------- places */}
-      <section className="fb-section" id="places" style={{ paddingTop: 0 }}>
+      <section className="fb-section" id="places">
         <div className="fb-shell">
           <Reveal className="fb-section-head">
             <span className="fb-kicker">Near you</span>
-            <h2 className="fb-display">Open <em>right now</em></h2>
+            <h2>Open <em>right now</em></h2>
             <p className="fb-section-sub">A sample of verified locations. The live map has thousands more.</p>
           </Reveal>
 
@@ -177,8 +459,10 @@ export default function Landing({ onNavigatePlaces }) {
             {PLACES.map((p) => (
               <motion.article key={p.name} className="fb-place" variants={reveal}>
                 <div className="fb-place-media">
-                  <img src={p.img} alt={p.name} loading="lazy" />
-                  <span className="fb-pill">{p.pill}</span>
+                  <img src={p.img} alt="" loading="lazy" />
+                  <span className="fb-pill">
+                    {p.live && <i className="fb-live" aria-hidden="true" />}{p.pill}
+                  </span>
                 </div>
                 <div className="fb-place-body">
                   <h3>{p.name}</h3>
@@ -190,7 +474,7 @@ export default function Landing({ onNavigatePlaces }) {
           </motion.div>
 
           <Reveal className="fb-more">
-            <button type="button" className="fb-btn" onClick={onNavigatePlaces}>Open the full map <Arrow /></button>
+            <button type="button" className="fb-btn" onClick={findFood}>Open the full map <Arrow /></button>
           </Reveal>
         </div>
       </section>
@@ -201,7 +485,7 @@ export default function Landing({ onNavigatePlaces }) {
           <motion.div className="fb-stats-grid" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
             {STATS.map((s) => (
               <motion.div key={s.label} className="fb-stat" variants={reveal}>
-                <b>{s.n}</b>
+                <Counter to={s.to} suffix={s.suffix} />
                 <span>{s.label}</span>
               </motion.div>
             ))}
@@ -223,13 +507,15 @@ export default function Landing({ onNavigatePlaces }) {
 
       {/* -------------------------------------------------------------- cta */}
       <section className="fb-cta">
+        <Loop className="fb-cta-video" rate={0.5} start={1.8} />
+        <div className="fb-cta-scrim" aria-hidden="true" />
         <div className="fb-shell">
           <Reveal>
-            <h2 className="fb-display">Nobody should have to search for dinner</h2>
+            <h2>Nobody should have to <em>search for dinner</em></h2>
             <p>Find a verified place near you in under a minute. Free, private, and open to everyone.</p>
             <div className="fb-cta-actions">
-              <button type="button" className="fb-btn fb-btn-cream" onClick={onNavigatePlaces}>Find food near you <Arrow /></button>
-              <button type="button" className="fb-btn fb-btn-ghost" onClick={onNavigatePlaces}>Browse the map</button>
+              <button type="button" className="fb-btn fb-btn-cream" onClick={findFood}>Find food near you <Arrow /></button>
+              <button type="button" className="fb-btn fb-btn-ghost" onClick={findFood}>Browse the map</button>
             </div>
           </Reveal>
         </div>
@@ -240,35 +526,21 @@ export default function Landing({ onNavigatePlaces }) {
         <div className="fb-shell">
           <div className="fb-footer-grid">
             <div>
-              <span className="fb-logo" style={{ color: 'var(--fb-amber)', WebkitTextStroke: '0' }}>NeighborCart</span>
-              <p style={{ marginTop: 14, maxWidth: '30ch' }}>
+              <span className="fb-logo"><span className="fb-logo-dot" aria-hidden="true" />NeighborCart</span>
+              <p className="fb-footer-blurb">
                 A free, nationwide directory of food assistance. Built so a meal is never more than a search away.
               </p>
             </div>
-            <div>
-              <h4>Find food</h4>
-              <ul>
-                <li><button type="button" onClick={onNavigatePlaces}>Places &amp; map</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>Open right now</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>Community fridges</button></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Get involved</h4>
-              <ul>
-                <li><button type="button" onClick={onNavigatePlaces}>Volunteer</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>Food rescue</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>For nonprofits</button></li>
-              </ul>
-            </div>
-            <div>
-              <h4>About</h4>
-              <ul>
-                <li><button type="button" onClick={onNavigatePlaces}>Our data</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>Privacy</button></li>
-                <li><button type="button" onClick={onNavigatePlaces}>Contact</button></li>
-              </ul>
-            </div>
+            {FOOTER_COLS.map((col) => (
+              <div key={col.head}>
+                <h4>{col.head}</h4>
+                <ul>
+                  {col.links.map((l) => (
+                    <li key={l}><button type="button" onClick={findFood}>{l}</button></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
           <div className="fb-footer-note">
             <span>© 2026 Neighbor Cart. Free to use, always.</span>
