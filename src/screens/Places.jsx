@@ -118,37 +118,12 @@ export default function Places({ onNavigateHome }) {
       {/* Top Header Bar */}
       <header className="places-topbar">
         <div className="places-topbar-inner">
-          <button type="button" className="places-brand-btn" onClick={onNavigateHome}>
-            <span className="places-brand-mark"><i /><b /></span>
-            <span>neighbor<b>cart</b></span>
-          </button>
-
-          {/* Quick Hub Portals Switcher */}
-          <div className="topbar-portal-links">
-            <button type="button" className="portal-btn" onClick={() => setShowAI(true)}>
-              🤖 Ask AI
+          <div className="topbar-brand-group">
+            <button type="button" className="places-brand-btn" onClick={onNavigateHome}>
+              <span className="places-brand-mark"><i /><b /></span>
+              <span>neighbor<b>cart</b></span>
             </button>
-            <button type="button" className="portal-btn" onClick={() => setShowIntake(true)}>
-              📋 Food Plan
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowCommunity(true)}>
-              📣 Community
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowVolunteer(true)}>
-              🤝 Volunteers
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowRescue(true)}>
-              🥦 Food Rescue
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowNonprofit(true)}>
-              🏢 Nonprofits
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowImpact(true)}>
-              📊 Impact
-            </button>
-            <button type="button" className="portal-btn" onClick={() => setShowAdmin(true)}>
-              ⚙️ Admin
-            </button>
+            <span className="topbar-live-tag">● Nationwide Access</span>
           </div>
 
           <nav className="places-nav">
@@ -157,8 +132,9 @@ export default function Places({ onNavigateHome }) {
               type="button"
               className="lang-toggle-btn"
               onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
+              title="Toggle language"
             >
-              🌐 {language === 'en' ? 'Español' : 'English'}
+              🌐 <span>{language === 'en' ? 'Español' : 'English'}</span>
             </button>
 
             {savedReservations.length > 0 && (
@@ -176,18 +152,54 @@ export default function Places({ onNavigateHome }) {
             </button>
           </nav>
         </div>
+
+        {/* Dedicated Hub Portals Bar */}
+        <div className="places-portals-subbar">
+          <div className="shell-contained portals-subbar-inner">
+            <span className="portals-subbar-label">Explore Hubs:</span>
+            <div className="topbar-portal-links">
+              <button type="button" className="portal-btn portal-btn-ai" onClick={() => setShowAI(true)}>
+                🤖 Ask AI Assistant
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowIntake(true)}>
+                📋 Food Access Plan
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowCommunity(true)}>
+                📣 Community Feed
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowVolunteer(true)}>
+                🤝 Volunteer Network
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowRescue(true)}>
+                🥦 Food Rescue Dispatch
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowNonprofit(true)}>
+                🏢 Nonprofit Portal
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowImpact(true)}>
+                📊 Impact Report
+              </button>
+              <button type="button" className="portal-btn" onClick={() => setShowAdmin(true)}>
+                ⚙️ Admin
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Hero / Filter Section */}
       <section className="places-hero-bar">
         <div className="shell-contained">
           <div className="places-title-row">
-            <div>
-              <span className="places-badge">National Food Access & Relief Network</span>
-              <h1 className="places-heading">Food Assistance Directory & Map</h1>
+            <div className="places-title-copy">
+              <div className="badge-row">
+                <span className="places-badge">National Food Access & Relief Network</span>
+                <span className="places-live-count">{filteredPlaces.length} Verified Centers</span>
+              </div>
+              <h1 className="places-heading">Food Assistance Directory & Real-Time Map</h1>
               <p className="places-sub">
-                Verified locations across the United States offering free groceries, fresh produce, chef-prepared hot meals, and 24/7 community pantries. 
-                Zero judgment, zero paperwork.
+                Explore verified food banks, neighborhood pantries, hot meal sites, and mobile rescue distributions across all 50 states. 
+                100% free, confidential, and zero paperwork required.
               </p>
             </div>
 
@@ -197,39 +209,59 @@ export default function Places({ onNavigateHome }) {
                 className="hero-action-pill ai-pill"
                 onClick={() => setShowAI(true)}
               >
-                🤖 Ask AI Assistant
+                🤖 Ask AI Navigator
               </button>
               <button 
                 type="button" 
                 className="hero-action-pill plan-pill"
                 onClick={() => setShowIntake(true)}
               >
-                📋 Get Personalized Food Plan
+                📋 Build My Custom Food Plan
               </button>
               <button 
                 type="button" 
                 className={`hero-action-pill ${lowBandwidthMode ? 'active-bandwidth' : ''}`}
                 onClick={() => setLowBandwidthMode(!lowBandwidthMode)}
               >
-                ⚡ {lowBandwidthMode ? 'Standard View' : 'Low-Bandwidth List Mode'}
+                ⚡ {lowBandwidthMode ? 'Standard Rich View' : 'Low-Bandwidth List Mode'}
               </button>
             </div>
           </div>
 
           {/* Search Input & Filter Controls */}
           <div className="places-filter-card">
+            {/* Search Input Box */}
             <div className="search-bar-row">
               <span className="search-icon">🔍</span>
               <input
                 type="text"
                 className="search-input-field"
-                placeholder="Search across the US by City (e.g. Chicago, New York, Des Moines), ZIP code (e.g. 50309, 10002), or item (e.g. milk, produce)..."
+                placeholder="Search by city (e.g. Des Moines, NYC, LA, Chicago, Miami, Seattle), ZIP code, or food item..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
-                <button type="button" className="clear-search-btn" onClick={() => setSearchQuery('')}>×</button>
+                <button type="button" className="clear-search-btn" onClick={() => setSearchQuery('')} aria-label="Clear search">×</button>
               )}
+            </div>
+
+            {/* Quick Cities Pills */}
+            <div className="quick-cities-strip">
+              <span className="quick-city-label">Popular Cities:</span>
+              {['Des Moines, IA', 'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Seattle, WA', 'Miami, FL', 'Boston, MA'].map((cityStr) => {
+                const cityName = cityStr.split(',')[0];
+                const isActive = searchQuery.toLowerCase().includes(cityName.toLowerCase());
+                return (
+                  <button
+                    key={cityStr}
+                    type="button"
+                    className={`quick-city-pill ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setSearchQuery(isActive ? '' : cityName)}
+                  >
+                    📍 {cityStr}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Category scroll pills */}
@@ -241,7 +273,8 @@ export default function Places({ onNavigateHome }) {
                   className={`category-pill ${selectedCategory === cat.id ? 'is-active' : ''}`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
-                  <span>{cat.icon}</span> {cat.label}
+                  <span className="cat-icon">{cat.icon}</span> 
+                  <span className="cat-label">{cat.label}</span>
                 </button>
               ))}
             </div>
@@ -249,45 +282,51 @@ export default function Places({ onNavigateHome }) {
             {/* Secondary Advanced Filters Dropdowns */}
             <div className="advanced-filter-row">
               <div className="adv-filter-group">
-                <label className="adv-filter-label">Dietary Accommodation:</label>
-                <select
-                  className="adv-filter-select"
-                  value={selectedDiet}
-                  onChange={(e) => setSelectedDiet(e.target.value)}
-                >
-                  <option value="all">All Dietary Types</option>
-                  {DIETARY_OPTIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                <label className="adv-filter-label">🥗 Dietary Accommodations</label>
+                <div className="select-wrapper">
+                  <select
+                    className="adv-filter-select"
+                    value={selectedDiet}
+                    onChange={(e) => setSelectedDiet(e.target.value)}
+                  >
+                    <option value="all">All Dietary Types (Vegetarian, Halal, etc.)</option>
+                    {DIETARY_OPTIONS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="adv-filter-group">
-                <label className="adv-filter-label">Languages Spoken:</label>
-                <select
-                  className="adv-filter-select"
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                >
-                  <option value="all">All Languages</option>
-                  {LANGUAGE_OPTIONS.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
+                <label className="adv-filter-label">🗣 Languages Spoken</label>
+                <div className="select-wrapper">
+                  <select
+                    className="adv-filter-select"
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                  >
+                    <option value="all">All Languages Spoken</option>
+                    {LANGUAGE_OPTIONS.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="adv-filter-group">
-                <label className="adv-filter-label">Eligibility / Access:</label>
-                <select
-                  className="adv-filter-select"
-                  value={selectedEligibility}
-                  onChange={(e) => setSelectedEligibility(e.target.value)}
-                >
-                  <option value="all">All Eligibility Rules</option>
-                  {ELIGIBILITY_OPTIONS.map((el) => (
-                    <option key={el} value={el}>{el}</option>
-                  ))}
-                </select>
+                <label className="adv-filter-label">🛡 Access & Eligibility</label>
+                <div className="select-wrapper">
+                  <select
+                    className="adv-filter-select"
+                    value={selectedEligibility}
+                    onChange={(e) => setSelectedEligibility(e.target.value)}
+                  >
+                    <option value="all">All Eligibility Rules (No ID, Walk-in)</option>
+                    {ELIGIBILITY_OPTIONS.map((el) => (
+                      <option key={el} value={el}>{el}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -299,7 +338,7 @@ export default function Places({ onNavigateHome }) {
                   checked={openNowOnly}
                   onChange={(e) => setOpenNowOnly(e.target.checked)}
                 />
-                <span>🟢 Open Right Now</span>
+                <span className="toggle-text">🟢 <b>Open Right Now</b></span>
               </label>
 
               <label className="toggle-filter-label">
@@ -308,7 +347,7 @@ export default function Places({ onNavigateHome }) {
                   checked={reservationsOnly}
                   onChange={(e) => setReservationsOnly(e.target.checked)}
                 />
-                <span>📅 Accepts Free Reservations</span>
+                <span className="toggle-text">📅 <b>Free Reservations / Express Pickup</b></span>
               </label>
 
               <label className="toggle-filter-label">
@@ -317,7 +356,7 @@ export default function Places({ onNavigateHome }) {
                   checked={produceOnly}
                   onChange={(e) => setProduceOnly(e.target.checked)}
                 />
-                <span>🥬 Fresh Produce In Stock</span>
+                <span className="toggle-text">🥬 <b>Fresh Produce In Stock</b></span>
               </label>
 
               {(selectedCategory !== 'all' || openNowOnly || reservationsOnly || produceOnly || selectedDiet !== 'all' || selectedLanguage !== 'all' || selectedEligibility !== 'all' || searchQuery) && (
@@ -335,7 +374,7 @@ export default function Places({ onNavigateHome }) {
                     setSearchQuery('');
                   }}
                 >
-                  Reset all filters
+                  ✕ Reset filters
                 </button>
               )}
             </div>

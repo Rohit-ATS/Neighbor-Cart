@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-const DEFAULT_CENTER = [41.595, -93.625];
-const DEFAULT_ZOOM = 12;
+const DEFAULT_CENTER = [39.5, -98.35]; // Geographical center of the contiguous US
+const DEFAULT_ZOOM = 4;
 
 const ICONS = {
   'food-bank': '🥫',
@@ -56,6 +56,13 @@ export default function MapView({
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
+
+      // Force recalculation of map container size
+      setTimeout(() => {
+        if (!cancelled && mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      }, 250);
 
       setMapLoaded(true);
     }).catch((err) => {
@@ -140,7 +147,11 @@ export default function MapView({
     });
 
     if (places.length > 0 && !activeId) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      if (places.length === 1) {
+        map.setView([places[0].lat, places[0].lng], 13);
+      } else {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      }
     }
   }, [places, mapLoaded]);
 
