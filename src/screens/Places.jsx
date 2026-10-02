@@ -60,8 +60,15 @@ export default function Places({ onNavigateHome }) {
     }
   };
 
+  const [aiMatchIds, setAiMatchIds] = useState(null);
+
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
+      // A match set handed over by the AI navigator overrides the filters,
+      // so "show all on the main map" lands on exactly what it recommended.
+      if (aiMatchIds && !aiMatchIds.includes(place.id)) {
+        return false;
+      }
       // Category filter
       if (selectedCategory !== 'all' && place.type !== selectedCategory) {
         return false;
@@ -114,7 +121,7 @@ export default function Places({ onNavigateHome }) {
 
       return true;
     });
-  }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility]);
+  }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
 
   return (
     <div className={`places-workspace ${sidebarCollapsed ? 'is-collapsed' : ''} ${mobileMenuOpen ? 'has-mobile-drawer' : ''}`}>
@@ -491,6 +498,11 @@ export default function Places({ onNavigateHome }) {
               <div className="badge-row">
                 <span className="places-badge">National Food Access & Relief Network</span>
                 <span className="places-live-count">{filteredPlaces.length} Verified Centers</span>
+                {aiMatchIds && (
+                  <button type="button" className="ai-match-banner" onClick={() => setAiMatchIds(null)}>
+                    Showing {aiMatchIds.length} AI navigator matches · Clear ✕
+                  </button>
+                )}
               </div>
               <h1 className="places-heading">Food Assistance Directory & Real-Time Map</h1>
               <p className="places-sub">
@@ -862,6 +874,11 @@ export default function Places({ onNavigateHome }) {
         <HarvestLinkAI
           onClose={() => setShowAI(false)}
           onSelectPlace={(p) => setActivePlace(p)}
+          onShowMatches={(matches) => {
+            // Narrow the list and map to the navigator's matches. Opening one
+            // place's detail here would hide the very thing we just revealed.
+            setAiMatchIds(matches.map((m) => m.id));
+          }}
         />
       )}
 

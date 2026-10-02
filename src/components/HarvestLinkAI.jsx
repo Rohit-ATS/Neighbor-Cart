@@ -1,9 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PLACES, getIsOpenNow } from '../data/places.js';
 import { askHarvestLink } from '../lib/api.js';
 import AskBar from './AskBar.jsx';
+import MapView from './MapView.jsx';
 
-export default function HarvestLinkAI({ onClose, onSelectPlace }) {
+
+/* Once the navigator knows enough to name places, it shows them on a map
+   rather than leaving the person to picture a list of addresses. */
+function AiMatchMap({ places, matchedOn, onOpenPlace, onShowAll }) {
+  const [activeId, setActiveId] = useState(places[0]?.id ?? null);
+  const active = places.find((p) => p.id === activeId) || places[0];
+
+  return (
+    <div className="ai-map-panel">
+      <div className="ai-map-head">
+        <div>
+          <span className="ai-map-count">
+            {places.length} {places.length === 1 ? 'location matches' : 'locations match'} what you told me
+          </span>
+          {matchedOn?.length > 0 && (
+            <ul className="ai-map-criteria">
+              {matchedOn.slice(-4).map((need, i) => <li key={i}>{need}</li>)}
+            </ul>
+          )}
+        </div>
+        {onShowAll && (
+          <button type="button" className="ai-map-expand" onClick={() => onShowAll(places)}>
+            Show all on the main map →
+          </button>
+        )}
+      </div>
+
+      <MapView
+        places={places}
+        activeId={activeId}
+        onSelectPlace={(p) => setActiveId(p.id)}
+        className="ai-inline-map"
+      />
+
+      <div className="ai-map-list">
+        {places.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className={`ai-map-row${p.id === activeId ? ' is-active' : ''}`}
+            onClick={() => setActiveId(p.id)}
+          >
+            <span className="ai-map-dot" aria-hidden="true" />
+            <span className="ai-map-row-body">
+              <b>{p.name}</b>
+              <span>{p.city}, {p.state} · {p.hoursSummary}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {active && (
+        <div className="ai-map-active">
+          <div>
+            <b>{active.name}</b>
+            <span>📍 {active.address}, {active.cityStateZip}</span>
+          </div>
+          <button type="button" className="citation-view-btn" onClick={() => onOpenPlace(active)}>
+            Open details →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function HarvestLinkAI({ onClose, onSelectPlace, onShowMatches }) {
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
@@ -13,6 +80,7 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
     }
   ]);
   const [isThinking, setIsThinking] = useState(false);
+  const streamRef = useRef(null);
   const [rememberedNeeds, setRememberedNeeds] = useState(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs') || '[]');
@@ -25,6 +93,19 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
   useEffect(() => {
     sessionStorage.setItem('harvestlink-ai-needs', JSON.stringify(rememberedNeeds));
   }, [rememberedNeeds]);
+
+  // Land on the top of the newest answer rather than the bottom of the thread,
+  // so the reply and the map it brings are both in view.
+  useEffect(() => {
+    const el = streamRef.current;
+    if (!el) return;
+    const last = el.lastElementChild;
+    if (isThinking || !last) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+    el.scrollTo({ top: Math.max(0, last.offsetTop - el.offsetTop - 8), behavior: 'smooth' });
+  }, [messages, isThinking]);
 
   const sampleQuestions = [
     'What food assistance is open right now?',
@@ -85,6 +166,9 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
         sender: 'ai',
         text: answer.reply,
         citations,
+        // every match drives the map; citations stay the top few for reading
+        matchIds: (answer.placeIds || []).filter((id) => PLACES.some((place) => place.id === id)),
+        matchedOn: nextNeeds.filter((need) => !isConversationOnly(need)),
         warning: answer.warning || null,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }]);
@@ -223,6 +307,9 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
       sender: 'ai',
       text: reasoning,
       citations,
+      // every match drives the map; citations stay the top few for reading
+      matchIds: matchedPlaces.map((p) => p.id),
+      matchedOn: needs.filter((need) => !isConversationOnly(need)),
       warning: warningNote,
       timestamp: nowTime
     };
@@ -243,7 +330,7 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
         </div>
 
         {/* Chat message stream */}
-        <div className="ai-chat-stream">
+        <div className="ai-chat-stream" ref={streamRef}>
           {messages.map((m, idx) => (
             <div key={idx} className={`ai-message-row ${m.sender === 'user' ? 'is-user' : 'is-ai'}`}>
               <div className="ai-message-bubble">
@@ -253,6 +340,16 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
                   <div className="ai-call-ahead-alert">
                     ⚠️ <b>Call Ahead Notice:</b> {m.warning}
                   </div>
+                )}
+
+                {/* Matched locations, on a map */}
+                {m.matchIds && m.matchIds.length > 0 && (
+                  <AiMatchMap
+                    places={m.matchIds.map((id) => PLACES.find((p) => p.id === id)).filter(Boolean)}
+                    matchedOn={m.matchedOn}
+                    onOpenPlace={(place) => { onClose(); onSelectPlace?.(place); }}
+                    onShowAll={onShowMatches ? (places) => { onClose(); onShowMatches(places); } : null}
+                  />
                 )}
 
                 {/* Citations Box */}
