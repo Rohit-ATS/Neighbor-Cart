@@ -601,7 +601,10 @@ export default function ImpactDashboard({ onClose }) {
           </section>
 
           {/* ---------------------------------------------- service health */}
-          <section className="impact-section-panel">
+          {/* Full width: with three half-width panels one is always stranded
+              beside an empty column, and the health list reads better as a
+              wide row of measures than a tall narrow stack. */}
+          <section className="impact-section-panel ir-span-2 ir-health-panel">
             <div className="ir-panel-head">
               <div>
                 <h3>Service health</h3>

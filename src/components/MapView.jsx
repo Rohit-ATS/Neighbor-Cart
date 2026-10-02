@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
+import { isStockImage, placeImage } from '../lib/placeImages.js';
 
 const DEFAULT_CENTER = [39.5, -98.35]; // Geographical center of the contiguous US
 const DEFAULT_ZOOM = 4;
@@ -8,8 +9,16 @@ const ICONS = {
   'food-bank': '🥫',
   'pantry': '🧺',
   'hot-meal': '🍲',
-  'community-fridge': '🧊'
+  'community-fridge': '🧊',
+  'mobile': '🚐'
 };
+
+/* The popup is built as an HTML string, so anything interpolated from place
+   data has to be escaped — a name containing a quote would otherwise break
+   out of the attribute it sits in. */
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
 
 const COLORS = {
   'food-bank': '#e65100',
@@ -116,15 +125,21 @@ export default function MapView({
       }).addTo(map);
 
       // Popup
+      // Real photo when the place has one, otherwise a stable stand-in — a
+      // directory record from OpenStreetMap carries no image at all.
+      const address = [place.address, place.cityStateZip].filter(Boolean).join(', ');
       const popupContent = `
         <div class="map-popup-card">
-          <img src="${place.images[0]}" alt="${place.name}" class="map-popup-img" />
+          <div class="map-popup-media">
+            <img src="${esc(placeImage(place, 480))}" alt="" class="map-popup-img" loading="lazy" />
+            ${isStockImage(place) ? '<span class="map-popup-stock">Stock photo</span>' : ''}
+          </div>
           <div class="map-popup-info">
-            <span class="map-popup-badge" style="background: ${color}20; color: ${color};">${place.typeLabel}</span>
-            <h4 class="map-popup-title">${place.name}</h4>
-            <p class="map-popup-addr">${place.address}, ${place.cityStateZip}</p>
-            <p class="map-popup-hours">⏱ ${place.hoursSummary}</p>
-            <button class="map-popup-btn" id="popup-btn-${place.id}">View Details & Inventory</button>
+            <span class="map-popup-badge" style="background: ${color}20; color: ${color};">${esc(place.typeLabel)}</span>
+            <h4 class="map-popup-title">${esc(place.name)}</h4>
+            <p class="map-popup-addr">${esc(address || 'Address not listed')}</p>
+            <p class="map-popup-hours">⏱ ${esc(place.hoursSummary)}</p>
+            <button class="map-popup-btn" id="popup-btn-${esc(place.id)}">View Details &amp; Inventory</button>
           </div>
         </div>
       `;
