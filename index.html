@@ -16,8 +16,8 @@
 
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- the hero poster is the LCP candidate; the loop streams in behind it -->
-    <link rel="preload" as="image" href="/media/food-poster.jpg" />
+    <!-- no preload for the hero poster: this shell also serves /places, where
+         the image is never used and the hint just warns in the console -->
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,1307 @@
+/* ==========================================================================
+   DASHBOARD POPUPS
+   One design system for every modal that opens over the Places dashboard:
+   Volunteer Hub, Food Rescue, Impact, Community Feed, Admin, Nonprofit
+   Portal and the AI navigator.
+
+   Why this file exists: the modal components were rewritten with new class
+   names (vsc-top, ric-specs-grid, np-tab-content, aic-actions …) but
+   app.css was never updated to match, so most of the body content rendered
+   unstyled. On top of that, `.vol-shift-card` was `display:flex` with eight
+   flat children, which turned every shift into a cramped eight-column table.
+
+   Loaded after app.css so it settles the look.
+   ========================================================================== */
+
+.modal-backdrop {
+  --d-ink: #2d0407;
+  --d-brown: #482820;
+  --d-muted: #7f675c;
+  --d-crimson: #920711;
+  --d-crimson-deep: #5f070d;
+  --d-amber: #fc9e25;
+  --d-cream: #fff7e8;
+  --d-cream-2: #fdf0dc;
+  --d-line: rgba(72, 40, 32, .12);
+  --d-line-soft: rgba(72, 40, 32, .07);
+  --d-surface: #fff;
+  --d-tint: #fffaf1;
+  --d-ok: #1d7a44;
+  --d-warn: #b4540a;
+  --d-ease: cubic-bezier(.22, .9, .3, 1);
+  --d-shadow: 0 1px 2px rgba(45, 4, 7, .04), 0 10px 26px rgba(45, 4, 7, .07);
+  --d-shadow-lg: 0 40px 90px rgba(45, 4, 7, .34);
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.modal-backdrop {
+  background: rgba(45, 4, 7, .55);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  padding: 24px 16px;
+  animation: dFade .2s var(--d-ease);
+}
+@keyframes dFade { from { opacity: 0; } }
+
+.modal-backdrop .volunteer-modal-card,
+.modal-backdrop .rescue-modal-card,
+.modal-backdrop .community-modal-card,
+.modal-backdrop .impact-modal-card,
+.modal-backdrop .admin-modal-card,
+.modal-backdrop .nonprofit-modal-card,
+.modal-backdrop .ai-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  max-height: min(880px, 92vh);
+  background: var(--d-surface);
+  border: 1px solid rgba(255, 255, 255, .6);
+  border-radius: 26px;
+  box-shadow: var(--d-shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: dPop .32s var(--d-ease);
+}
+@keyframes dPop { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+
+.modal-backdrop .impact-modal-card,
+.modal-backdrop .nonprofit-modal-card { max-width: 1080px; }
+
+/* Headings inside a modal are product UI, not billboard type. app.css sets
+   `h1,h2,h3 { font-family: Tanker !important; text-transform: uppercase }`
+   globally, which is why every card title was rendering as condensed caps. */
+.modal-backdrop h2,
+.modal-backdrop h3,
+.modal-backdrop h4 {
+  font-family: Inter, -apple-system, 'Segoe UI', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+  text-transform: none;
+  line-height: 1.25;
+  color: var(--d-brown);
+}
+
+/* ----------------------------------------------------------------- header */
+
+.modal-backdrop .vol-header,
+.modal-backdrop .rescue-header,
+.modal-backdrop .comm-header,
+.modal-backdrop .impact-header,
+.modal-backdrop .admin-header,
+.modal-backdrop .np-header,
+.modal-backdrop .ai-modal-header {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px 30px 22px;
+  background: linear-gradient(180deg, var(--d-tint), var(--d-surface));
+  border-bottom: 1px solid var(--d-line-soft);
+}
+/* a thin brand rule across the very top of every popup */
+.modal-backdrop .vol-header::before,
+.modal-backdrop .rescue-header::before,
+.modal-backdrop .comm-header::before,
+.modal-backdrop .impact-header::before,
+.modal-backdrop .admin-header::before,
+.modal-backdrop .np-header::before,
+.modal-backdrop .ai-modal-header::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--d-crimson), var(--d-amber));
+}
+
+.modal-backdrop .np-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--d-cream-2);
+  border: 1px solid rgba(146, 7, 17, .16);
+  color: var(--d-crimson);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.modal-backdrop .np-title {
+  margin: 0 0 6px;
+  font-size: 25px;
+  font-weight: 800 !important;
+  letter-spacing: -.02em !important;
+  color: var(--d-ink);
+}
+.modal-backdrop .np-sub {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--d-muted);
+}
+.modal-backdrop .np-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--d-muted);
+}
+
+/* Scoped to the hub headers only. These lay the close button out as a flex
+   sibling of the title block, so it is static here — but ReservationModal
+   puts `.modal-close` directly in the card and relies on app.css positioning
+   it absolutely, so this must not reach that one. */
+.modal-backdrop .vol-header .modal-close,
+.modal-backdrop .rescue-header .modal-close,
+.modal-backdrop .comm-header .modal-close,
+.modal-backdrop .impact-header .modal-close,
+.modal-backdrop .admin-header .modal-close,
+.modal-backdrop .np-header .modal-close,
+.modal-backdrop .ai-modal-header .modal-close-simple {
+  position: static;
+  flex: none;
+  width: 38px; height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--d-line);
+  border-radius: 50%;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 21px;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background .18s var(--d-ease), color .18s var(--d-ease), transform .18s var(--d-ease);
+}
+.modal-backdrop .vol-header .modal-close:hover,
+.modal-backdrop .rescue-header .modal-close:hover,
+.modal-backdrop .comm-header .modal-close:hover,
+.modal-backdrop .impact-header .modal-close:hover,
+.modal-backdrop .admin-header .modal-close:hover,
+.modal-backdrop .np-header .modal-close:hover,
+.modal-backdrop .ai-modal-header .modal-close-simple:hover {
+  background: var(--d-crimson);
+  border-color: var(--d-crimson);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+/* ---------------------------------------------------------------- buttons */
+/* app.css gives `.btn-primary` `flex: 1`, so every one of these dropped into
+   a flex row stretched across the whole bar. Inside a popup they size to
+   their label; only a form's submit row still goes full width. */
+
+.modal-backdrop .btn-primary,
+.modal-backdrop .btn-secondary {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  padding: 11px 20px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s var(--d-ease), border-color .18s var(--d-ease), transform .18s var(--d-ease), box-shadow .18s var(--d-ease);
+}
+.modal-backdrop .btn-primary {
+  background: var(--d-crimson);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(146, 7, 17, .25);
+}
+.modal-backdrop .btn-primary:hover {
+  background: var(--d-crimson-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(146, 7, 17, .34);
+}
+.modal-backdrop .btn-secondary {
+  background: var(--d-surface);
+  border-color: var(--d-line);
+  color: var(--d-brown);
+}
+.modal-backdrop .btn-secondary:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+.modal-backdrop .btn-primary:active,
+.modal-backdrop .btn-secondary:active { transform: scale(.97); }
+
+.modal-backdrop .btn-primary.small,
+.modal-backdrop .btn-secondary.small { padding: 9px 16px; font-size: 12.5px; }
+
+/* a form's submit row keeps the full-width button */
+.modal-backdrop .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal-backdrop .modal-actions .btn-primary,
+.modal-backdrop .modal-actions .btn-secondary { flex: 1; white-space: normal; }
+
+/* the shift CTA wraps to two lines rather than squeezing the card */
+.modal-backdrop .vsc-actions .btn-primary { max-width: 170px; white-space: normal; }
+
+/* ------------------------------------------------------------- stat strip */
+
+.modal-backdrop .vol-impact-summary {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  padding: 0;
+  background: var(--d-line-soft);
+  border-bottom: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .vol-impact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 18px 30px;
+  background: var(--d-tint);
+}
+.modal-backdrop .vii-val {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--d-crimson);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .vii-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+/* ----------------------------------------------------------- filter strip */
+
+.modal-backdrop .vol-filter-strip,
+.modal-backdrop .comm-filter-strip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 30px;
+  background: var(--d-surface);
+  border-bottom: 1px solid var(--d-line-soft);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.modal-backdrop .filter-label {
+  flex: none;
+  margin-right: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+.modal-backdrop .vol-filter-pill,
+.modal-backdrop .comm-filter-btn {
+  flex: none;
+  padding: 8px 15px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s var(--d-ease), color .18s var(--d-ease), border-color .18s var(--d-ease);
+}
+.modal-backdrop .vol-filter-pill:hover,
+.modal-backdrop .comm-filter-btn:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+.modal-backdrop .vol-filter-pill.is-active,
+.modal-backdrop .comm-filter-btn.is-active {
+  background: var(--d-crimson);
+  border-color: var(--d-crimson);
+  color: #fff;
+}
+.modal-backdrop .btn-report-info {
+  flex: none;
+  margin-left: auto;
+  padding: 8px 15px;
+  border: 1px solid rgba(180, 84, 10, .35);
+  border-radius: 999px;
+  background: rgba(252, 158, 37, .12);
+  color: var(--d-warn);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.modal-backdrop .btn-report-info:hover { background: rgba(252, 158, 37, .22); }
+
+/* --------------------------------------------------------- scroll regions */
+
+.modal-backdrop .vol-shifts-list,
+.modal-backdrop .rescue-listings-grid,
+.modal-backdrop .comm-feed-list,
+.modal-backdrop .admin-content-pane,
+.modal-backdrop .np-tab-content,
+.modal-backdrop .impact-secondary-grid,
+.modal-backdrop .ai-chat-stream {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 30px 26px;
+  background: var(--d-cream);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(72, 40, 32, .25) transparent;
+}
+.modal-backdrop ::-webkit-scrollbar { width: 9px; height: 9px; }
+.modal-backdrop ::-webkit-scrollbar-thumb {
+  background: rgba(72, 40, 32, .22);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+.modal-backdrop ::-webkit-scrollbar-thumb:hover { background: rgba(72, 40, 32, .4); background-clip: padding-box; }
+
+.modal-backdrop .vol-shifts-list,
+.modal-backdrop .rescue-listings-grid,
+.modal-backdrop .comm-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ------------------------------------------------------- the record card */
+/* Shared surface for shifts, rescue listings, feed items, admin rows and
+   referrals, so the whole dashboard reads as one product. */
+
+.modal-backdrop .vol-shift-card,
+.modal-backdrop .rescue-item-card,
+.modal-backdrop .comm-feed-card,
+.modal-backdrop .admin-item-card,
+.modal-backdrop .referral-row-card {
+  position: relative;
+  margin: 0;
+  padding: 20px 22px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 18px;
+  box-shadow: var(--d-shadow);
+  transition: border-color .2s var(--d-ease), box-shadow .2s var(--d-ease), transform .2s var(--d-ease);
+}
+.modal-backdrop .vol-shift-card:hover,
+.modal-backdrop .rescue-item-card:hover,
+.modal-backdrop .comm-feed-card:hover,
+.modal-backdrop .admin-item-card:hover,
+.modal-backdrop .referral-row-card:hover {
+  border-color: rgba(146, 7, 17, .3);
+  box-shadow: 0 2px 4px rgba(45, 4, 7, .05), 0 14px 32px rgba(45, 4, 7, .1);
+  transform: translateY(-2px);
+}
+
+/* ------------------------------------------------------------ shift cards */
+/* Flat children, so the action column is placed with an explicit grid span
+   rather than wrapping the content in an extra div. */
+.modal-backdrop .vol-shift-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 24px;
+  row-gap: 0;
+}
+.modal-backdrop .vol-shift-card > * { grid-column: 1; min-width: 0; }
+
+.modal-backdrop .vsc-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.modal-backdrop .vsc-type-tag {
+  padding: 5px 11px;
+  border-radius: 7px;
+  background: var(--d-cream-2);
+  color: var(--d-crimson);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.modal-backdrop .vsc-spots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--d-ok);
+}
+.modal-backdrop .vsc-spots::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.modal-backdrop .vsc-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--d-ink);
+}
+
+.modal-backdrop .vsc-org,
+.modal-backdrop .vsc-date,
+.modal-backdrop .vsc-skills,
+.modal-backdrop .vsc-impact,
+.modal-backdrop .ric-meta,
+.modal-backdrop .ref-need,
+.modal-backdrop .ref-time {
+  margin: 0 0 5px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--d-muted);
+}
+.modal-backdrop .vsc-org b,
+.modal-backdrop .vsc-skills b,
+.modal-backdrop .vsc-impact b,
+.modal-backdrop .ric-meta b,
+.modal-backdrop .ref-need b { color: var(--d-brown); font-weight: 650; }
+.modal-backdrop .vsc-date { color: var(--d-brown); font-weight: 600; }
+.modal-backdrop .vsc-impact { margin-bottom: 0; }
+
+.modal-backdrop .vsc-actions {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
+  display: flex;
+  justify-content: flex-end;
+}
+.modal-backdrop .vsc-claimed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(29, 122, 68, .1);
+  border: 1px solid rgba(29, 122, 68, .3);
+  color: var(--d-ok);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------- rescue cards */
+
+.modal-backdrop .rescue-action-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 30px;
+  background: var(--d-surface);
+  border-bottom: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .rescue-action-bar h3 { margin: 0; font-size: 15px; }
+
+.modal-backdrop .ric-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.modal-backdrop .ric-donor-type {
+  padding: 5px 11px;
+  border-radius: 7px;
+  background: var(--d-cream-2);
+  color: var(--d-crimson);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.modal-backdrop .ric-status-pill {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(252, 158, 37, .16);
+  color: var(--d-warn);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.modal-backdrop .ric-food { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--d-ink); }
+
+.modal-backdrop .ric-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 18px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  background: var(--d-cream);
+  border: 1px solid var(--d-line-soft);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--d-muted);
+}
+.modal-backdrop .ric-specs-grid b {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--d-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.modal-backdrop .ric-specs-grid > div { color: var(--d-brown); font-weight: 600; }
+
+.modal-backdrop .ric-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-line-soft);
+  font-size: 12.5px;
+  color: var(--d-muted);
+}
+.modal-backdrop .ric-footer b { color: var(--d-brown); }
+
+.modal-backdrop .post-surplus-card {
+  flex: none;
+  margin: 0;
+  padding: 22px 30px;
+  background: var(--d-tint);
+  border-bottom: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .post-surplus-card h4 { margin: 0 0 16px; font-size: 15px; }
+
+/* ------------------------------------------------------------- feed cards */
+
+.modal-backdrop .cfc-org {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--d-muted);
+}
+.modal-backdrop .cfc-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(29, 122, 68, .1);
+  color: var(--d-ok);
+  font-size: 11px;
+  font-weight: 700;
+}
+.modal-backdrop .cfc-feedback-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .btn-useful,
+.modal-backdrop .btn-share {
+  padding: 8px 14px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s var(--d-ease), border-color .18s var(--d-ease);
+}
+.modal-backdrop .btn-useful:hover,
+.modal-backdrop .btn-share:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+
+/* ------------------------------------------------------------------ admin */
+
+.modal-backdrop .admin-tabs-strip,
+.modal-backdrop .np-tabs-nav {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 0 30px;
+  background: var(--d-surface);
+  border-bottom: 1px solid var(--d-line-soft);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.modal-backdrop .admin-tabs-strip::-webkit-scrollbar,
+.modal-backdrop .np-tabs-nav::-webkit-scrollbar { display: none; }
+
+.modal-backdrop .admin-tab-btn,
+.modal-backdrop .np-tab-btn {
+  flex: none;
+  padding: 14px 14px 12px;
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  background: none;
+  color: var(--d-muted);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .18s var(--d-ease), border-color .18s var(--d-ease);
+}
+.modal-backdrop .admin-tab-btn:hover,
+.modal-backdrop .np-tab-btn:hover { color: var(--d-brown); }
+.modal-backdrop .admin-tab-btn.is-active,
+.modal-backdrop .np-tab-btn.is-active { color: var(--d-crimson); border-bottom-color: var(--d-crimson); }
+
+.modal-backdrop .admin-content-pane > h3,
+.modal-backdrop .np-demand-section > h3,
+.modal-backdrop .np-inv-head > h3,
+.modal-backdrop .np-urgent-manager > h3,
+.modal-backdrop .np-referrals-head > h3 { margin: 0 0 4px; font-size: 16px; }
+
+.modal-backdrop .admin-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+.modal-backdrop .admin-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.modal-backdrop .aic-title { margin: 0 0 4px; font-size: 15px; }
+.modal-backdrop .aic-sub { margin: 0; font-size: 12.5px; color: var(--d-muted); }
+.modal-backdrop .aic-sub b { color: var(--d-brown); }
+.modal-backdrop .aic-actions { flex: none; display: flex; gap: 8px; }
+
+.modal-backdrop .admin-empty {
+  margin: 0;
+  padding: 30px;
+  border: 1px dashed var(--d-line);
+  border-radius: 16px;
+  background: var(--d-surface);
+  color: var(--d-ok);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-backdrop .stale-summary-box {
+  margin-top: 16px;
+  padding: 6px 20px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 16px;
+}
+.modal-backdrop .ssb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--d-line-soft);
+  font-size: 13px;
+  color: var(--d-muted);
+}
+.modal-backdrop .ssb-row:last-child { border-bottom: 0; }
+.modal-backdrop .ssb-row b { color: var(--d-brown); text-align: right; }
+
+/* -------------------------------------------------------- nonprofit portal */
+
+.modal-backdrop .np-header-left { min-width: 0; }
+.modal-backdrop .np-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.modal-backdrop .np-org-select {
+  padding: 8px 12px;
+  border: 1px solid var(--d-line);
+  border-radius: 10px;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-backdrop .np-top-controls {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 30px;
+  background: var(--d-tint);
+  border-bottom: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .np-status-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+}
+.modal-backdrop .np-status-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+.modal-backdrop .np-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* the label already carries its own status dot, so no pseudo-element here */
+.modal-backdrop .np-status-btn.is-active {
+  background: rgba(29, 122, 68, .12);
+  border-color: rgba(29, 122, 68, .35);
+  color: var(--d-ok);
+}
+.modal-backdrop .np-status-btn.is-paused {
+  background: rgba(252, 158, 37, .16);
+  border-color: rgba(180, 84, 10, .35);
+  color: var(--d-warn);
+}
+
+.modal-backdrop .btn-verify-stamp,
+.modal-backdrop .btn-export-rep {
+  padding: 9px 15px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s var(--d-ease), border-color .18s var(--d-ease);
+}
+.modal-backdrop .btn-verify-stamp:hover,
+.modal-backdrop .btn-export-rep:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+
+.modal-backdrop .np-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.modal-backdrop .np-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 18px 20px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 16px;
+  box-shadow: var(--d-shadow);
+}
+.modal-backdrop .np-sc-val {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--d-crimson);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .np-sc-label { font-size: 12.5px; font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .np-sc-sub { font-size: 11.5px; color: var(--d-muted); }
+
+.modal-backdrop .np-demand-section,
+.modal-backdrop .np-urgent-manager,
+.modal-backdrop .np-inv-head,
+.modal-backdrop .np-referrals-head { margin-top: 22px; }
+.modal-backdrop .np-inv-head,
+.modal-backdrop .np-referrals-head { margin-top: 0; margin-bottom: 16px; }
+
+.modal-backdrop .demand-bars-list,
+.modal-backdrop .category-metric-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+.modal-backdrop .demand-bar-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 170px) 1fr auto;
+  align-items: center;
+  gap: 14px;
+  font-size: 12.5px;
+}
+.modal-backdrop .demand-bar-title { font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .demand-bar-pct { color: var(--d-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.modal-backdrop .demand-bar-track,
+.modal-backdrop .cmi-bar-track,
+.modal-backdrop .zip-bar-track {
+  height: 9px;
+  background: var(--d-cream-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.modal-backdrop .demand-bar-fill,
+.modal-backdrop .cmi-bar-fill,
+.modal-backdrop .zip-bar-fill {
+  height: 100%;
+  max-width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--d-crimson), var(--d-amber));
+}
+
+.modal-backdrop .np-inventory-table,
+.modal-backdrop .referrals-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-backdrop .np-inv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 16px;
+}
+.modal-backdrop .np-inv-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.modal-backdrop .np-inv-cat {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--d-crimson);
+}
+.modal-backdrop .np-inv-title { margin: 0; font-size: 14.5px; }
+.modal-backdrop .np-inv-note { font-size: 12px; color: var(--d-muted); }
+.modal-backdrop .np-inv-actions { flex: none; display: flex; align-items: center; gap: 10px; }
+.modal-backdrop .btn-stock-toggle {
+  padding: 8px 14px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  color: var(--d-brown);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.modal-backdrop .btn-stock-toggle:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+
+.modal-backdrop .urgent-form {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+.modal-backdrop .urgent-form .form-input { flex: 1; min-width: 0; margin: 0; }
+.modal-backdrop .urgent-active-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.modal-backdrop .urgent-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px 9px 16px;
+  border-radius: 999px;
+  background: rgba(252, 158, 37, .16);
+  border: 1px solid rgba(180, 84, 10, .3);
+  color: var(--d-warn);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.modal-backdrop .urgent-del-btn {
+  width: 20px; height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(180, 84, 10, .2);
+  color: var(--d-warn);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-backdrop .urgent-del-btn:hover { background: var(--d-warn); color: #fff; }
+
+.modal-backdrop .ref-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.modal-backdrop .ref-client { font-size: 15px; font-weight: 700; color: var(--d-ink); }
+.modal-backdrop .ref-status-tag {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--d-cream-2);
+  color: var(--d-crimson);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.modal-backdrop .ref-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-line-soft);
+}
+
+/* ----------------------------------------------------------------- impact */
+
+.modal-backdrop .impact-counters-grid {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 22px 30px;
+  background: var(--d-cream);
+  border-bottom: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .ic-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 18px;
+  box-shadow: var(--d-shadow);
+}
+.modal-backdrop .ic-val {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.05;
+  color: var(--d-crimson);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ic-label { font-size: 12.5px; font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .ic-note { font-size: 11.5px; color: var(--d-muted); }
+
+.modal-backdrop .impact-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.modal-backdrop .impact-section-panel {
+  padding: 22px 24px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  border-radius: 18px;
+  box-shadow: var(--d-shadow);
+}
+.modal-backdrop .impact-section-panel h3 { margin: 0 0 4px; font-size: 15.5px; }
+
+.modal-backdrop .zip-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) minmax(70px, 1.3fr) auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.modal-backdrop .zip-num { font-weight: 700; color: var(--d-crimson); font-variant-numeric: tabular-nums; }
+.modal-backdrop .zip-city { color: var(--d-brown); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-backdrop .zip-reqs { color: var(--d-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.modal-backdrop .cat-metric-item { display: flex; flex-direction: column; gap: 7px; }
+.modal-backdrop .cmi-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.modal-backdrop .cmi-name { font-size: 13px; font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .cmi-pct { font-size: 12px; color: var(--d-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.modal-backdrop .performance-stat-box {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .psb-item { display: flex; flex-direction: column; gap: 3px; }
+.modal-backdrop .psb-val { font-size: 20px; font-weight: 800; color: var(--d-crimson); font-variant-numeric: tabular-nums; }
+.modal-backdrop .psb-label { font-size: 11px; line-height: 1.35; color: var(--d-muted); font-weight: 600; }
+
+/* ------------------------------------------------------------- AI modal */
+
+.modal-backdrop .ai-modal-card { max-width: 760px; }
+.modal-backdrop .ai-header-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.modal-backdrop .ai-avatar-badge {
+  flex: none;
+  width: 44px; height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--d-crimson), var(--d-crimson-deep));
+  font-size: 21px;
+}
+.modal-backdrop .ai-header-title { margin: 0 0 3px; font-size: 17px; }
+.modal-backdrop .ai-header-sub { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--d-muted); }
+
+.modal-backdrop .ai-chat-stream { display: flex; flex-direction: column; gap: 16px; }
+.modal-backdrop .ai-message-row { display: flex; }
+.modal-backdrop .ai-message-row.is-user { justify-content: flex-end; }
+.modal-backdrop .ai-message-bubble {
+  max-width: 86%;
+  padding: 14px 17px;
+  border-radius: 18px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line);
+  box-shadow: var(--d-shadow);
+}
+.modal-backdrop .ai-message-row.is-user .ai-message-bubble {
+  background: var(--d-crimson);
+  border-color: var(--d-crimson);
+  color: var(--d-cream);
+}
+.modal-backdrop .ai-message-text { margin: 0; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.modal-backdrop .ai-message-timestamp {
+  display: block;
+  margin-top: 8px;
+  font-size: 10.5px;
+  color: var(--d-muted);
+}
+.modal-backdrop .ai-message-row.is-user .ai-message-timestamp { color: rgba(255, 247, 232, .7); }
+
+.modal-backdrop .ai-call-ahead-alert {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(252, 158, 37, .15);
+  border: 1px solid rgba(180, 84, 10, .28);
+  color: var(--d-warn);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.modal-backdrop .ai-citations-box {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .citations-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+.modal-backdrop .citations-list { display: flex; flex-direction: column; gap: 10px; }
+.modal-backdrop .citation-card {
+  padding: 14px 16px;
+  background: var(--d-cream);
+  border: 1px solid var(--d-line-soft);
+  border-radius: 14px;
+}
+.modal-backdrop .citation-top { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.modal-backdrop .citation-title { margin: 0; font-size: 13.5px; }
+.modal-backdrop .citation-verified-pill {
+  margin-left: auto;
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(29, 122, 68, .12);
+  color: var(--d-ok);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.modal-backdrop .ai-thinking-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--d-muted);
+}
+.modal-backdrop .dot-pulse {
+  flex: none;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--d-crimson);
+  animation: dPulse 1.1s ease-in-out infinite;
+}
+@keyframes dPulse { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
+
+/* -------------------------------------------------- claim confirmation */
+
+.claim-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(45, 4, 7, .55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: dFade .2s var(--d-ease);
+}
+.claim-confirm-box {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 30px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 30px 70px rgba(45, 4, 7, .4);
+  text-align: center;
+  animation: dPop .3s var(--d-ease);
+}
+.claim-confirm-box .conf-icon {
+  display: grid;
+  place-items: center;
+  width: 58px; height: 58px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: rgba(29, 122, 68, .12);
+  color: #1d7a44;
+  font-size: 28px;
+  font-weight: 700;
+}
+.claim-confirm-box h3 { margin: 0 0 8px; font-size: 21px; }
+.claim-confirm-box > p { margin: 0; font-size: 13.5px; line-height: 1.55; color: #7f675c; }
+.claim-details-box {
+  margin: 20px 0;
+  padding: 16px 18px;
+  background: #fff7e8;
+  border: 1px solid rgba(72, 40, 32, .1);
+  border-radius: 14px;
+  text-align: left;
+}
+.claim-details-box p { margin: 0 0 9px; font-size: 12.5px; line-height: 1.5; color: #7f675c; }
+.claim-details-box p:last-child { margin-bottom: 0; }
+.claim-details-box b { color: #482820; }
+
+/* ------------------------------------------------- reservation time slots */
+/* `.slot-pill` renders `<span>time</span><small>N left</small>`, but the rules
+   that stacked the <small> are not present at HEAD, so the label ran together
+   as "9:00 AM – 10:30 AM0 left". Kept here rather than in app.css so it does
+   not collide with that file's upstream history. */
+
+.modal-backdrop .slot-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.modal-backdrop .slot-pill small {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: .75;
+}
+.modal-backdrop .slot-pill:disabled {
+  cursor: not-allowed;
+  color: #9a948a;
+  background: #f4f0e9;
+  border-color: #e4ded2;
+}
+.modal-backdrop .slot-pill:disabled small { opacity: .6; }
+
+.modal-backdrop .availability-note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--d-muted);
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 760px) {
+  .modal-backdrop { padding: 0; }
+  .modal-backdrop .volunteer-modal-card,
+  .modal-backdrop .rescue-modal-card,
+  .modal-backdrop .community-modal-card,
+  .modal-backdrop .impact-modal-card,
+  .modal-backdrop .admin-modal-card,
+  .modal-backdrop .nonprofit-modal-card,
+  .modal-backdrop .ai-modal-card {
+    max-width: none;
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+  }
+
+  .modal-backdrop .vol-header,
+  .modal-backdrop .rescue-header,
+  .modal-backdrop .comm-header,
+  .modal-backdrop .impact-header,
+  .modal-backdrop .admin-header,
+  .modal-backdrop .np-header,
+  .modal-backdrop .ai-modal-header { padding: 22px 18px 18px; }
+
+  .modal-backdrop .np-title { font-size: 20px; }
+
+  .modal-backdrop .vol-filter-strip,
+  .modal-backdrop .comm-filter-strip,
+  .modal-backdrop .rescue-action-bar,
+  .modal-backdrop .np-top-controls,
+  .modal-backdrop .admin-tabs-strip,
+  .modal-backdrop .np-tabs-nav { padding-inline: 18px; }
+
+  .modal-backdrop .vol-shifts-list,
+  .modal-backdrop .rescue-listings-grid,
+  .modal-backdrop .comm-feed-list,
+  .modal-backdrop .admin-content-pane,
+  .modal-backdrop .np-tab-content,
+  .modal-backdrop .impact-secondary-grid,
+  .modal-backdrop .impact-counters-grid,
+  .modal-backdrop .post-surplus-card,
+  .modal-backdrop .ai-chat-stream { padding-inline: 18px; }
+
+  /* the action column drops under the content instead of squeezing it */
+  .modal-backdrop .vol-shift-card { grid-template-columns: minmax(0, 1fr); }
+  .modal-backdrop .vol-shift-card .vsc-actions {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--d-line-soft);
+  }
+  .modal-backdrop .vsc-actions > * { width: 100%; }
+  .modal-backdrop .vsc-actions .btn-primary { max-width: none; }
+
+  .modal-backdrop .vol-impact-summary { grid-template-columns: 1fr; }
+  .modal-backdrop .vol-impact-item { padding: 14px 18px; }
+  .modal-backdrop .vii-val { font-size: 20px; }
+
+  .modal-backdrop .demand-bar-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .modal-backdrop .demand-bar-row .demand-bar-track { grid-column: 1 / -1; }
+  .modal-backdrop .zip-row { grid-template-columns: 70px minmax(0, 1fr) auto; }
+  .modal-backdrop .zip-row .zip-bar-track { grid-column: 1 / -1; }
+  .modal-backdrop .performance-stat-box { grid-template-columns: 1fr; gap: 14px; }
+
+  .modal-backdrop .admin-item-card,
+  .modal-backdrop .np-inv-row { flex-direction: column; align-items: stretch; }
+  .modal-backdrop .aic-actions > *,
+  .modal-backdrop .np-inv-actions { width: 100%; }
+
+  .modal-backdrop .urgent-form { flex-direction: column; }
+  .modal-backdrop .ai-message-bubble { max-width: 94%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal-backdrop *,
+  .claim-confirm-overlay,
+  .claim-confirm-box { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
