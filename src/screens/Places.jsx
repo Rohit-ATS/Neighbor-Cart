@@ -14,6 +14,7 @@ import ImpactDashboard from '../components/ImpactDashboard.jsx';
 import AdminPortal from '../components/AdminPortal.jsx';
 
 export default function Places({ onNavigateHome }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [places, setPlaces] = useState(PLACES);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -115,16 +116,206 @@ export default function Places({ onNavigateHome }) {
   }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility]);
 
   return (
-    <div className="places-page-shell">
+    <div className={`places-page-shell ${sidebarOpen ? 'has-sidebar-open' : ''}`}>
+      {/* Sidebar Overlay Backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true" 
+        />
+      )}
+
+      {/* Floating Side Drawer Navigation */}
+      <aside className={`places-side-drawer ${sidebarOpen ? 'is-open' : ''}`} aria-label="Portal Navigation Menu">
+        <div className="side-drawer-header">
+          <div className="side-drawer-brand">
+            <span className="places-brand-mark"><i /><b /></span>
+            <div className="side-drawer-brand-copy">
+              <span className="side-brand-title">neighbor<b>cart</b></span>
+              <span className="side-brand-subtitle">Relief & Access Hubs</span>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            className="side-drawer-close-btn" 
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar menu"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="side-drawer-content">
+          <div className="side-nav-section">
+            <span className="side-section-heading">Smart Navigators</span>
+            <div className="side-nav-links">
+              <button 
+                type="button" 
+                className="side-nav-item side-item-highlight" 
+                onClick={() => { setShowAI(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">🤖</span>
+                <div className="sni-text">
+                  <span className="sni-title">Ask HarvestLink AI</span>
+                  <span className="sni-desc">Grounded answers & call-ahead advice</span>
+                </div>
+                <span className="sni-pill">AI</span>
+              </button>
+
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowIntake(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">📋</span>
+                <div className="sni-text">
+                  <span className="sni-title">Personalized Food Plan</span>
+                  <span className="sni-desc">Custom 3-step action roadmap</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="side-nav-section">
+            <span className="side-section-heading">Community & Volunteers</span>
+            <div className="side-nav-links">
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowCommunity(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">📣</span>
+                <div className="sni-text">
+                  <span className="sni-title">Community Feed</span>
+                  <span className="sni-desc">Pop-ups, distributions & urgent requests</span>
+                </div>
+              </button>
+
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowVolunteer(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">🤝</span>
+                <div className="sni-text">
+                  <span className="sni-title">Volunteer Network</span>
+                  <span className="sni-desc">Claim shifts, delivery routes & track hours</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="side-nav-section">
+            <span className="side-section-heading">Logistics & Partners</span>
+            <div className="side-nav-links">
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowRescue(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">🥦</span>
+                <div className="sni-text">
+                  <span className="sni-title">Food Rescue Dispatch</span>
+                  <span className="sni-desc">Match store surplus with cold-storage pantries</span>
+                </div>
+              </button>
+
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowNonprofit(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">🏢</span>
+                <div className="sni-text">
+                  <span className="sni-title">Nonprofit Portal</span>
+                  <span className="sni-desc">Broadcast needs, verify listings & export CSV</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="side-nav-section">
+            <span className="side-section-heading">Transparency & Governance</span>
+            <div className="side-nav-links">
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowImpact(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">📊</span>
+                <div className="sni-text">
+                  <span className="sni-title">Impact Dashboard</span>
+                  <span className="sni-desc">Nationwide meals delivered & ZIP demand</span>
+                </div>
+              </button>
+
+              <button 
+                type="button" 
+                className="side-nav-item" 
+                onClick={() => { setShowAdmin(true); setSidebarOpen(false); }}
+              >
+                <span className="sni-icon">⚙️</span>
+                <div className="sni-text">
+                  <span className="sni-title">Admin Directory</span>
+                  <span className="sni-desc">Review pending orgs & resolve accuracy flags</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="side-drawer-footer">
+          <div className="side-quick-stats">
+            <span className="sqs-dot">●</span>
+            <span>Over <b>4,800+</b> verified food relief access points nationwide</span>
+          </div>
+        </div>
+      </aside>
+
       {/* Top Header Bar */}
       <header className="places-topbar">
         <div className="places-topbar-inner">
           <div className="topbar-brand-group">
+            {/* Side Menu Hamburger Toggle */}
+            <button 
+              type="button" 
+              className="side-menu-trigger-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Open side menu"
+              title="Open Hubs & Tools Menu"
+            >
+              <span className="hamburger-box">
+                <span className="hamburger-line" />
+                <span className="hamburger-line" />
+                <span className="hamburger-line" />
+              </span>
+              <span className="menu-trigger-text">Hubs Menu</span>
+            </button>
+
             <button type="button" className="places-brand-btn" onClick={onNavigateHome}>
               <span className="places-brand-mark"><i /><b /></span>
               <span>neighbor<b>cart</b></span>
             </button>
             <span className="topbar-live-tag">● Nationwide Access</span>
+          </div>
+
+          <div className="topbar-center-hubs-strip">
+            <button type="button" className="quick-hub-pill ai-hub-pill" onClick={() => setShowAI(true)}>
+              🤖 Ask AI
+            </button>
+            <button type="button" className="quick-hub-pill" onClick={() => setShowIntake(true)}>
+              📋 Food Plan
+            </button>
+            <button type="button" className="quick-hub-pill" onClick={() => setShowVolunteer(true)}>
+              🤝 Volunteers
+            </button>
+            <button type="button" className="quick-hub-pill" onClick={() => setShowRescue(true)}>
+              🥦 Food Rescue
+            </button>
+            <button type="button" className="quick-hub-pill" onClick={() => setShowImpact(true)}>
+              📊 Impact
+            </button>
           </div>
 
           <nav className="places-nav">
@@ -152,39 +343,6 @@ export default function Places({ onNavigateHome }) {
               ← Back to Home
             </button>
           </nav>
-        </div>
-
-        {/* Dedicated Hub Portals Bar */}
-        <div className="places-portals-subbar">
-          <div className="shell-contained portals-subbar-inner">
-            <span className="portals-subbar-label">Explore Hubs:</span>
-            <div className="topbar-portal-links">
-              <button type="button" className="portal-btn portal-btn-ai" onClick={() => setShowAI(true)}>
-                🤖 Ask AI Assistant
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowIntake(true)}>
-                📋 Food Access Plan
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowCommunity(true)}>
-                📣 Community Feed
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowVolunteer(true)}>
-                🤝 Volunteer Network
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowRescue(true)}>
-                🥦 Food Rescue Dispatch
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowNonprofit(true)}>
-                🏢 Nonprofit Portal
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowImpact(true)}>
-                📊 Impact Report
-              </button>
-              <button type="button" className="portal-btn" onClick={() => setShowAdmin(true)}>
-                ⚙️ Admin
-              </button>
-            </div>
-          </div>
         </div>
       </header>
 
