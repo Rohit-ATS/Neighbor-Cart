@@ -187,7 +187,7 @@ class JsonHandler(BaseHTTPRequestHandler):
     """Turns raw HTTP into :class:`Request` objects and JSON responses."""
 
     protocol_version = "HTTP/1.1"
-    server_version = "nexus-stage1"
+server_version = "neighbor-cart-stage1"
     sys_version = ""
 
     def log_message(self, fmt, *args):  # pragma: no cover - quiet by design

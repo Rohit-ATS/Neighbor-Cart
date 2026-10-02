@@ -9,11 +9,11 @@ server {
     }
 
     location = / {
-        return 302 /Nexus/;
+        try_files /harvestlink.html =404;
     }
 
-    location /Nexus/ {
+    location / {
         root /usr/share/nginx/html;
-        try_files $uri $uri/ /Nexus/index.html;
+        try_files $uri $uri/ /harvestlink.html;
     }
 }

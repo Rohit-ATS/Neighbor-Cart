@@ -1,6 +1,6 @@
 # Dark Factory: a five-seat BAND that builds from one task
 
-[![Mandate lint](https://github.com/IamDavidLe/Nexus/actions/workflows/mandate-lint.yml/badge.svg)](https://github.com/IamDavidLe/Nexus/actions/workflows/mandate-lint.yml)
+[![Mandate lint](https://github.com/Rohit-ATS/Neighbor-Cart/actions/workflows/mandate-lint.yml/badge.svg)](https://github.com/Rohit-ATS/Neighbor-Cart/actions/workflows/mandate-lint.yml)
 
 Our entry for the WeAreDevelopers x BAND Dark Factory hackathon. Five AI coding seats in a BAND room turn
 one written task into a working, verified service with no human steering. Two of the five seats can't

@@ -29,9 +29,9 @@ jobs:
         run: npm ci
       - name: Build site
         working-directory: frontend
-        # Pages serves this as a project site at /Nexus/; every other target uses the root.
+        # Pages serves the product at the repository root.
         env:
-          BASE_PATH: /Nexus/
+          BASE_PATH: /
         run: npm run build
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5

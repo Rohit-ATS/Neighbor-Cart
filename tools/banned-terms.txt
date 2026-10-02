@@ -8,7 +8,6 @@
 pocketful
 tablekeeper
 venmo
-nexus
 
 # domain nouns and verbs
 wallet

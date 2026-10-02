@@ -1,8 +1,8 @@
 {
-  "name": "nexus-frontend",
+  "name": "neighbor-cart-frontend",
   "private": true,
   "version": "0.1.0",
-  "description": "Nexus — Dark Factory landing page",
+  "description": "Neighbor-Cart HarvestLink frontend",
   "license": "MIT",
   "type": "module",
   "scripts": {
