@@ -1,39 +1,46 @@
 # Amazon Cognito Auth setup
 
-The frontend uses an Amazon Cognito User Pool with an authorization-code PKCE flow.
-No Cognito client secret is sent to the browser.
+> The proxy architecture below supersedes any older direct-browser/public-client wording in this
+> document: use the confidential client and Render variables above. The browser must never call
+> Cognito directly or receive `COGNITO_CLIENT_SECRET`.
+
+The Render service uses an Amazon Cognito User Pool confidential app client. The browser talks
+only to the same-origin Node auth proxy; the client secret, authorization-code exchange, direct
+auth calls, tokens, and session state stay server-side. No Cognito client secret is sent to the browser.
 
 1. Create or select an Amazon Cognito User Pool and enable email sign-in.
-2. Assign a domain and an app client with authorization-code grant and PKCE.
-3. Allow `openid email` scopes and add callback/sign-out URLs ending in `/auth.html`.
-4. Copy `.env.example` to `.env` and set:
+2. Assign a domain and retain the confidential app client with authorization-code grant.
+3. Allow `openid email` scopes and set callback URL to `https://<render-host>/auth/callback` and logout URL to `https://<render-host>/Nexus/auth.html`.
+4. In Render, set these server-only environment variables:
 
 ```text
-VITE_COGNITO_DOMAIN=https://<domain>.auth.<region>.amazoncognito.com
-VITE_COGNITO_CLIENT_ID=<public-app-client-id>
-VITE_COGNITO_REDIRECT_URI=https://<host>/auth.html
-VITE_COGNITO_LOGOUT_URI=https://<host>/auth.html
-VITE_COGNITO_ISSUER=https://cognito-idp.<region>.amazonaws.com/<user-pool-id>
-VITE_COGNITO_SCOPES=openid email   # optional, this is the default
+COGNITO_DOMAIN=https://<domain>.auth.<region>.amazoncognito.com
+COGNITO_CLIENT_ID=<confidential-app-client-id>
+COGNITO_CLIENT_SECRET=<Render-secret>
+COGNITO_REDIRECT_URI=https://<render-host>/auth/callback
+COGNITO_LOGOUT_URI=https://<render-host>/Nexus/auth.html
+COGNITO_ISSUER=https://cognito-idp.<region>.amazonaws.com/<user-pool-id>
+SESSION_SECRET=<long-random-Render-secret>
+PORT=<Render-provided-port>
 ```
 
-Never put a Cognito client secret or AWS credentials in `.env`, source, or any `VITE_` variable.
-Without all five required values the auth and sign-up pages stay disabled and the dashboard
-redirects to setup.
+Never put a Cognito client secret or AWS credentials in source, browser code, or any `VITE_` variable.
+The proxy fails closed with 503 when any required Render variable is absent. Render should use
+the repository root as build context and the root Dockerfile; its start command is the Dockerfile
+default (`node server.js`).
 
 Implemented flows:
 
 - Nexus-hosted multi-step sign-up at `signup.html` (name, contact, address, password, email code);
-- on-page email/password sign-in via InitiateAuth (USER_PASSWORD_AUTH), no hosted-UI redirect;
-- a fail-closed dashboard gate that hides the page before paint until the ID token verifies;
-- authorization-code PKCE with state, nonce, and verifier checks;
-- issuer, audience, token-use, nonce, and expiry checks on the ID token;
-- RS256 signature verification against the user pool JWKS endpoint;
-- sign-out that clears the session locally and revokes the refresh token.
+- on-page email/password sign-in via a server-side InitiateAuth call with `SECRET_HASH`;
+- authorization-code exchange on the server with state and nonce checks;
+- issuer, audience, token-use, and expiry checks before creating an opaque HttpOnly session;
+- secure SameSite cookies and a public `/healthz` endpoint;
+- sign-out that clears the server session and cookie.
 
 ## Sign-up (`signup.html`)
 
-`cognito-signup.js` calls the user-pool API directly from the browser using only the public
+`cognito-api.js` calls same-origin `/api/auth/*` routes; the Node proxy calls the user-pool API using
 app client id — `SignUp`, `ConfirmSignUp`, and `ResendConfirmationCode`, the three operations a
 public client may call unauthenticated. There is no backend, no AWS credential, and no
 `SecretHash`. The endpoint is derived from `VITE_COGNITO_ISSUER`, so it needs no extra variable.
@@ -51,7 +58,7 @@ The flow collects and submits these Cognito standard attributes:
 After `ConfirmSignUp` succeeds, the page hands off to the normal PKCE sign-in with
 `login_hint` set to the new email. The password is never persisted anywhere in the frontend.
 
-### The app client must be PUBLIC (no client secret)
+### Confidential client boundary
 
 This is the single hard requirement, and it is currently **not met** by app client
 `67ajqh4655tvb6a6g74sdang7g`. Cognito reports:

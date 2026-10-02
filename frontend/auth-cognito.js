@@ -5,7 +5,7 @@ const status = document.querySelector('[data-auth-status]');
 const form = document.querySelector('[data-login-form]');
 const button = document.querySelector('[data-login]');
 const signupLink = document.querySelector('[data-signup-link]');
-const setup = 'Configure VITE_COGNITO_DOMAIN, VITE_COGNITO_CLIENT_ID, VITE_COGNITO_REDIRECT_URI, VITE_COGNITO_LOGOUT_URI, and VITE_COGNITO_ISSUER.';
+const setup = 'Configure the server COGNITO_* variables and SESSION_SECRET in Render.';
 const field = (name) => form.elements.namedItem(name);
 
 function show(message, kind = '') { status.hidden = !message; status.textContent = message; status.dataset.kind = kind; }

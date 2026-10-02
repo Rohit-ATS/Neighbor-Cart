@@ -273,7 +273,7 @@ form.addEventListener('input', (event) => {
 render();
 
 if (!isCognitoConfigured) {
-  show('Sign-up is unavailable: Cognito is not configured for this build. Set the VITE_COGNITO_* values in frontend/.env.', 'error');
+  show('Sign-up is unavailable: configure the server Cognito variables in Render.', 'error');
   next.disabled = true;
   back.disabled = true;
   if (resend) resend.disabled = true;

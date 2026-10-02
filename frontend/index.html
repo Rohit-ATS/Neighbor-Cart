@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Nexus — Money that moves like a message</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="description" content="Nexus lets you send, split and request money in seconds, on the web or in the app." />
   <meta name="theme-color" content="#000000" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,20 +37,66 @@
 
     <!-- ================= HERO ================= -->
     <section class="hero" id="top" data-hero>
-      <div class="hero__media" aria-hidden="true">
-        <video poster="/hero-poster.webp" autoplay loop muted playsinline preload="auto" tabindex="-1" data-hero-video>
-          <source src="/hero-1080.mp4" type="video/mp4" />
-        </video>
+      <div class="world" aria-hidden="true">
+        <div class="sky"><div class="sky__sun"></div><div class="sky__haze"></div></div>
+        <canvas class="layer" data-layer="back" data-depth="0.012"></canvas>
+        <canvas class="layer" data-layer="fx" data-depth="0.02"></canvas>
+        <canvas class="layer" data-layer="meadow" data-depth="0.035"></canvas>
+
+        <!-- The sender: sitting on the hill, phone glowing -->
+        <div class="layer sender-wrap" data-depth="0.045">
+          <svg class="sender" viewBox="0 0 300 360" data-sender>
+            <defs>
+              <linearGradient id="robe" x1="0" y1="0" x2=".35" y2="1">
+                <stop offset="0" stop-color="#2f55b8" /><stop offset=".5" stop-color="#1d3a86" /><stop offset="1" stop-color="#0a1638" />
+              </linearGradient>
+              <linearGradient id="rim" x1="0" y1="0" x2="1" y2=".4">
+                <stop offset="0" stop-color="#ffffff" stop-opacity=".95" /><stop offset=".45" stop-color="#cfe2ff" stop-opacity=".2" /><stop offset="1" stop-color="#bfd6ff" stop-opacity=".8" />
+              </linearGradient>
+              <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#1d3272" /><stop offset="1" stop-color="#081230" />
+              </linearGradient>
+              <radialGradient id="face" cx=".78" cy=".62" r=".9">
+                <stop offset="0" stop-color="#a9cbff" /><stop offset=".45" stop-color="#2f53a8" /><stop offset="1" stop-color="#1a2f6c" />
+              </radialGradient>
+              <radialGradient id="screenGlow">
+                <stop offset="0" stop-color="#f2faff" stop-opacity="1" /><stop offset=".25" stop-color="#a9d6ff" stop-opacity=".55" /><stop offset="1" stop-color="#6aa8ff" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <circle class="sender__glow" cx="228" cy="196" r="96" fill="url(#screenGlow)" />
+            <path d="M136 118 C118 124 104 146 98 178 C90 220 86 262 70 300 C60 322 44 340 26 356 L286 356 C282 340 276 326 266 316 C262 292 262 262 254 244 C248 232 236 228 222 232 C206 236 196 232 188 220 C180 200 176 168 166 142 C160 128 150 120 136 118Z" fill="url(#robe)" stroke="url(#rim)" stroke-width="1.6" />
+            <path d="M142 108 L152 108 L154 126 L140 126Z" fill="#1a2f6c" />
+            <circle class="sender__face" cx="152" cy="92" r="23" fill="url(#face)" />
+            <path d="M126 98 C121 66 143 55 161 61 C178 67 182 86 176 99 C170 94 162 88 151 90 C144 103 140 116 133 121 C127 117 125 108 126 98Z" fill="url(#hair)" stroke="url(#rim)" stroke-width="1.2" />
+            <path d="M158 140 C170 170 180 202 196 214 C206 222 218 220 230 208 L226 198 C216 206 206 208 198 200 C186 182 178 160 170 138Z" fill="#2a4fae" stroke="rgba(190,214,255,.35)" stroke-width="1" />
+            <rect class="sender__phone" x="221" y="185" width="13" height="22" rx="3" transform="rotate(-32 228 196)" />
+          </svg>
+        </div>
+
+        <canvas class="layer" data-layer="front" data-depth="0.07"></canvas>
+
+        <!-- arrival notifications (positioned by JS) -->
+        <div class="ping" data-ping>
+          <span class="ping__av" data-ping-av>M</span>
+          <div><b data-ping-title>Maya received $40.00</b><small data-ping-note>🌸 For the flowers</small></div>
+        </div>
       </div>
+
       <div class="hero__fade" aria-hidden="true"></div>
+      <p class="hero__hint" aria-hidden="true"><span></span>Move through the clouds · tap the sky to send a spark</p>
 
       <div class="hero__content" data-hero-content>
-        <h1 class="hero__title rise">Where every dollar finds its way home.</h1>
+        <h1 class="hero__title rise">
+          <span class="hw">Where</span> <span class="hw">every</span> <span class="hw">dollar</span> <span class="hw">finds</span> <span class="hw">its</span> <span class="hw">way</span> <span class="hw hw--key">home.<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 16 C 50 6, 110 4, 196 12" /></svg></span>
+        </h1>
         <p class="hero__lead rise rise--d1">
           Nexus is how friends, families and roommates send, split and request money in seconds, on the web or in the app.
           It's simple, secure and feels a little like magic.
         </p>
-        <a href="./dashboard.html" class="glass-btn hero__cta fade-rise">Get Nexus</a>
+        <div class="hero__ctas fade-rise">
+          <a href="./dashboard.html" class="btn-solid">Get Nexus</a>
+          <a href="#how" class="glass-btn hero__ghost">How it works <span aria-hidden="true">→</span></a>
+        </div>
       </div>
     </section>
 

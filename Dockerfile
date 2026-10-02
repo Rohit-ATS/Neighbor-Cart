@@ -6,10 +6,12 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM node:24-alpine
 
 ENV PORT=8080
-COPY --from=build /app/frontend/dist/ /usr/share/nginx/html/Nexus/
-COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+WORKDIR /app
+COPY --from=build /app/frontend/dist/ ./frontend/dist/
+COPY server.js ./server.js
 
 EXPOSE 8080
+CMD ["node", "server.js"]

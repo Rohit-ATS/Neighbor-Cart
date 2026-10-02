@@ -6,7 +6,9 @@ const required = {
   issuer: import.meta.env.VITE_COGNITO_ISSUER,
 };
 
-export const isCognitoConfigured = Object.values(required).every(Boolean);
+/* Public builds never receive the confidential client secret. Availability is determined
+   by the same-origin proxy, which fails closed when Render secrets are absent. */
+export const isCognitoConfigured = true;
 export const cognitoClientId = required.clientId;
 /* Allowed OIDC scopes are an app-client setting. Keep the default to what the pool
    already grants; widen it with VITE_COGNITO_SCOPES only after allowing the extra
@@ -28,43 +30,12 @@ export function idpOrigin() {
 function clearPkce() { sessionStorage.removeItem(verifierKey); sessionStorage.removeItem(stateKey); sessionStorage.removeItem(nonceKey); }
 
 export async function startLogin({ signup = false, loginHint = '' } = {}) {
-  if (!isCognitoConfigured) throw new Error('Cognito is not configured.');
-  const verifier = random(); const state = random(32); const nonce = random(32);
-  sessionStorage.setItem(verifierKey, verifier); sessionStorage.setItem(stateKey, state); sessionStorage.setItem(nonceKey, nonce);
-  const params = new URLSearchParams({ response_type: 'code', client_id: required.clientId, redirect_uri: required.redirectUri, scope: cognitoScopes, code_challenge_method: 'S256', code_challenge: await challenge(verifier), state, nonce });
-  if (signup) params.set('screen_hint', 'signup');
-  if (loginHint) params.set('login_hint', loginHint);
-  window.location.assign(`${endpoint('/oauth2/authorize')}?${params}`);
+  const query = signup ? '?signup=1' : '';
+  window.location.assign(`/auth/login${query}`);
 }
 
 export async function finishLogin() {
-  const query = new URLSearchParams(window.location.search);
-  const code = query.get('code');
-  /* Cognito reports a failed authorize as ?error=..., which must not look like "no attempt". */
-  if (query.get('error')) {
-    clearPkce();
-    history.replaceState({}, document.title, window.location.pathname);
-    throw new Error(`Cognito sign-in failed: ${query.get('error_description') || query.get('error')}`);
-  }
-  if (!code) return getSession();
-  try {
-    if (query.get('state') !== sessionStorage.getItem(stateKey)) throw new Error('Invalid Cognito login state.');
-    const verifier = sessionStorage.getItem(verifierKey);
-    if (!verifier) throw new Error('Missing Cognito PKCE verifier.');
-    const response = await fetch(endpoint('/oauth2/token'), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: required.clientId, code, redirect_uri: required.redirectUri, code_verifier: verifier }) });
-    if (!response.ok) throw new Error('Cognito token exchange failed.');
-    const tokens = await response.json();
-    /* Must await: an unawaited validation returns a truthy promise and would admit an
-       unverified token while the rejection escapes as an unhandled promise rejection. */
-    const claims = await validateIdToken(tokens.id_token, { nonce: sessionStorage.getItem(nonceKey) });
-    const session = { ...tokens, claims };
-    sessionStorage.setItem(sessionKey, JSON.stringify(session));
-    return session;
-  } finally {
-    /* A single-use code and its PKCE artifacts must not survive a failed exchange. */
-    clearPkce();
-    history.replaceState({}, document.title, window.location.pathname);
-  }
+  return getSession();
 }
 
 function decode(token) {
@@ -86,8 +57,8 @@ export async function validateIdToken(token, { nonce = '' } = {}) {
   return claims;
 }
 export async function getSession() {
-  try { const session = JSON.parse(sessionStorage.getItem(sessionKey) || 'null'); if (!session?.id_token) return null; await validateIdToken(session.id_token); return session; }
-  catch { sessionStorage.removeItem(sessionKey); return null; }
+  try { const response = await fetch('/api/session', { credentials: 'same-origin' }); if (!response.ok) return null; const result = await response.json(); return result.authenticated ? result : null; }
+  catch { return null; }
 }
 export function readStoredSession() { try { return JSON.parse(sessionStorage.getItem(sessionKey) || 'null'); } catch { return null; } }
 
@@ -95,10 +66,7 @@ export function readStoredSession() { try { return JSON.parse(sessionStorage.get
    than from a redirect. The ID token is verified here too, so no caller can store an
    unvalidated session. */
 export async function persistSession(tokens) {
-  const claims = await validateIdToken(tokens.id_token);
-  const session = { ...tokens, claims };
-  sessionStorage.setItem(sessionKey, JSON.stringify(session));
-  return session;
+  return getSession();
 }
 
 /* Sign-in happens on our own pages, so there is no hosted-UI cookie to clear and logout
@@ -109,6 +77,5 @@ export function hostedLogoutUrl() {
   return `${endpoint('/logout')}?${new URLSearchParams({ client_id: required.clientId, logout_uri: required.logoutUri })}`;
 }
 export function signOut({ redirectTo = './auth.html' } = {}) {
-  sessionStorage.removeItem(sessionKey);
-  window.location.replace(redirectTo);
+  window.location.replace('/auth/logout');
 }

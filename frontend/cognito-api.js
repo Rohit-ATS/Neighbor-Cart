@@ -1,4 +1,4 @@
-import { cognitoClientId, idpOrigin, isCognitoConfigured } from './cognito.js';
+import { isCognitoConfigured } from './cognito.js';
 
 /* Amazon Cognito user-pool API calls a public app client may make unauthenticated:
    SignUp, ConfirmSignUp, ResendConfirmationCode, InitiateAuth, RevokeToken.
@@ -53,10 +53,10 @@ async function call(operation, payload) {
   if (!isCognitoConfigured) throw new CognitoError('NotConfigured', 'Cognito is not configured.');
   let response;
   try {
-    response = await fetch(`${idpOrigin()}/`, {
+    response = await fetch(`/api/auth/${operation}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-amz-json-1.1', 'X-Amz-Target': operations[operation] },
-      body: JSON.stringify({ ClientId: cognitoClientId, ...payload }),
+      headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify(payload),
     });
   } catch {
     throw new CognitoError('NetworkError', 'Could not reach Amazon Cognito. Check your connection and try again.');
@@ -64,7 +64,7 @@ async function call(operation, payload) {
   const body = await response.json().catch(() => ({}));
   if (response.ok) return body;
   /* __type looks like "com.amazonaws.cognitoidp#UsernameExistsException". */
-  const code = String(body.__type || '').split('#').pop() || `Http${response.status}`;
+  const code = body.code || String(body.__type || '').split('#').pop() || `Http${response.status}`;
   const raw = body.message || '';
   /* Checked before anything else: a client secret makes every browser-direct call fail, and
      the per-operation hints below would otherwise bury the one explanation that matters. */
@@ -109,16 +109,16 @@ export async function signUp({ email, password, firstName, lastName, phone, addr
   if (phone) attributes.push({ Name: 'phone_number', Value: phone });
   if (address) attributes.push({ Name: 'address', Value: address });
   /* Email as username keeps sign-up and sign-in on the same identifier. */
-  const result = await call('signUp', { Username: email, Password: password, UserAttributes: attributes });
+  const result = await call('signup', { email, password, attributes });
   return { confirmed: Boolean(result.UserConfirmed), deliveryTo: result.CodeDeliveryDetails?.Destination || '' };
 }
 
 export async function confirmSignUp({ email, code }) {
-  await call('confirmSignUp', { Username: email, ConfirmationCode: code.trim() });
+  await call('confirm', { email, code: code.trim() });
 }
 
 export async function resendCode({ email }) {
-  const result = await call('resendCode', { Username: email });
+  const result = await call('resend', { email });
   return { deliveryTo: result.CodeDeliveryDetails?.Destination || '' };
 }
 
@@ -127,30 +127,16 @@ export async function resendCode({ email }) {
    SRP would keep the password inside the browser entirely but needs a real SRP
    implementation — see COGNITO_AUTH.md before swapping this out. */
 export async function signIn({ email, password }) {
-  const result = await call('initiateAuth', {
-    AuthFlow: 'USER_PASSWORD_AUTH',
-    AuthParameters: { USERNAME: email, PASSWORD: password },
-  });
+  const result = await call('signin', { email, password });
   /* MFA or a forced password change comes back as a challenge, not tokens. Nothing in this
      frontend can complete those yet, so say so rather than failing as "no tokens". */
   if (result.ChallengeName) {
     throw new CognitoError(`Challenge:${result.ChallengeName}`, `This account requires an extra step (${result.ChallengeName}) that this app cannot complete yet.`);
   }
-  const tokens = result.AuthenticationResult;
-  if (!tokens?.id_token && !tokens?.IdToken) throw new CognitoError('NoTokens', 'Cognito did not return a session.');
-  /* InitiateAuth returns PascalCase; normalise to the snake_case the token endpoint uses
-     so both sign-in paths store an identically shaped session. */
-  return {
-    id_token: tokens.IdToken,
-    access_token: tokens.AccessToken,
-    refresh_token: tokens.RefreshToken,
-    expires_in: tokens.ExpiresIn,
-    token_type: tokens.TokenType,
-  };
+  return result;
 }
 
 /* Best effort: a revoked refresh token cannot be replayed if local storage is scraped later. */
 export async function revokeToken(refreshToken) {
-  if (!refreshToken) return;
-  try { await call('revokeToken', { Token: refreshToken }); } catch { /* sign-out must never block on this */ }
+  return undefined;
 }
