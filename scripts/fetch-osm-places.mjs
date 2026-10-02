@@ -21,6 +21,7 @@
 
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { categoryFor } from './osm-category.mjs';
 
 const ATTRIBUTION = '© OpenStreetMap contributors (ODbL)';
 
@@ -220,8 +221,19 @@ const CATEGORY = {
   food_sharing: 'community-fridge',
 };
 
+/* OSM has one tag (`social_facility=food_bank`) for what the UI splits into
+   food banks, pantries and mobile distributions, so the tag alone left the
+   "Food Pantries" and "Mobile Distributions" filters empty while 45 records
+   were literally named "...Food Pantry". The name decides when it is
+   specific; the tag is the fallback. Order matters — "Mobile Food Pantry"
+   is a mobile distribution first. */
+/* categoryFor lives in its own module so the patterns stay readable and are
+   not mangled by shell escaping. */
+
 const TYPE_LABEL = {
-  'food-bank': 'Food Bank / Pantry',
+  'food-bank': 'Food Bank',
+  pantry: 'Food Pantry',
+  mobile: 'Mobile Distribution',
   'hot-meal': 'Hot Meals & Community Kitchen',
   'community-fridge': 'Community Fridge / Free Food Point',
   pantry: 'Food Pantry',
@@ -298,9 +310,10 @@ function normalise(element, state) {
   const lng = element.lon ?? element.center?.lon;
   if (typeof lat !== 'number' || typeof lng !== 'number') return null;
 
-  const kind = t.social_facility && CATEGORY[t.social_facility]
+  const tagged = t.social_facility && CATEGORY[t.social_facility]
     ? CATEGORY[t.social_facility]
     : CATEGORY[t.amenity] ?? 'food-bank';
+  const kind = categoryFor(name, tagged);
 
   const houseNumber = t['addr:housenumber'] ?? '';
   const street = t['addr:street'] ?? '';

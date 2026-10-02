@@ -1015,12 +1015,24 @@ def looks_like_food_assistance(name: str, types: list[str]) -> bool:
     return any(word in haystack for word in ASSISTANCE_NAME_WORDS)
 
 
+# Same split as the OpenStreetMap importer: Google gives one blob of food
+# assistance, the UI offers five filters. Order matters — a "Mobile Food
+# Pantry" is a mobile distribution first, since that is what a visitor has to
+# plan around.
 GOOGLE_TYPE_HINTS = (
     ("fridge", "community-fridge"),
+    ("mobile", "mobile"),
+    ("on wheels", "mobile"),
+    ("drive-thru", "mobile"),
+    ("pop-up", "mobile"),
     ("soup kitchen", "hot-meal"),
+    ("community kitchen", "hot-meal"),
+    ("hot meal", "hot-meal"),
+    ("free meal", "hot-meal"),
     ("kitchen", "hot-meal"),
-    ("meal", "hot-meal"),
     ("pantry", "pantry"),
+    ("cupboard", "pantry"),
+    ("food closet", "pantry"),
     ("bank", "food-bank"),
 )
 
