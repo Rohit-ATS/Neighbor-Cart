@@ -891,13 +891,18 @@ h2 em {
    SIDE DRAWER MENU STYLING
    ========================================================================== */
 
+/* ==========================================================================
+   LEXISGUIDE SIGNATURE SIDEBAR DESIGN SYSTEM
+   ========================================================================== */
+
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 24, 20, 0.65);
-  backdrop-filter: blur(5px);
+  background: rgba(27, 28, 20, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 998;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.22s ease-out;
 }
 
 @keyframes fadeIn {
@@ -905,202 +910,325 @@ h2 em {
   to { opacity: 1; }
 }
 
-.places-side-drawer {
+.places-side-drawer.lexis-sidebar {
+  --lg-ink: #1b1c14;
+  --lg-ink-80: rgba(27, 28, 20, 0.8);
+  --lg-ink-60: rgba(27, 28, 20, 0.6);
+  --lg-ink-45: rgba(27, 28, 20, 0.45);
+  --lg-ink-06: rgba(27, 28, 20, 0.06);
+  --lg-paper: #fffdf5;
+  --lg-sand: #faf7ee;
+  --lg-wheat: #f4efe1;
+  --lg-hover: #efe8d5;
+  --lg-line: #ece3cd;
+  --lg-line-2: #c9c2ad;
+  --lg-green: #00674f;
+  --lg-green-soft: #e9f3ea;
+  --lg-serif: "Newsreader", "Playfair Display", Georgia, serif;
+  --lg-sans: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
+  --lg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
-  width: 360px;
-  max-width: 88vw;
-  background: #0f241d;
-  color: #fff;
+  width: 290px;
+  max-width: 90vw;
+  background: var(--lg-sand);
+  color: var(--lg-ink);
+  font-family: var(--lg-sans);
   z-index: 999;
   display: flex;
   flex-direction: column;
-  box-shadow: 12px 0 45px rgba(0, 0, 0, 0.45);
+  padding: 16px 14px 14px;
+  border-right: 1px solid var(--lg-line);
+  box-shadow: 0 30px 80px -25px rgba(40, 50, 30, 0.35);
   transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.32s var(--lg-ease);
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.places-side-drawer.is-open {
+.places-side-drawer.lexis-sidebar.is-open {
   transform: translateX(0);
 }
 
-.side-drawer-header {
-  padding: 24px 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+/* Lexis Brand Row */
+.lexis-brand-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #0b1c17;
+  padding: 2px 4px 14px;
+  border-bottom: 1px solid var(--lg-line);
+  margin-bottom: 14px;
 }
 
-.side-drawer-brand {
+.lexis-brand-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.side-drawer-brand-copy {
+.lexis-brand-mark {
+  background: var(--lg-ink);
+  color: #fffaeb !important;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.18s var(--lg-ease), background-color 0.18s;
+  box-shadow: 0 4px 12px rgba(27, 28, 20, 0.2);
+}
+
+.lexis-brand-mark:hover {
+  background: var(--lg-green);
+  transform: translateY(-1px) rotate(-6deg);
+}
+
+.lexis-brand-text {
   display: flex;
   flex-direction: column;
 }
 
-.side-brand-title {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #fff;
+.lexis-brand-name {
+  font-family: var(--lg-serif);
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--lg-ink);
+  line-height: 1.1;
 }
 
-.side-brand-title b {
-  color: var(--lime);
+.lexis-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--lg-ink-45);
+  letter-spacing: 0.2px;
 }
 
-.side-brand-subtitle {
-  font-size: 11px;
-  color: #8da498;
-  font-family: 'DM Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.side-drawer-close-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #c0d1c8;
-  font-size: 14px;
+.lexis-icon-btn {
+  border: 1px solid var(--lg-line);
+  background: var(--lg-paper);
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
+  color: var(--lg-ink-60);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+}
+
+.lexis-icon-btn:hover {
+  background: #ffffff;
+  color: var(--lg-ink);
+  border-color: var(--lg-line-2);
+}
+
+/* Lexis Primary Action Button (Matches 'Add document') */
+.lexis-new-btn {
+  background: var(--lg-ink);
+  color: #ffffff !important;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 8px 20px -10px rgba(27, 28, 20, 0.5);
+  transition: transform 0.18s var(--lg-ease), background-color 0.18s;
+  width: 100%;
+}
+
+.lexis-new-btn:hover {
+  background: #2b2d22;
+  transform: translateY(-1px);
+}
+
+.lexis-new-icon {
+  font-size: 16px;
+}
+
+/* Navigation Rail & Groups */
+.lexis-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lexis-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lexis-rail-label {
+  color: var(--lg-ink-45);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 6px 8px 4px;
+  display: block;
+}
+
+.lexis-nav-btn {
+  width: 100%;
+  height: 36px;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  color: var(--lg-ink-80) !important;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  position: relative;
+}
+
+.lexis-nav-btn:hover {
+  background: var(--lg-ink-06);
+  color: var(--lg-ink) !important;
+}
+
+.lexis-nav-btn.is-active {
+  background: var(--lg-hover);
+  color: var(--lg-ink) !important;
+  font-weight: 600;
+}
+
+.ln-icon {
+  font-size: 16px;
+  width: 18px;
+  text-align: center;
+}
+
+.ln-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ln-badge {
+  background: var(--lg-green-soft);
+  color: var(--lg-green);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.ln-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lg-green);
+}
+
+/* Recent Documents/Centers list */
+.lexis-recent-box {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--lg-line);
+}
+
+.lexis-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.lexis-recent-item {
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--lg-ink-60) !important;
+  text-align: left;
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.side-drawer-close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+.lexis-recent-item:hover {
+  background: var(--lg-ink-06);
+  color: var(--lg-ink) !important;
 }
 
-.side-drawer-content {
+.lri-icon {
+  font-size: 13px;
+}
+
+.lri-title {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.side-nav-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.side-section-heading {
-  font-family: 'DM Mono', monospace;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #728c7f;
-  padding: 0 10px;
-}
-
-.side-nav-links {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.side-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  position: relative;
-  color: #fff;
-}
-
-.side-nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateX(4px);
-}
-
-.side-nav-item.side-item-highlight {
-  background: linear-gradient(135deg, rgba(201, 232, 109, 0.12), rgba(201, 232, 109, 0.02));
-  border-color: rgba(201, 232, 109, 0.25);
-}
-
-.side-nav-item.side-item-highlight:hover {
-  background: linear-gradient(135deg, rgba(201, 232, 109, 0.22), rgba(201, 232, 109, 0.08));
-  border-color: rgba(201, 232, 109, 0.45);
-}
-
-.sni-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.sni-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.sni-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #f0f7f3;
-  margin-bottom: 2px;
-}
-
-.sni-desc {
-  font-size: 11.5px;
-  color: #9ab3a6;
-  line-height: 1.3;
-}
-
-.sni-pill {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px;
+.lri-status {
+  font-style: normal;
+  color: var(--lg-green);
+  font-size: 11px;
   font-weight: 800;
-  color: var(--ink);
-  background: var(--lime);
-  padding: 2px 7px;
-  border-radius: 8px;
-  letter-spacing: 0.5px;
 }
 
-.side-drawer-footer {
-  padding: 18px 20px;
-  background: #091713;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+/* Side Foot */
+.lexis-side-foot {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--lg-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.side-quick-stats {
-  font-size: 12px;
-  color: #92aca0;
+.lexis-foot-btn {
+  width: 100%;
+  height: 34px;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  line-height: 1.4;
+  gap: 9px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--lg-ink-60);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
 }
 
-.sqs-dot {
-  color: var(--lime);
+.lexis-foot-btn:hover {
+  background: var(--lg-hover);
+  color: var(--lg-ink);
+}
+
+.lfb-icon {
   font-size: 14px;
 }
 

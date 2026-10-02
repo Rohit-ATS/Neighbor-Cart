@@ -127,149 +127,177 @@ export default function Places({ onNavigateHome }) {
       )}
 
       {/* Floating Side Drawer Navigation */}
-      <aside className={`places-side-drawer ${sidebarOpen ? 'is-open' : ''}`} aria-label="Portal Navigation Menu">
-        <div className="side-drawer-header">
-          <div className="side-drawer-brand">
-            <span className="places-brand-mark"><i /><b /></span>
-            <div className="side-drawer-brand-copy">
-              <span className="side-brand-title">neighbor<b>cart</b></span>
-              <span className="side-brand-subtitle">Relief & Access Hubs</span>
+      <aside className={`places-side-drawer lexis-sidebar ${sidebarOpen ? 'is-open' : ''}`} aria-label="Workspace & Hubs Navigation">
+        {/* LexisGuide Brand Header */}
+        <div className="lexis-brand-row">
+          <div className="lexis-brand-left">
+            <button 
+              type="button" 
+              className="lexis-brand-mark" 
+              onClick={onNavigateHome}
+              title="Neighbor Cart Home"
+              aria-label="Neighbor Cart Home"
+            >
+              <svg viewBox="0 0 32 32" width="18" height="18">
+                <path d="M6 26C6 15 13 6 27 5c-1 13-9 21-21 21Z" fill="currentColor" />
+                <path d="M9 23c4-5 8-9 14-13" stroke="#fffaeb" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+              </svg>
+            </button>
+            <div className="lexis-brand-text">
+              <span className="lexis-brand-name">NeighborCart</span>
+              <span className="lexis-brand-sub">Food Access & Relief</span>
             </div>
           </div>
+
           <button 
             type="button" 
-            className="side-drawer-close-btn" 
+            className="lexis-icon-btn" 
             onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar menu"
+            aria-label="Close menu"
+            title="Close menu"
           >
             ✕
           </button>
         </div>
 
-        <div className="side-drawer-content">
-          <div className="side-nav-section">
-            <span className="side-section-heading">Smart Navigators</span>
-            <div className="side-nav-links">
-              <button 
-                type="button" 
-                className="side-nav-item side-item-highlight" 
-                onClick={() => { setShowAI(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">🤖</span>
-                <div className="sni-text">
-                  <span className="sni-title">Ask HarvestLink AI</span>
-                  <span className="sni-desc">Grounded answers & call-ahead advice</span>
-                </div>
-                <span className="sni-pill">AI</span>
-              </button>
+        {/* Primary Action Button (like LexisGuide 'Add document') */}
+        <button 
+          type="button" 
+          className="lexis-new-btn"
+          onClick={() => { setShowAI(true); setSidebarOpen(false); }}
+        >
+          <span className="lexis-new-icon">🤖</span>
+          <span>Ask HarvestLink AI</span>
+        </button>
 
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowIntake(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">📋</span>
-                <div className="sni-text">
-                  <span className="sni-title">Personalized Food Plan</span>
-                  <span className="sni-desc">Custom 3-step action roadmap</span>
-                </div>
-              </button>
-            </div>
+        {/* Navigation Groups */}
+        <nav className="lexis-nav">
+          <div className="lexis-nav-group">
+            <span className="lexis-rail-label">Resident Navigators</span>
+            <button 
+              type="button" 
+              className="lexis-nav-btn is-active" 
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="ln-icon">📍</span>
+              <span className="ln-label">Map & Directory</span>
+              <em className="ln-badge">{filteredPlaces.length}</em>
+            </button>
+
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowIntake(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">📋</span>
+              <span className="ln-label">Personalized Plan</span>
+            </button>
+
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowCommunity(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">📣</span>
+              <span className="ln-label">Community Feed</span>
+              <span className="ln-dot" />
+            </button>
           </div>
 
-          <div className="side-nav-section">
-            <span className="side-section-heading">Community & Volunteers</span>
-            <div className="side-nav-links">
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowCommunity(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">📣</span>
-                <div className="sni-text">
-                  <span className="sni-title">Community Feed</span>
-                  <span className="sni-desc">Pop-ups, distributions & urgent requests</span>
-                </div>
-              </button>
+          <div className="lexis-nav-group">
+            <span className="lexis-rail-label">Relief Network</span>
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowVolunteer(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">🤝</span>
+              <span className="ln-label">Volunteer Shifts</span>
+              <em className="ln-badge">4 open</em>
+            </button>
 
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowVolunteer(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">🤝</span>
-                <div className="sni-text">
-                  <span className="sni-title">Volunteer Network</span>
-                  <span className="sni-desc">Claim shifts, delivery routes & track hours</span>
-                </div>
-              </button>
-            </div>
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowRescue(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">🥦</span>
+              <span className="ln-label">Food Rescue Dispatch</span>
+            </button>
+
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowNonprofit(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">🏢</span>
+              <span className="ln-label">Nonprofit Portal</span>
+            </button>
           </div>
 
-          <div className="side-nav-section">
-            <span className="side-section-heading">Logistics & Partners</span>
-            <div className="side-nav-links">
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowRescue(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">🥦</span>
-                <div className="sni-text">
-                  <span className="sni-title">Food Rescue Dispatch</span>
-                  <span className="sni-desc">Match store surplus with cold-storage pantries</span>
-                </div>
-              </button>
+          <div className="lexis-nav-group">
+            <span className="lexis-rail-label">Governance & Data</span>
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowImpact(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">📊</span>
+              <span className="ln-label">Impact Dashboard</span>
+            </button>
 
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowNonprofit(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">🏢</span>
-                <div className="sni-text">
-                  <span className="sni-title">Nonprofit Portal</span>
-                  <span className="sni-desc">Broadcast needs, verify listings & export CSV</span>
-                </div>
-              </button>
-            </div>
+            <button 
+              type="button" 
+              className="lexis-nav-btn" 
+              onClick={() => { setShowAdmin(true); setSidebarOpen(false); }}
+            >
+              <span className="ln-icon">⚙️</span>
+              <span className="ln-label">Admin Verification</span>
+            </button>
           </div>
+        </nav>
 
-          <div className="side-nav-section">
-            <span className="side-section-heading">Transparency & Governance</span>
-            <div className="side-nav-links">
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowImpact(true); setSidebarOpen(false); }}
+        {/* Recent Places Section (Matching LexisGuide 'Recent documents') */}
+        <div className="lexis-recent-box">
+          <span className="lexis-rail-label">Featured Centers</span>
+          <div className="lexis-recent-list">
+            {PLACES.slice(0, 4).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="lexis-recent-item"
+                onClick={() => {
+                  setActivePlace(p);
+                  setSidebarOpen(false);
+                }}
+                title={p.name}
               >
-                <span className="sni-icon">📊</span>
-                <div className="sni-text">
-                  <span className="sni-title">Impact Dashboard</span>
-                  <span className="sni-desc">Nationwide meals delivered & ZIP demand</span>
-                </div>
+                <span className="lri-icon">{p.type === 'food-bank' ? '🥫' : p.type === 'hot-meal' ? '🍲' : '🧺'}</span>
+                <span className="lri-title">{p.name}</span>
+                <em className="lri-status">✓</em>
               </button>
-
-              <button 
-                type="button" 
-                className="side-nav-item" 
-                onClick={() => { setShowAdmin(true); setSidebarOpen(false); }}
-              >
-                <span className="sni-icon">⚙️</span>
-                <div className="sni-text">
-                  <span className="sni-title">Admin Directory</span>
-                  <span className="sni-desc">Review pending orgs & resolve accuracy flags</span>
-                </div>
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
-        <div className="side-drawer-footer">
-          <div className="side-quick-stats">
-            <span className="sqs-dot">●</span>
-            <span>Over <b>4,800+</b> verified food relief access points nationwide</span>
-          </div>
+        {/* Footer Settings & Exit (Matching LexisGuide side-foot) */}
+        <div className="lexis-side-foot">
+          <button 
+            type="button" 
+            className="lexis-foot-btn"
+            onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
+          >
+            <span className="lfb-icon">🌐</span>
+            <span>Language: <b>{language === 'en' ? 'English' : 'Español'}</b></span>
+          </button>
+          <button 
+            type="button" 
+            className="lexis-foot-btn"
+            onClick={onNavigateHome}
+          >
+            <span className="lfb-icon">←</span>
+            <span>Return to Landing</span>
+          </button>
         </div>
       </aside>
 
