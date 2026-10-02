@@ -137,7 +137,7 @@ function Counter({ to, suffix }) {
     return () => cancelAnimationFrame(frame);
   }, [inView, to, reduce]);
 
-  return <b ref={ref}>{n.toLocaleString()}{suffix}</b>;
+  return <b ref={ref}>{n.toLocaleString('en-US')}{suffix}</b>;
 }
 
 /* A muted, looping decorative clip. Kept out of the a11y tree, and skipped

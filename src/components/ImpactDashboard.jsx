@@ -20,24 +20,24 @@ export default function ImpactDashboard({ onClose }) {
         {/* Big Counter Stat Cards */}
         <div className="impact-counters-grid">
           <div className="ic-card">
-            <span className="ic-val">{m.residentsHelped.toLocaleString()}</span>
+            <span className="ic-val">{m.residentsHelped.toLocaleString('en-US')}</span>
             <span className="ic-label">Residents Connected to Food</span>
             <span className="ic-note">Zero paperwork or ID barriers</span>
           </div>
           <div className="ic-card">
-            <span className="ic-val">{m.poundsRescued.toLocaleString()} lbs</span>
+            <span className="ic-val">{m.poundsRescued.toLocaleString('en-US')} lbs</span>
             <span className="ic-label">Pounds of Surplus Rescued</span>
             <span className="ic-note">Diverted from food waste</span>
           </div>
           <div className="ic-card">
-            <span className="ic-val">{m.estimatedMeals.toLocaleString()}</span>
+            <span className="ic-val">{m.estimatedMeals.toLocaleString('en-US')}</span>
             <span className="ic-label">Nutritious Meals Delivered</span>
             <span className="ic-note">1.2 lbs per meal USDA standard</span>
           </div>
           <div className="ic-card">
-            <span className="ic-val">{m.volunteerHours.toLocaleString()} hrs</span>
+            <span className="ic-val">{m.volunteerHours.toLocaleString('en-US')} hrs</span>
             <span className="ic-label">Community Volunteer Hours</span>
-            <span className="ic-note">{m.volunteerShiftsFilled.toLocaleString()} shifts filled</span>
+            <span className="ic-note">{m.volunteerShiftsFilled.toLocaleString('en-US')} shifts filled</span>
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function ImpactDashboard({ onClose }) {
                   <div className="zip-bar-track">
                     <div className="zip-bar-fill" style={{ width: `${(z.requests / 8000) * 100}%` }} />
                   </div>
-                  <span className="zip-reqs">{z.requests.toLocaleString()} searches</span>
+                  <span className="zip-reqs">{z.requests.toLocaleString('en-US')} searches</span>
                 </div>
               ))}
             </div>
@@ -89,7 +89,7 @@ export default function ImpactDashboard({ onClose }) {
                 <span className="psb-label">Avg. Request to Recommendation</span>
               </div>
               <div className="psb-item">
-                <span className="psb-val">{m.successfulReferrals.toLocaleString()}</span>
+                <span className="psb-val">{m.successfulReferrals.toLocaleString('en-US')}</span>
                 <span className="psb-label">Successful Partner Referrals</span>
               </div>
             </div>
