@@ -33,6 +33,15 @@ def make_application():
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", mimetypes.guess_type(candidate.name)[0] or "application/octet-stream")
             self.send_header("Content-Length", str(len(content)))
+            # Vite fingerprints everything under /assets/, so those are safe to
+            # cache forever. index.html must not be, or a deploy never reaches
+            # anyone still holding the old one.
+            if requested.startswith("assets/"):
+                self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+            elif candidate.name == "index.html":
+                self.send_header("Cache-Control", "no-cache")
+            else:
+                self.send_header("Cache-Control", "public, max-age=86400")
             self.end_headers()
             self.wfile.write(content)
 
