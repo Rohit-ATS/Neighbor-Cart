@@ -33,7 +33,11 @@ by Git. Reset the local demo by stopping the API and deleting that file.
 The API is dependency-free Python 3.12 + SQLite and is designed around an
 anonymous, device-scoped pickup pass instead of an account or ID requirement.
 
-- `GET /api/v1/locations` — search/filter the seeded demo locations
+- `GET /api/v1/locations` — search/filter locations. Accepts `category`, `q`,
+  `reservable`, and `lat`/`lng` with optional `radiusKm` (default 40, max 500)
+  and `limit` (default 250, max 1000). With a point, results carry
+  `distanceKm`/`distanceMiles` and are sorted nearest first. The response is
+  `{ locations, total, returned }`.
 - `GET /api/v1/locations/:id` — location details and inventory snapshot
 - `GET /api/v1/locations/:id/availability?date=YYYY-MM-DD` — remaining capacity for each pickup window
 - `POST /api/v1/sessions` — issue a private, anonymous device session (the web client does this automatically)
@@ -68,6 +72,49 @@ proxy, set `NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES` to a comma-separated allowlis
 of proxy addresses only after confirming that proxy replaces `X-Forwarded-For`.
 Untrusted forwarding headers are ignored by default.
 
+### Real place data (OpenStreetMap)
+
+The 15 curated records in `src/data/places.js` are hand-written demo content.
+For a real nationwide directory, pull live data from OpenStreetMap:
+
+```bash
+npm run fetch:osm              # all 51 states/DC
+npm run fetch:osm CA NY TX     # just a few
+npm run fetch:osm -- --fresh   # ignore the cache
+```
+
+This writes `api/osm_places.json`, which the API seeds alongside the demo
+records (OSM ids are prefixed `osm-`, so the two sets never collide).
+
+**Why OpenStreetMap.** It is the only nationwide dataset of these places that
+is free, key-less, and licensed so the data may be stored and redistributed.
+Google Places, Yelp, and Foursquare all forbid persisting place records, and
+Feeding America has no public API.
+
+**Coverage is partial.** OSM is community-mapped, so density tracks local
+mapping activity, not need — Alabama returns 8 places, Arizona 38, California
+roughly 210. Expect a few thousand nationwide against the ~60,000 agencies in
+the Feeding America network. This is a real directory, not a complete one.
+
+**Nothing is invented.** Fields OSM does not carry — inventory, dietary
+options, languages, photos, reservation windows — stay empty, and every record
+is flagged `verifiedBadge: false` and rendered as a "Community listing". Where
+opening hours are missing the UI withholds any open/closed claim and shows a
+call-ahead warning instead, because a confident wrong answer sends someone on a
+wasted trip.
+
+**Attribution is required.** OSM data is ODbL-licensed. The Places page credits
+OpenStreetMap contributors whenever community listings are shown; keep that
+notice if you change the UI.
+
+**Running it.** The public Overpass endpoints are shared and rate-limited, so
+the script rotates mirrors, backs off on 429/504, and caches each state under
+`.cache/osm/`. A dense state that times out as one query is retried as a 3×3
+grid of tiles, with a second pass over any that fail. A state whose tiles still
+fail is reported rather than cached, so partial coverage never masquerades as
+complete. Re-running resumes from the cache, so an interrupted run is cheap to
+finish.
+
 ### Production Build
 ```bash
 npm run build
@@ -81,3 +128,15 @@ Pushing to `main` publishes the static React build through GitHub Actions at
 Python/SQLite API, so locations retain their checked-in demo snapshot there,
 while live reservations, AI navigation, and place enrichment require a
 separately deployed API.
+
+### Deployment
+
+`Dockerfile` builds the frontend, then serves it with `server.py` — not
+`api/app.py`, which exposes only `/api/*` and `/healthz` and returns
+`{"error":"Route not found"}` for every page request. `server.py` wraps the
+same API handler and adds the static bundle with SPA fallback and cache
+headers.
+
+The SQLite file lives on the container filesystem, so reservations reset on
+each deploy unless you attach a persistent disk and point
+`NEIGHBOR_CART_DB_PATH` at it.

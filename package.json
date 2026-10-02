@@ -12,7 +12,8 @@
     "seed:places": "node scripts/export-demo-places.mjs",
     "test:api": "python3 -m unittest discover -s api/tests -v",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fetch:osm": "node scripts/fetch-osm-places.mjs"
   },
   "dependencies": {
     "framer-motion": "^13.5.0",

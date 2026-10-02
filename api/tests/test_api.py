@@ -30,7 +30,12 @@ class ApiTests(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
-        self.temp_dir.cleanup()
+        if hasattr(self.server, "database"):
+            self.server.database.close()
+        try:
+            self.temp_dir.cleanup()
+        except Exception:
+            pass
 
     def request(self, method, path, payload=None, headers=None):
         connection = HTTPConnection("127.0.0.1", self.port, timeout=3)
@@ -408,6 +413,8 @@ class ApiTests(unittest.TestCase):
         constrained.shutdown()
         constrained.server_close()
         thread.join(timeout=2)
+        if hasattr(constrained, "database"):
+            constrained.database.close()
 
     @staticmethod
     def request_to_port(method, path, port):

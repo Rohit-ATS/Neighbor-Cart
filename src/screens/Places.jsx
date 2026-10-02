@@ -3,7 +3,7 @@ import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILIT
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
-import { listLocations, listReservations } from '../lib/api.js';
+import { currentPosition, listLocations, listReservations } from '../lib/api.js';
 import AiChat from '../components/AiChat.jsx';
 import ResidentIntakeModal from '../components/ResidentIntakeModal.jsx';
 import NonprofitDashboard from '../components/NonprofitDashboard.jsx';
@@ -18,6 +18,8 @@ export default function Places({ onNavigateHome }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [places, setPlaces] = useState(PLACES);
+  const [placesTotal, setPlacesTotal] = useState(PLACES.length);
+  const [userPosition, setUserPosition] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [reservationsOnly, setReservationsOnly] = useState(false);
@@ -48,9 +50,41 @@ export default function Places({ onNavigateHome }) {
   useEffect(() => { refreshReservations(); }, []);
 
   useEffect(() => {
-    listLocations().then(setPlaces).catch(() => {
-      // Keep the checked-in demo snapshot visible while a local API is starting.
-    });
+    let cancelled = false;
+
+    (async () => {
+      // Ask for coordinates first: the directory is nationwide, so without a
+      // centre the server can only send an arbitrary alphabetical slice. A
+      // denied or unavailable position just falls back to that slice.
+      const position = await currentPosition();
+      if (cancelled) return;
+
+      try {
+        const near = position
+          ? { ...position, radiusKm: 80, limit: 300 }
+          : { limit: 300 };
+        const { places: found, total } = await listLocations(near);
+        if (cancelled) return;
+
+        // An empty radius is worse than a wider net, so retry nationwide.
+        if (position && found.length === 0) {
+          const fallback = await listLocations({ limit: 300 });
+          if (cancelled) return;
+          setPlaces(fallback.places);
+          setPlacesTotal(fallback.total);
+          setUserPosition(null);
+          return;
+        }
+
+        setPlaces(found);
+        setPlacesTotal(total);
+        setUserPosition(position);
+      } catch {
+        // Keep the checked-in demo snapshot visible while a local API is starting.
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, []);
 
   const refreshReservations = async () => {
@@ -124,6 +158,11 @@ export default function Places({ onNavigateHome }) {
       return true;
     });
   }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
+
+  const verifiedCount = useMemo(
+    () => filteredPlaces.filter((place) => place.verifiedBadge).length,
+    [filteredPlaces],
+  );
 
   return (
     <div className={`places-workspace ${sidebarCollapsed ? 'is-collapsed' : ''} ${mobileMenuOpen ? 'has-mobile-drawer' : ''}`}>
@@ -472,7 +511,15 @@ export default function Places({ onNavigateHome }) {
             <div className="places-title-copy">
               <div className="badge-row">
                 <span className="places-badge">National Food Access & Relief Network</span>
-                <span className="places-live-count">{filteredPlaces.length} Verified Centers</span>
+                {/* Only staff-verified records may claim verification. OSM
+                    places are community-mapped, so the count is neutral and
+                    the verified subset is called out separately. */}
+                <span className="places-live-count">
+                  {filteredPlaces.length} Location{filteredPlaces.length === 1 ? '' : 's'}
+                  {userPosition && ' near you'}
+                  {placesTotal > places.length && ` · ${placesTotal.toLocaleString()} nationwide`}
+                  {verifiedCount > 0 && ` · ${verifiedCount} verified`}
+                </span>
                 {aiMatchIds && (
                   <button type="button" className="ai-match-banner" onClick={() => setAiMatchIds(null)}>
                     Showing {aiMatchIds.length} AI navigator matches · Clear ✕
@@ -716,24 +763,47 @@ export default function Places({ onNavigateHome }) {
                       onClick={() => setActivePlace(place)}
                     >
                       <div className="card-thumb-wrap">
-                        <img src={place.images[0]} alt={place.name} className="card-thumb-img" />
-                        <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
-                          {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
-                        </span>
+                        {/* Real directory records have no photo of their own.
+                            A monogram beats a broken-image icon. */}
+                        {place.images?.length ? (
+                          <img src={place.images[0]} alt="" className="card-thumb-img" />
+                        ) : (
+                          <span className="card-thumb-fallback" aria-hidden="true">
+                            {place.name.trim().charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        {/* Without hours we cannot claim open or closed. */}
+                        {place.hoursKnown !== false && (
+                          <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
+                            {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
+                          </span>
+                        )}
                         <span className="type-badge-float">{place.typeLabel.split(' ')[0]}</span>
                       </div>
 
                       <div className="card-info-wrap">
                         <div className="card-top-row">
-                          <span className="card-neighborhood">{place.city}, {place.state} ({place.neighborhood})</span>
-                          <span className="card-verified">✓ {place.verifiedDate}</span>
+                          <span className="card-neighborhood">
+                            {[place.city, place.state].filter(Boolean).join(', ')}
+                            {place.neighborhood ? ` (${place.neighborhood})` : ''}
+                            {typeof place.distanceMiles === 'number' && ` · ${place.distanceMiles} mi`}
+                          </span>
+                          {place.verifiedBadge ? (
+                            <span className="card-verified">✓ {place.verifiedDate}</span>
+                          ) : (
+                            <span className="card-unverified" title="Community-mapped from OpenStreetMap, not staff-verified">
+                              Community listing
+                            </span>
+                          )}
                         </div>
 
                         <h3 className="card-name" onClick={() => setActivePlace(place)}>
                           {place.name}
                         </h3>
 
-                        <p className="card-address">📍 {place.address}, {place.cityStateZip}</p>
+                        <p className="card-address">
+                          📍 {[place.address, place.cityStateZip].filter(Boolean).join(', ') || 'Address not listed'}
+                        </p>
                         <p className="card-hours">⏱ {place.hoursSummary}</p>
 
                         {/* Call ahead warning if present */}
@@ -743,7 +813,9 @@ export default function Places({ onNavigateHome }) {
                           </div>
                         )}
 
-                        {/* Top inventory teaser */}
+                        {/* Only shown when stock is actually reported — an
+                            empty "Available inventory" reads as "nothing here". */}
+                        {place.inventory?.length > 0 && (
                         <div className="card-inventory-teasers">
                           <span className="inv-teaser-label">Available inventory:</span>
                           <div className="inv-teaser-chips">
@@ -757,6 +829,7 @@ export default function Places({ onNavigateHome }) {
                             )}
                           </div>
                         </div>
+                        )}
 
                         {/* Card Action Buttons */}
                         <div className="card-actions-bar" onClick={(e) => e.stopPropagation()}>
@@ -805,6 +878,19 @@ export default function Places({ onNavigateHome }) {
             </div>
           </div>
         </div>
+
+        {/* ODbL requires attribution wherever the data is shown, and saying
+            where a listing came from is also how someone judges it. */}
+        {places.some((place) => place.dataSource === 'openstreetmap') && (
+          <p className="places-attribution">
+            Community listings come from{' '}
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer noopener">
+              OpenStreetMap
+            </a>{' '}
+            contributors, licensed under ODbL. They are mapped by volunteers rather than
+            confirmed by staff — call ahead before you travel.
+          </p>
+        )}
       </main>
       </>
       )}

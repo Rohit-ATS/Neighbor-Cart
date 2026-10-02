@@ -53,9 +53,37 @@ export async function listReservations() {
   return body.reservations;
 }
 
-export async function listLocations() {
-  const body = await request('/api/v1/locations', {}, false);
-  return body.locations;
+/**
+ * Locations, optionally near a point. The directory is nationwide, so an
+ * unfiltered call returns only the first page the server is willing to send —
+ * pass { lat, lng } to get the places someone can actually walk or drive to.
+ */
+export async function listLocations({ lat, lng, radiusKm, limit, category, q } = {}) {
+  const params = new URLSearchParams();
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    params.set('lat', String(lat));
+    params.set('lng', String(lng));
+  }
+  if (radiusKm) params.set('radiusKm', String(radiusKm));
+  if (limit) params.set('limit', String(limit));
+  if (category && category !== 'all') params.set('category', category);
+  if (q) params.set('q', q);
+
+  const suffix = params.toString() ? `?${params}` : '';
+  const body = await request(`/api/v1/locations${suffix}`, {}, false);
+  return { places: body.locations, total: body.total ?? body.locations.length };
+}
+
+/** The visitor's coordinates, or null when unavailable or declined. */
+export function currentPosition({ timeout = 8000 } = {}) {
+  if (!navigator.geolocation) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null), // denial is a normal outcome, not an error to surface
+      { timeout, maximumAge: 300_000 },
+    );
+  });
 }
 
 export async function getLocationAvailability(locationId, pickupDate) {

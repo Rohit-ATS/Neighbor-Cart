@@ -131,6 +131,8 @@ class Database:
         self.path = str(path)
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._local = threading.local()
+        self._connections: list[sqlite3.Connection] = []
+        self._conn_lock = threading.Lock()
         self._initialize()
 
     def connection(self) -> sqlite3.Connection:
@@ -141,7 +143,18 @@ class Database:
             connection.execute("PRAGMA foreign_keys = ON")
             connection.execute("PRAGMA busy_timeout = 5000")
             self._local.connection = connection
+            with self._conn_lock:
+                self._connections.append(connection)
         return connection
+
+    def close(self) -> None:
+        with self._conn_lock:
+            for conn in self._connections:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            self._connections.clear()
 
     def _initialize(self) -> None:
         connection = sqlite3.connect(self.path, timeout=5, isolation_level=None)
