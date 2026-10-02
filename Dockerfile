@@ -6,12 +6,13 @@ RUN npm ci
 COPY . ./
 RUN npm run build
 
-FROM node:24-alpine
+FROM python:3.12-alpine
 
 ENV PORT=8080
 WORKDIR /app
 COPY --from=build /app/dist/ ./dist/
-COPY server.js ./server.js
+COPY api/ ./api/
+COPY server.py ./server.py
 
 EXPOSE 8080
-CMD ["node", "server.js"]
+CMD ["python3", "server.py"]

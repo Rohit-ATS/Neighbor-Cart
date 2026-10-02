@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:api": "python3 -m api.app",
+    "seed:places": "node scripts/export-demo-places.mjs",
+    "test:api": "python3 -m unittest discover -s api/tests -v",
     "build": "vite build",
     "preview": "vite preview"
   },

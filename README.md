@@ -18,8 +18,26 @@ Food support that stays with you. Neighbor Cart connects individuals and familie
 ### Development
 ```bash
 npm install
-npm run dev
+npm run seed:places
+npm run dev:api # terminal 1: local SQLite API on :8080
+npm run dev     # terminal 2: Vite frontend on :5173
 ```
+
+The Vite development server proxies `/api` requests to the local API. The
+SQLite file is created at `data/neighbor-cart.db` and is intentionally ignored
+by Git. Reset the local demo by stopping the API and deleting that file.
+
+### Local API
+
+The API is dependency-free Python 3.12 + SQLite and is designed around an
+anonymous, device-scoped pickup pass instead of an account or ID requirement.
+
+- `GET /api/v1/locations` — search/filter the seeded demo locations
+- `GET /api/v1/locations/:id` — location details and inventory snapshot
+- `POST /api/v1/reservations` — create an idempotent pickup pass
+- `GET /api/v1/reservations` — passes for the current anonymous device
+
+Run its integration suite with `npm run test:api`.
 
 ### Production Build
 ```bash

@@ -2076,6 +2076,13 @@ h2 em {
   margin-top: 10px;
 }
 
+.form-error {
+  margin: 0;
+  color: #a12828;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .btn-primary {
   flex: 1;
   background: var(--orange);

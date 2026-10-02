@@ -2,6 +2,7 @@
 node_modules/
 dist/
 __pycache__/
+data/
 
 # secrets: never commit real keys (see .env.example for the names)
 .env

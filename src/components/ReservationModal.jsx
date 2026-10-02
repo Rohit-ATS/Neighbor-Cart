@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createReservation } from '../lib/api.js';
 
 export default function ReservationModal({ place, onClose, onReservationConfirmed }) {
   const [step, setStep] = useState('form'); // 'form' | 'confirmed'
@@ -19,6 +20,8 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [confirmedPass, setConfirmedPass] = useState(null);
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleDiet = (item) => {
     setDietary((prev) => 
@@ -26,34 +29,29 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const confCode = 'NC-' + Math.floor(10000 + Math.random() * 90000);
-    const pass = {
-      code: confCode,
-      placeId: place.id,
-      placeName: place.name,
-      address: place.address + ', ' + place.cityStateZip,
-      date,
-      timeSlot,
-      householdSize,
-      dietary,
-      needsCurbside,
-      name: name.trim() || 'Neighbor Guest',
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save to localStorage
+    setSubmitError('');
+    setIsSubmitting(true);
     try {
-      const existing = JSON.parse(localStorage.getItem('nc_reservations') || '[]');
-      localStorage.setItem('nc_reservations', JSON.stringify([pass, ...existing]));
-    } catch {
-      // ignore storage error
+      const pass = await createReservation({
+        locationId: place.id,
+        pickupDate: date,
+        timeSlot,
+        householdSize,
+        dietary,
+        needsCurbside,
+        guestName: name,
+        contact,
+      });
+      setConfirmedPass(pass);
+      setStep('confirmed');
+      onReservationConfirmed?.(pass);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setConfirmedPass(pass);
-    setStep('confirmed');
-    onReservationConfirmed?.(pass);
   };
 
   return (
@@ -177,8 +175,11 @@ export default function ReservationModal({ place, onClose, onReservationConfirme
 
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn-primary">Confirm Free Reservation</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating your pass…' : 'Confirm Free Reservation'}
+                </button>
               </div>
+              {submitError && <p className="form-error" role="alert">{submitError}</p>}
             </form>
           </div>
         ) : (

@@ -3,9 +3,11 @@ import { PLACES, PLACE_CATEGORIES, getIsOpenNow } from '../data/places.js';
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
+import { listLocations, listReservations } from '../lib/api.js';
 
 export default function Places({ onNavigateHome }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [places, setPlaces] = useState(PLACES);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [reservationsOnly, setReservationsOnly] = useState(false);
@@ -15,26 +17,25 @@ export default function Places({ onNavigateHome }) {
   const [savedReservations, setSavedReservations] = useState([]);
   const [showMyPasses, setShowMyPasses] = useState(false);
 
+  useEffect(() => { refreshReservations(); }, []);
+
   useEffect(() => {
-    try {
-      const res = JSON.parse(localStorage.getItem('nc_reservations') || '[]');
-      setSavedReservations(res);
-    } catch {
-      // ignore
-    }
+    listLocations().then(setPlaces).catch(() => {
+      // Keep the checked-in demo snapshot visible while a local API is starting.
+    });
   }, []);
 
-  const refreshReservations = () => {
+  const refreshReservations = async () => {
     try {
-      const res = JSON.parse(localStorage.getItem('nc_reservations') || '[]');
-      setSavedReservations(res);
+      setSavedReservations(await listReservations());
     } catch {
-      // ignore
+      // Reservations remain unavailable rather than silently falling back to browser storage.
+      setSavedReservations([]);
     }
   };
 
   const filteredPlaces = useMemo(() => {
-    return PLACES.filter((place) => {
+    return places.filter((place) => {
       // Category filter
       if (selectedCategory !== 'all' && place.type !== selectedCategory) {
         return false;
@@ -65,7 +66,7 @@ export default function Places({ onNavigateHome }) {
 
       return true;
     });
-  }, [searchQuery, selectedCategory, openNowOnly, reservationsOnly]);
+  }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly]);
 
   return (
     <div className="places-page-shell">
@@ -346,7 +347,7 @@ export default function Places({ onNavigateHome }) {
             <button className="modal-close" onClick={() => setShowMyPasses(false)}>×</button>
             <div className="passes-header">
               <h2>Your Active Pickup Passes</h2>
-              <p>Stored locally on this device. Show upon arrival for rapid, discreet pickup.</p>
+              <p>Saved for this browser on the local Neighbor Cart service. Show upon arrival for rapid, discreet pickup.</p>
             </div>
             
             <div className="passes-list">
