@@ -5,7 +5,8 @@ import { PLACES, PRODUCTS, SERVICE_AREA, byId } from '../data/catalog.js';
 import PlaceCard from '../components/PlaceCard.jsx';
 import MapView from '../components/MapView.jsx';
 import FoodArt from '../components/FoodArt.jsx';
-import { Icon, SafetyNote, SectionHead, Tag } from '../components/ui.jsx';
+import { Button, Icon, SafetyNote, SectionHead, Tag } from '../components/ui.jsx';
+import AskBar from '../components/AskBar.jsx';
 
 const PROMPTS = [
   'What is safe for my peanut allergy?',
@@ -44,28 +45,7 @@ export default function Dashboard() {
           <p className="mono command-eyebrow">{profile.city} · within {profile.distance} miles</p>
           <h1>{greeting()}, {profile.name}. <em className="serif">What sounds good?</em></h1>
 
-          <form
-            className="ask"
-            onSubmit={(e) => { e.preventDefault(); submit(); }}
-            role="search"
-          >
-            <Icon name="search" size={28} />
-            <input
-              value={ask}
-              onChange={(e) => setAsk(e.target.value)}
-              placeholder="Search a dish, store or tag"
-              aria-label="Search for a dish, store, or tag"
-            />
-            <button className="sr-only" type="submit">Search</button>
-          </form>
-
-          <ul className="prompt-chips">
-            {PROMPTS.map((p) => (
-              <li key={p}>
-                <button type="button" className="prompt-chip" onClick={() => submit(p)}>{p}</button>
-              </li>
-            ))}
-          </ul>
+          <AskBar chips={PROMPTS} onSubmit={submit} />
         </section>
 
         <section className="insight-row">

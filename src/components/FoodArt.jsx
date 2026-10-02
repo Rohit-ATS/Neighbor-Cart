@@ -78,13 +78,13 @@ const ART = {
   storefront: (
     <>
       <rect x="34" y="70" width="132" height="86" rx="10" fill="#e9e1d4" />
-      <path d="M34 70h132l-10-22H44Z" fill="#2b5247" />
+      <path d="M34 70h132l-10-22H44Z" fill="#00674f" />
       <g fill="#d4603c">
         <path d="M44 48h22l-4 22H40Z" /><path d="M88 48h22l-2 22H86Z" /><path d="M132 48h22l6 22h-24Z" />
       </g>
       <rect x="52" y="92" width="42" height="36" rx="6" fill="#fffdf9" />
       <rect x="106" y="92" width="42" height="36" rx="6" fill="#fffdf9" />
-      <rect x="82" y="132" width="36" height="24" rx="4" fill="#2b5247" />
+      <rect x="82" y="132" width="36" height="24" rx="4" fill="#00674f" />
       <circle cx="73" cy="110" r="9" fill="#5a9a4c" />
       <circle cx="127" cy="110" r="9" fill="#f3c73f" />
     </>
@@ -129,8 +129,8 @@ const ART = {
       <path d="M70 142h30l-16 22Z" fill="#fffdf9" />
       <rect x="54" y="80" width="78" height="9" rx="4.5" fill="#d9e3da" />
       <rect x="54" y="98" width="56" height="9" rx="4.5" fill="#d9e3da" />
-      <circle cx="140" cy="104" r="14" fill="#c9e86d" />
-      <path d="M140 96v16M132 104h16" stroke="#14312a" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="140" cy="104" r="14" fill="#d9e7da" />
+      <path d="M140 96v16M132 104h16" stroke="#00674f" strokeWidth="3" strokeLinecap="round" />
     </>
   ),
 };
@@ -142,13 +142,13 @@ export default function FoodArt({ art, className = '', rounded = true }) {
       <svg viewBox="0 0 200 200" role="presentation" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id={`fa-${art}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#fffdf9" />
-            <stop offset="1" stopColor="#f1ebe0" />
+            <stop offset="0" stopColor="#fffdf5" />
+            <stop offset="1" stopColor="#f1ebda" />
           </linearGradient>
         </defs>
         <rect width="200" height="200" fill={`url(#fa-${art})`} />
-        <circle cx="152" cy="52" r="46" fill="#e4f0d6" opacity=".7" />
-        <circle cx="44" cy="160" r="38" fill="#fae7dd" opacity=".7" />
+        <circle cx="152" cy="52" r="46" fill="#e8f1e6" opacity=".75" />
+        <circle cx="44" cy="160" r="38" fill="#f6e3dc" opacity=".75" />
         {content}
       </svg>
     </div>

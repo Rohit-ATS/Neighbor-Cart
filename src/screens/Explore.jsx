@@ -42,8 +42,9 @@ export default function Explore() {
       <div className="shell">
         <header className="explore-head">
           <div>
-            <p className="mono">Explore</p>
-            <h1>Food near <em className="serif">{profile.city}</em></h1>
+            <p className="mono">Food finder · {profile.city}</p>
+            <h1>Explore food near you</h1>
+            <p className="page-sub">Find nearby meals, groceries, and pantry-friendly options that work with your needs.</p>
           </div>
           <form className="explore-search" role="search" onSubmit={(e) => e.preventDefault()}>
             <Icon name="search" size={18} />
@@ -75,31 +76,39 @@ export default function Explore() {
           </label>
         </div>
 
-        <MapView
-          label="Map of results"
-          boundary={SERVICE_AREA}
-          points={results}
-          activeId={activeId}
-          radiusM={800}
-          onSelect={setActiveId}
-          className="explore-map"
-        />
-
-        <p className="result-count" aria-live="polite">
-          {results.length} {results.length === 1 ? 'result' : 'results'} within {maxDistance} miles
-        </p>
-
-        {results.length ? (
-          <div className="card-grid">
-            {results.map((item) => <PlaceCard key={item.id} item={item} />)}
+        <section className="explore-workspace" aria-label="Food finder results">
+          <div className="explore-results">
+            <div className="explore-results-head">
+              <p className="result-count" aria-live="polite">
+                <b>{results.length}</b> {results.length === 1 ? 'place found' : 'places found'}
+              </p>
+              <span>Closest first</span>
+            </div>
+            {results.length ? (
+              <div className="explore-list">
+                {results.map((item) => <PlaceCard key={item.id} item={item} compact />)}
+              </div>
+            ) : (
+              <EmptyState
+                title="Nothing matches those filters"
+                body="Try widening the distance or clearing a tag."
+                action={<Button variant="primary" size="md" onClick={reset}>Reset filters</Button>}
+              />
+            )}
           </div>
-        ) : (
-          <EmptyState
-            title="Nothing matches those filters"
-            body="Try widening the distance or clearing a tag — your profile still applies to everything we show."
-            action={<Button variant="primary" size="md" onClick={reset}>Reset filters</Button>}
-          />
-        )}
+          <div className="explore-map-panel">
+            <MapView
+              label="Map of results"
+              boundary={SERVICE_AREA}
+              points={results}
+              activeId={activeId}
+              radiusM={800}
+              onSelect={setActiveId}
+              className="explore-map"
+            />
+            <div className="map-note"><Icon name="pin" size={15} />Showing options within {maxDistance} miles</div>
+          </div>
+        </section>
 
         <SafetyNote>
           Allergen labels reflect what each provider publishes. Where nothing is published we say so,

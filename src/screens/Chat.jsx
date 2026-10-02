@@ -232,22 +232,10 @@ export default function Chat({ query }) {
           )}
         </div>
 
-        <form className="chat-input" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-          <span className="guide-orb" aria-hidden="true"><Icon name="spark" size={17} /></span>
-          <div className="chat-entry">
-            <span className="entry-label">Ask Nourish</span>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about a food, ingredient, craving, or nearby option…"
-              aria-label="Message the AI Food Guide"
-            />
-          </div>
-          <span className="enter-hint" aria-hidden="true">↵</span>
-          <button type="submit" className="send-btn" aria-label="Send question" disabled={pending || !input.trim()}>
-            <Icon name="send" size={18} />
-          </button>
-        </form>
+        <AskBar
+          chips={['What should I ask when I call?', 'Only peanut-free kitchens', 'Something under $15']}
+          onSubmit={send}
+        />
         <p className="chat-foot">
           Neighbor Cart provides food information, not medical advice. Always verify allergens with the provider.
         </p>
