@@ -7,6 +7,7 @@ import AiMiniMap from './AiMiniMap.jsx';
 import LocationButton from './LocationButton.jsx';
 import { getSectionKnowledge } from '../lib/pageContext.js';
 import { classifyMessage, mergeNeeds } from '../lib/needs.js';
+import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts } from '../lib/residentProfile.js';
 
 /* The conversation itself.
 
@@ -83,10 +84,19 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       return [];
     }
   });
+  const [residentProfile, setResidentProfile] = useState(() => getResidentProfile());
 
   useEffect(() => {
     sessionStorage.setItem('harvestlink-ai-needs-v2', JSON.stringify(rememberedNeeds));
   }, [rememberedNeeds]);
+
+  // The intake can remain open beside the navigator. Listen for its save event
+  // so the next message immediately uses the newly completed profile.
+  useEffect(() => {
+    const updateProfile = (event) => setResidentProfile(event.detail || getResidentProfile());
+    window.addEventListener(RESIDENT_PROFILE_EVENT, updateProfile);
+    return () => window.removeEventListener(RESIDENT_PROFILE_EVENT, updateProfile);
+  }, []);
 
 
   // Land on the top of the newest answer rather than the bottom of the thread,
@@ -119,7 +129,9 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     /* Read the message before answering it: only recognized facts are kept,
        and an unreadable line is handled here rather than filed and forwarded. */
     const reading = classifyMessage(question);
-    const nextNeeds = reading.facts.length > 0 ? mergeNeeds(rememberedNeeds, reading.facts) : rememberedNeeds;
+    const profileFacts = residentProfileFacts(residentProfile);
+    const memoryWithProfile = mergeNeeds(rememberedNeeds, profileFacts);
+    const nextNeeds = reading.facts.length > 0 ? mergeNeeds(memoryWithProfile, reading.facts) : memoryWithProfile;
     const nextLabels = nextNeeds.map((need) => need.label);
 
     setMessages((prev) => [...prev, { sender: 'user', text: question, timestamp: clockTime() }]);
@@ -145,6 +157,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         catalog: verifiedCatalog,
         memory: nextLabels,
         context: section?.summary || '',
+        residentProfile,
       });
       const citations = (answer.placeIds || [])
         .map((placeId) => PLACES.find((place) => place.id === placeId))
@@ -172,7 +185,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     } catch {
       // The verified local matcher keeps the navigator useful if Bedrock is
       // temporarily unavailable or the server has not yet received an IAM role.
-      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading)]);
+      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading, residentProfile)]);
     } finally {
       setIsThinking(false);
     }
@@ -204,7 +217,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     }]);
   };
 
-  const groundedAnswer = (query, needs = rememberedNeeds, reading = classifyMessage(query)) => {
+  const groundedAnswer = (query, needs = rememberedNeeds, reading = classifyMessage(query), profile = residentProfile) => {
     const lower = [...needs.map((need) => need.label), query].join(' ').toLowerCase();  // everything we know so far
     const nowTime = clockTime();
 
@@ -249,6 +262,13 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
        requirement shared three messages ago should narrow an answer, never
        decide which question is being answered. */
     const matchFor = (text) => {
+      const zipMatch = text.match(/\b(\d{5})(?:-\d{4})?\b/);
+      if (zipMatch) {
+        const places = PLACES.filter((place) => place.zip === zipMatch[1]);
+        if (places.length > 0) {
+          return { places, reasoning: `Here are verified food-access locations serving ZIP ${zipMatch[1]}:` };
+        }
+      }
       if (text.includes('open right now') || text.includes('open now') || text.includes('open today')) {
         const places = PLACES.filter((place) => getIsOpenNow(place).isOpen);
         return { places, reasoning: `I found ${places.length} verified ${places.length === 1 ? 'location' : 'locations'} open right now based on published hours.` };
@@ -340,7 +360,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     }
 
     if (matchedPlaces.length === 0) {
-      if (!hasLocation(query)) {
+      if (!hasLocation(query) && !profile?.location) {
         return {
           sender: 'ai',
           text: 'I can help with that. I’ve noted what you told me, and I’ll look for places with published accommodation information. What city or ZIP code should I search near? You can also share your location and I’ll sort everything by how far it is.',

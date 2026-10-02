@@ -4638,6 +4638,10 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .askbar textarea:focus { outline: none; }
 .askbar textarea::placeholder { color: var(--ink-45); }
 
+/* Give the active composer a comfortable multi-line writing area instead of
+   leaving a single-line field above the prompt suggestions. */
+.askbar.is-open textarea { min-height: 72px; }
+
 .askbar-send {
   flex: none;
   display: grid;

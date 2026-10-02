@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { PLACES } from '../data/places.js';
+import { saveResidentProfile } from '../lib/residentProfile.js';
 
 export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en' }) {
   const [step, setStep] = useState('questions'); // 'questions' | 'plan' | 'referral'
   const [zip, setZip] = useState('50309');
+  const [address, setAddress] = useState('');
   const [householdSize, setHouseholdSize] = useState('2-3 people');
   const [urgency, setUrgency] = useState('today'); // 'today' | 'this-week' | 'ongoing'
   const [transit, setTransit] = useState('car'); // 'car' | 'transit' | 'walk' | 'delivery'
@@ -21,6 +23,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       sub: 'Answer 4 quick questions to receive a custom food assistance plan matched to your schedule, diet, and transit.',
       privacy: '🔒 100% confidential. No ID or paperwork required.',
       q1: 'ZIP Code or City',
+      address: 'Street address or neighborhood (optional)',
       q2: 'Household Size',
       q3: 'When do you need food?',
       today: 'Immediately today (Within 24 hours)',
@@ -46,6 +49,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       sub: 'Responda 4 preguntas para recibir un plan de alimentos adaptado a su horario, dieta y transporte.',
       privacy: '🔒 100% confidencial. No se requiere identificación ni documentos.',
       q1: 'Código Postal o Ciudad',
+      address: 'Dirección o vecindario (opcional)',
       q2: 'Tamaño del Hogar',
       q3: '¿Cuándo necesita alimentos?',
       today: 'Inmediatamente hoy (En 24 horas)',
@@ -131,6 +135,19 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       bulkPlace: bulkMatch
     };
 
+    // Keep this profile only for the current browser session. The AI reads it
+    // automatically for later questions, so residents do not need to repeat
+    // their location, household, transport, or food requirements.
+    saveResidentProfile({
+      location: zip,
+      address,
+      householdSize,
+      urgency: urgency === 'today' ? 'Needs food today' : urgency === 'this-week' ? 'Needs food this week' : 'Ongoing monthly food support',
+      transportation: transit === 'car' ? 'Personal car / drive-thru' : transit === 'transit' ? 'Public transit' : transit === 'walk' ? 'Walking / nearby only' : 'Home delivery needed',
+      dietary: generated.dietary,
+      otherNeed,
+    });
+
     setPlanResult(generated);
     setStep('plan');
 
@@ -209,6 +226,18 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
                       <option value="6+ people">6+ people</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{text.address}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="e.g. 123 Main St or Northside neighborhood"
+                    autoComplete="street-address"
+                  />
                 </div>
 
                 <div className="form-group">

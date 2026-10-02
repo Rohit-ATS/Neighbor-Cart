@@ -734,12 +734,39 @@ def clean_ai_context(value: object) -> str:
     return value.strip()[:600]
 
 
+def clean_ai_resident_profile(value: object) -> dict:
+    """Allow a small, explicitly saved intake profile into the AI context.
+
+    This is a one-turn personalization hint, not an account record. Each field
+    is capped independently and unknown fields are discarded.
+    """
+    if not isinstance(value, dict):
+        return {}
+    cleaned = {}
+    for key, limit in {
+        "location": 160,
+        "address": 180,
+        "householdSize": 48,
+        "urgency": 48,
+        "transportation": 48,
+        "otherNeed": 500,
+    }.items():
+        item = value.get(key)
+        if isinstance(item, str) and item.strip():
+            cleaned[key] = item.strip()[:limit]
+    dietary = value.get("dietary")
+    if isinstance(dietary, list):
+        cleaned["dietary"] = [item.strip()[:96] for item in dietary[:12] if isinstance(item, str) and item.strip()]
+    return cleaned
+
+
 def bedrock_chat(payload: dict) -> dict:
     """Call Converse server-side and accept only catalog IDs in the response."""
     message = ai_text(payload.get("message"), "message", AI_MAX_MESSAGE)
     catalog = clean_ai_catalog(payload.get("catalog"))
     memory = clean_ai_memory(payload.get("memory"))
     page_context = clean_ai_context(payload.get("context"))
+    resident_profile = clean_ai_resident_profile(payload.get("residentProfile"))
     valid_ids = {place["id"] for place in catalog}
     if not catalog:
         raise ApiError(HTTPStatus.BAD_REQUEST, "catalog must contain at least one verified location")
@@ -765,6 +792,13 @@ def bedrock_chat(payload: dict) -> dict:
         + "\n\nCUSTOMER_REQUIREMENTS_MEMORY (use these conditions together with the newest message):\n"
         + json.dumps(memory, separators=(",", ":"))
     )
+    if resident_profile:
+        system += (
+            "\n\nCUSTOMER_INTAKE_PROFILE (the customer explicitly saved these details for personalized help). "
+            "Use the location, household, timing, transportation, and dietary details to tailor your answer. "
+            "Do not repeat a street address back to the customer or claim an exact travel distance; use the city, ZIP, or neighborhood to guide matching instead:\n"
+            + json.dumps(resident_profile, separators=(",", ":"))
+        )
     if page_context:
         # Where on the site the question came from. It answers "what is this?"
         # and nothing more: it never licenses a place that is not in the catalog.
