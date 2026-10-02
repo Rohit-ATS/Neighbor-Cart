@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PLACES, getIsOpenNow } from '../data/places.js';
+import AskBar from './AskBar.jsx';
 
 export default function HarvestLinkAI({ onClose, onSelectPlace }) {
   const [messages, setMessages] = useState([
@@ -10,7 +11,6 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
       timestamp: 'Just now'
     }
   ]);
-  const [inputQuery, setInputQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
 
   const sampleQuestions = [
@@ -22,7 +22,7 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
   ];
 
   const handleAsk = (queryText) => {
-    const q = (queryText || inputQuery).trim();
+    const q = (queryText || '').trim();
     if (!q) return;
 
     const userMsg = {
@@ -32,7 +32,6 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputQuery('');
     setIsThinking(true);
 
     setTimeout(() => {
@@ -231,42 +230,14 @@ export default function HarvestLinkAI({ onClose, onSelectPlace }) {
           )}
         </div>
 
-        {/* Quick prompt suggestions */}
-        <div className="ai-prompt-chips">
-          <span className="prompt-chips-label">Try asking:</span>
-          <div className="chips-strip">
-            {sampleQuestions.map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                className="ai-chip-btn"
-                onClick={() => handleAsk(q)}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Input box */}
-        <form 
-          className="ai-input-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAsk();
-          }}
-        >
-          <input
-            type="text"
-            className="ai-input-field"
-            placeholder="Ask anything (e.g. 'Where can I get Halal produce without an ID?')..."
-            value={inputQuery}
-            onChange={(e) => setInputQuery(e.target.value)}
-          />
-          <button type="submit" className="ai-send-btn" disabled={!inputQuery.trim() || isThinking}>
-            Send
-          </button>
-        </form>
+        {/* Composer: springs open on focus, suggestions ride in its tray */}
+        <AskBar
+          placeholder="Ask anything (e.g. 'Where can I get Halal produce without an ID?')…"
+          chips={sampleQuestions}
+          onSubmit={handleAsk}
+          disabled={isThinking}
+        />
       </div>
     </div>
   );

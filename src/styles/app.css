@@ -1,18 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&display=swap');
 
 :root {
-  --ink: #18352d;
-  --cream: #fbf6ee;
-  --orange: #f46b42;
-  --lime: #c9e86d;
-  --yellow: #f8c849;
-  --muted: #64736b;
-  --surface: #ffffff;
-  --border: #e8e1d5;
-  --border-light: #f0eae0;
-  --bg-sand: #f4efd6;
-  --dark-green: #1c3b32;
-  --tag-bg: rgba(201, 232, 109, 0.22);
+  /* LexisGuide palette: warm paper, near-black ink, one deep green accent */
+  --ink: #1b1c14;
+  --cream: #f6f4ee;
+  --paper: #f6f4ee;
+  --panel: #fffdf5;
+  --panel-2: #faf7ee;
+  --orange: #b4412f;
+  --lime: #00674f;
+  --mint: #d9e7da;
+  --mint-soft: #e8f1e6;
+  --amber: #a86a12;
+  --amber-soft: #f7edd6;
+  --yellow: #a86a12;
+  --muted: rgba(27, 28, 20, .6);
+  --ink-45: rgba(27, 28, 20, .45);
+  --surface: #fffdf5;
+  --border: rgba(27, 28, 20, .12);
+  --border-light: rgba(27, 28, 20, .07);
+  --bg-sand: #f1ebda;
+  --dark-green: #1b1c14;
+  --tag-bg: rgba(0, 103, 79, .1);
+  --green: #00674f;
+  --green-deep: #00523f;
 }
 
 * {
@@ -25,9 +36,11 @@ html {
 
 body {
   margin: 0;
-  background: #d9ece2;
+  background: var(--paper);
   color: var(--ink);
-  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15.5px;
+  line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -3755,3 +3768,262 @@ h2 em {
     padding: 20px;
   }
 }
+
+/* ==========================================================================
+   LEXISGUIDE DESIGN LAYER
+   Light serif display, Inter body, near-black pill actions, paper surfaces.
+   Appended last so it settles the look without unpicking the rules above.
+   ========================================================================== */
+
+h1, h2, h3,
+.landing-hero h1,
+.section-title,
+.ai-title {
+  font-family: Newsreader, 'Iowan Old Style', Georgia, serif !important;
+  font-weight: 400 !important;
+  letter-spacing: -.035em !important;
+  line-height: 1.02;
+  color: var(--ink);
+}
+h1 { font-size: clamp(42px, 5.4vw, 64px); }
+h2 { font-size: clamp(30px, 3.8vw, 46px); }
+h3 { font-size: clamp(19px, 1.6vw, 23px); line-height: 1.2; }
+
+/* italic serif is the emphasis voice, not a second colour */
+h1 em, h2 em, h3 em, .serif {
+  font-family: Newsreader, Georgia, serif !important;
+  font-style: italic;
+  font-weight: 400 !important;
+  color: var(--green);
+}
+
+/* small caps labels */
+.eyebrow, .mono, .section-label, .kicker {
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-size: 11px !important;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-serif; }
+.lede, .hero-sub, .section-sub { color: var(--muted); font-size: 17px; line-height: 1.55; }
+
+/* ---- actions: near-black pills ---- */
+.button,
+.button.small,
+.nav-actions .button,
+.ai-send-btn,
+.cta-button,
+.primary-btn {
+  background: var(--ink);
+  color: var(--panel);
+  border-radius: 999px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  box-shadow: 0 8px 22px rgba(27, 28, 20, .16);
+  transition: background .18s cubic-bezier(.22, .9, .3, 1), transform .18s cubic-bezier(.22, .9, .3, 1);
+}
+.button:hover,
+.ai-send-btn:hover,
+.cta-button:hover { background: #2c2e22; transform: translateY(-1px); }
+.button:active { transform: scale(.97); }
+
+.button.secondary,
+.button.ghost,
+.feature-link-btn,
+.nav-link-btn {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: none;
+  font-weight: 500;
+}
+.nav-link-btn:hover, .feature-link-btn:hover { color: var(--green-deep); }
+
+/* ---- surfaces: cream panels with a hairline ---- */
+.card,
+.feature-card,
+.place-card,
+.info-card,
+.stat-card,
+.panel,
+.modal-content,
+.hub-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(27, 28, 20, .04), 0 6px 16px rgba(27, 28, 20, .04);
+}
+
+.page-shell { background: var(--paper); }
+.topbar, .site-header { background: var(--panel); border-bottom: 1px solid var(--border); }
+
+/* ---- the hero, centred the way Lexis sets it ---- */
+.landing-hero, .hero {
+  text-align: center;
+}
+.landing-hero .hero-inner,
+.hero .hero-inner,
+.hero-copy {
+  margin-inline: auto;
+  display: grid;
+  justify-items: center;
+}
+.landing-hero h1, .hero h1 { max-width: 17ch; margin-inline: auto; }
+.lede, .hero-sub { max-width: 54ch; margin-inline: auto; }
+
+/* muted icon row that sits under the hero CTA */
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 28px;
+  margin-top: 30px;
+  list-style: none;
+  padding: 0;
+}
+.hero-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-45);
+}
+
+/* ---- the composer ---- */
+
+.askbar {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 10px 10px 10px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 1px 2px rgba(27, 28, 20, .04), 0 6px 16px rgba(27, 28, 20, .04);
+  transition: border-color .22s cubic-bezier(.22, .9, .3, 1),
+              box-shadow .22s cubic-bezier(.22, .9, .3, 1),
+              max-width .3s cubic-bezier(.22, .9, .3, 1);
+}
+.askbar.is-open {
+  max-width: 760px;
+  border-color: rgba(0, 103, 79, .34);
+  box-shadow: 0 2px 8px rgba(27, 28, 20, .05), 0 22px 46px rgba(27, 28, 20, .1);
+}
+
+.askbar-main { display: flex; align-items: flex-start; gap: 12px; }
+.askbar-mark { flex: none; margin-top: 7px; color: var(--green); }
+
+.askbar textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 25px;
+  color: var(--ink);
+  resize: none;
+  overflow-y: auto;
+}
+.askbar textarea:focus { outline: none; }
+.askbar textarea::placeholder { color: var(--ink-45); }
+
+.askbar-send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--panel);
+  box-shadow: none;
+  transition: background .18s ease, transform .18s cubic-bezier(.2, 1.4, .4, 1);
+}
+.askbar-send:hover:not(:disabled) { background: #2c2e22; transform: scale(1.05); }
+.askbar-send:disabled { background: rgba(27, 28, 20, .12); color: var(--ink-45); cursor: not-allowed; }
+
+.askbar-tray { overflow: hidden; }
+.askbar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 0 0;
+  margin: 0;
+  list-style: none;
+}
+.askbar-chip {
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-family: Inter, sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: border-color .16s ease, color .16s ease, transform .16s cubic-bezier(.2, 1.4, .4, 1);
+}
+.askbar-chip:hover { border-color: var(--green); color: var(--green-deep); transform: translateY(-1px); }
+
+.askbar-hint { padding-top: 10px; font-size: 12px; color: var(--ink-45); }
+.askbar-hint kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(27, 28, 20, .05);
+  border: 1px solid var(--border-light);
+}
+
+@media (max-width: 620px) {
+  .askbar { max-width: 100%; padding-left: 14px; }
+  .askbar.is-open { max-width: 100%; }
+}
+
+/* ---- nav: white floating capsule, dark type ---- */
+.topbar {
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(27, 28, 20, .04), 0 10px 30px rgba(27, 28, 20, .06);
+  border: 1px solid var(--border);
+}
+.topbar .brand,
+.topbar .links a,
+.topbar .nav-link-btn { color: var(--ink); }
+.brand { font-family: Newsreader, Georgia, serif; font-weight: 400; letter-spacing: -.02em; font-size: 23px; }
+.brand b { color: var(--green); font-weight: 400; }
+.brand-mark { border-color: var(--green); }
+.brand-mark i, .brand-mark b { background: var(--green); }
+.topbar .links a:hover, .topbar .nav-link-btn:hover { color: var(--green-deep); }
+
+/* ---- hero: single centred column, illustration beneath ---- */
+.hero {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
+  padding: 72px 0 40px;
+  gap: 40px;
+}
+.hero-actions { justify-content: center; flex-wrap: wrap; }
+.eyebrow {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted) !important;
+}
+.pulse { background: var(--green); box-shadow: 0 0 0 4px var(--mint-soft); }
+
+/* the illustration now sits under the centred hero copy */
+.cart-stage { margin-inline: auto; max-width: 520px; }
+
+/* ---- composer inside the AI modal ---- */
+.ai-modal-card { background: var(--panel); border: 1px solid var(--border); }
+.ai-modal-card .ai-chat-stream { flex: 1; min-height: 0; overflow-y: auto; }
+.ai-modal-card > .askbar {
+  flex: none;
+  width: auto;
+  max-width: none;
+  margin: 0 22px 22px;
+}
+.ai-modal-card > .askbar.is-open { max-width: none; }
