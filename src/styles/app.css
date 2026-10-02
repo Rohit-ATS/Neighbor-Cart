@@ -2343,6 +2343,746 @@ h2 em {
 }
 
 /* ==========================================================================
+   PORTAL SWITCHER & NATIONWIDE MODULES CSS
+   ========================================================================== */
+
+.topbar-portal-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.portal-btn {
+  background: #f1f5f2;
+  border: 1px solid rgba(17, 38, 32, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.portal-btn:hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.lang-toggle-btn {
+  background: #fff;
+  border: 1.5px solid #204d3d;
+  color: #204d3d;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.lang-toggle-btn:hover {
+  background: #204d3d;
+  color: #fff;
+}
+
+/* Modals General Container */
+.ai-modal-card,
+.intake-modal-card,
+.nonprofit-modal-card,
+.volunteer-modal-card,
+.rescue-modal-card,
+.community-modal-card,
+.impact-modal-card,
+.admin-modal-card {
+  background: #fff;
+  border-radius: 24px;
+  width: 94%;
+  max-width: 900px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(17, 38, 32, 0.28);
+  animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.np-badge {
+  display: inline-block;
+  background: rgba(32, 77, 61, 0.1);
+  color: #204d3d;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.np-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 4px;
+  letter-spacing: -0.6px;
+}
+
+.np-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.np-header,
+.vol-header,
+.rescue-header,
+.comm-header,
+.impact-header,
+.admin-header,
+.ai-modal-header {
+  padding: 22px 26px;
+  border-bottom: 1px solid rgba(17, 38, 32, 0.08);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: #fbfdfc;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* AI Assistant Styles */
+.ai-chat-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #f8faf8;
+  box-sizing: border-box;
+}
+
+.ai-message-row {
+  display: flex;
+  width: 100%;
+}
+
+.ai-message-row.is-user {
+  justify-content: flex-end;
+}
+
+.ai-message-row.is-ai {
+  justify-content: flex-start;
+}
+
+.ai-message-bubble {
+  max-width: 82%;
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.ai-message-row.is-user .ai-message-bubble {
+  background: var(--ink);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message-row.is-ai .ai-message-bubble {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid rgba(17, 38, 32, 0.08);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.ai-warning-box {
+  background: #fff8e6;
+  border: 1px solid #ffd166;
+  color: #8c5800;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.ai-citations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ai-citation-card {
+  background: #f4f8f5;
+  border: 1px solid #d4e4da;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.citation-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.citation-name {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.citation-verified-tag {
+  font-size: 10px;
+  color: #1e704b;
+  font-weight: 700;
+}
+
+.citation-addr, .citation-hours {
+  margin: 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.citation-warn-tag {
+  display: inline-block;
+  background: #fff0d4;
+  color: #8a5300;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.citation-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.citation-view-btn {
+  background: #204d3d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.citation-call-btn {
+  background: #fff;
+  border: 1px solid #cbd5cf;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.ai-prompt-chips {
+  padding: 10px 22px;
+  background: #fff;
+  border-top: 1px solid rgba(17, 38, 32, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.prompt-chips-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chips-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.ai-chip-btn {
+  background: #f0f4f1;
+  border: 1px solid #d4ded8;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.15s;
+}
+
+.ai-chip-btn:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+.ai-input-form {
+  padding: 14px 22px;
+  background: #fff;
+  border-top: 1px solid rgba(17, 38, 32, 0.08);
+  display: flex;
+  gap: 10px;
+}
+
+.ai-input-field {
+  flex: 1;
+  background: #f6f8f6;
+  border: 1.5px solid #dbe2dd;
+  border-radius: 24px;
+  padding: 12px 18px;
+  font-size: 14px;
+  outline: none;
+}
+
+.ai-input-field:focus {
+  border-color: #204d3d;
+  background: #fff;
+}
+
+.ai-send-btn {
+  background: #204d3d;
+  color: #fff;
+  font-weight: 700;
+  padding: 0 24px;
+  border-radius: 24px;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.ai-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Intake Navigator & Plan */
+.intake-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.intake-group {
+  margin-bottom: 20px;
+}
+
+.intake-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.intake-grid-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.intake-opt-btn {
+  background: #f7faf8;
+  border: 1.5px solid #dbe3de;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ink);
+}
+
+.intake-opt-btn.is-selected {
+  background: #eef7f2;
+  border-color: #204d3d;
+  color: #204d3d;
+  box-shadow: inset 0 0 0 1px #204d3d;
+}
+
+.intake-input-text {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #dbe3de;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.plan-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.plan-step-card {
+  background: #fbfdfc;
+  border: 1.5px solid #d9e5dd;
+  border-radius: 16px;
+  padding: 18px 20px;
+  position: relative;
+}
+
+.plan-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.plan-step-badge {
+  background: #204d3d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.plan-actions-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* Volunteer Hub */
+.vol-impact-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 16px 26px;
+  background: #f4f8f5;
+  border-bottom: 1px solid rgba(17, 38, 32, 0.08);
+}
+
+.vol-impact-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.vii-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #204d3d;
+}
+
+.vii-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.vol-filter-strip {
+  padding: 12px 26px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(17, 38, 32, 0.06);
+}
+
+.vol-filter-pill {
+  background: #f2f5f3;
+  border: 1px solid #d5dfd8;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vol-filter-pill.is-active {
+  background: #204d3d;
+  color: #fff;
+  border-color: #204d3d;
+}
+
+.vol-shifts-list {
+  padding: 20px 26px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vol-shift-card {
+  background: #fff;
+  border: 1.5px solid #dbe4de;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vsc-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.vsc-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 2px 0;
+}
+
+.vsc-claim-btn {
+  background: #204d3d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+
+.vsc-claim-btn:disabled {
+  background: #c3d1c8;
+  cursor: default;
+}
+
+/* Impact Dashboard */
+.impact-counters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 22px 26px;
+  background: #f4f8f5;
+  border-bottom: 1px solid rgba(17, 38, 32, 0.08);
+}
+
+.ic-card {
+  background: #fff;
+  border: 1px solid #d8e4dc;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ic-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #204d3d;
+  letter-spacing: -1px;
+}
+
+.ic-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 2px;
+}
+
+.ic-note {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.impact-secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 22px 26px;
+  overflow-y: auto;
+}
+
+.impact-section-panel {
+  background: #fff;
+  border: 1px solid #dce5df;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.impact-section-panel h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.zip-table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.zip-row {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr 90px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.zip-bar-track {
+  height: 8px;
+  background: #e6eee8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.zip-bar-fill {
+  height: 100%;
+  background: #204d3d;
+  border-radius: 4px;
+}
+
+/* Nonprofit & Admin Portal tabs */
+.admin-tabs-strip,
+.np-tabs-bar {
+  display: flex;
+  background: #f0f4f1;
+  border-bottom: 1px solid #d8e2dc;
+  padding: 0 20px;
+  gap: 8px;
+}
+
+.admin-tab-btn,
+.np-tab-btn {
+  background: none;
+  border: none;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.admin-tab-btn.is-active,
+.np-tab-btn.is-active {
+  color: #204d3d;
+  border-bottom-color: #204d3d;
+}
+
+.admin-body-area,
+.np-body-area {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-item-card,
+.rescue-card-item,
+.comm-feed-card {
+  background: #fff;
+  border: 1.5px solid #d9e3dc;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+/* Community Feed */
+.comm-filter-strip {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(17, 38, 32, 0.08);
+}
+
+.comm-filter-btn {
+  background: #f3f6f4;
+  border: 1px solid #d4ddd6;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.comm-filter-btn.is-active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.btn-report-info {
+  margin-left: auto;
+  background: #fff4e5;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.comm-feed-list {
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.cfc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cfc-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.cfc-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cfc-body {
+  font-size: 13px;
+  color: #3e5046;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.cfc-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
    RESPONSIVE DESIGN
    ========================================================================== */
 

@@ -1,19 +1,43 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PLACES, PLACE_CATEGORIES, getIsOpenNow } from '../data/places.js';
+import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILITY_OPTIONS, getIsOpenNow } from '../data/places.js';
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
+import HarvestLinkAI from '../components/HarvestLinkAI.jsx';
+import ResidentIntakeModal from '../components/ResidentIntakeModal.jsx';
+import NonprofitDashboard from '../components/NonprofitDashboard.jsx';
+import VolunteerHub from '../components/VolunteerHub.jsx';
+import FoodRescueHub from '../components/FoodRescueHub.jsx';
+import CommunityFeed from '../components/CommunityFeed.jsx';
+import ImpactDashboard from '../components/ImpactDashboard.jsx';
+import AdminPortal from '../components/AdminPortal.jsx';
 
 export default function Places({ onNavigateHome }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [reservationsOnly, setReservationsOnly] = useState(false);
+  const [produceOnly, setProduceOnly] = useState(false);
+  const [selectedDiet, setSelectedDiet] = useState('all');
+  const [selectedLanguage, setSelectedLanguage] = useState('all');
+  const [selectedEligibility, setSelectedEligibility] = useState('all');
+  const [lowBandwidthMode, setLowBandwidthMode] = useState(false);
   const [activePlace, setActivePlace] = useState(null);
   const [placeToReserve, setPlaceToReserve] = useState(null);
-  const [mobileTab, setMobileTab] = useState('both'); // 'list' | 'map' | 'both'
+  const [mobileTab, setMobileTab] = useState('both');
   const [savedReservations, setSavedReservations] = useState([]);
   const [showMyPasses, setShowMyPasses] = useState(false);
+  const [language, setLanguage] = useState('en'); // 'en' | 'es'
+
+  // Modals state
+  const [showAI, setShowAI] = useState(false);
+  const [showIntake, setShowIntake] = useState(false);
+  const [showNonprofit, setShowNonprofit] = useState(false);
+  const [showVolunteer, setShowVolunteer] = useState(false);
+  const [showRescue, setShowRescue] = useState(false);
+  const [showCommunity, setShowCommunity] = useState(false);
+  const [showImpact, setShowImpact] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     try {
@@ -51,21 +75,43 @@ export default function Places({ onNavigateHome }) {
         return false;
       }
 
-      // Search query (matches name, address, neighborhood, city, or inventory items)
+      // Produce filter
+      if (produceOnly && !place.hasFreshProduce) {
+        return false;
+      }
+
+      // Dietary filter
+      if (selectedDiet !== 'all' && !place.dietary?.includes(selectedDiet)) {
+        return false;
+      }
+
+      // Language filter
+      if (selectedLanguage !== 'all' && !place.languages?.includes(selectedLanguage)) {
+        return false;
+      }
+
+      // Eligibility filter
+      if (selectedEligibility !== 'all' && !place.eligibilityTags?.includes(selectedEligibility)) {
+        return false;
+      }
+
+      // Search query (matches city, state, zip, name, address, neighborhood, or inventory items)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = place.name.toLowerCase().includes(q);
+        const matchesCity = place.city?.toLowerCase().includes(q) || place.state?.toLowerCase().includes(q);
+        const matchesZip = place.zip?.toLowerCase().includes(q);
         const matchesAddr = place.address.toLowerCase().includes(q) || place.cityStateZip.toLowerCase().includes(q);
         const matchesNeighborhood = place.neighborhood.toLowerCase().includes(q);
         const matchesInventory = place.inventory.some((i) => i.item.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
-        if (!matchesName && !matchesAddr && !matchesNeighborhood && !matchesInventory) {
+        if (!matchesName && !matchesCity && !matchesZip && !matchesAddr && !matchesNeighborhood && !matchesInventory) {
           return false;
         }
       }
 
       return true;
     });
-  }, [searchQuery, selectedCategory, openNowOnly, reservationsOnly]);
+  }, [searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility]);
 
   return (
     <div className="places-page-shell">
@@ -74,11 +120,47 @@ export default function Places({ onNavigateHome }) {
         <div className="places-topbar-inner">
           <button type="button" className="places-brand-btn" onClick={onNavigateHome}>
             <span className="places-brand-mark"><i /><b /></span>
-            <span>Neighbor<b>Cart</b></span>
+            <span>neighbor<b>cart</b></span>
           </button>
-          
+
+          {/* Quick Hub Portals Switcher */}
+          <div className="topbar-portal-links">
+            <button type="button" className="portal-btn" onClick={() => setShowAI(true)}>
+              🤖 Ask AI
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowIntake(true)}>
+              📋 Food Plan
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowCommunity(true)}>
+              📣 Community
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowVolunteer(true)}>
+              🤝 Volunteers
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowRescue(true)}>
+              🥦 Food Rescue
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowNonprofit(true)}>
+              🏢 Nonprofits
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowImpact(true)}>
+              📊 Impact
+            </button>
+            <button type="button" className="portal-btn" onClick={() => setShowAdmin(true)}>
+              ⚙️ Admin
+            </button>
+          </div>
+
           <nav className="places-nav">
-            <button type="button" className="nav-text-btn" onClick={onNavigateHome}>← Back to Home</button>
+            {/* Language Switcher */}
+            <button
+              type="button"
+              className="lang-toggle-btn"
+              onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
+            >
+              🌐 {language === 'en' ? 'Español' : 'English'}
+            </button>
+
             {savedReservations.length > 0 && (
               <button 
                 type="button" 
@@ -88,6 +170,10 @@ export default function Places({ onNavigateHome }) {
                 🎫 My Passes ({savedReservations.length})
               </button>
             )}
+
+            <button type="button" className="nav-text-btn" onClick={onNavigateHome}>
+              ← Back to Home
+            </button>
           </nav>
         </div>
       </header>
@@ -97,16 +183,36 @@ export default function Places({ onNavigateHome }) {
         <div className="shell-contained">
           <div className="places-title-row">
             <div>
-              <span className="places-badge">Iowa Community Food Access Network</span>
-              <h1 className="places-heading">Food Banks & Pantries <em>Near You</em></h1>
+              <span className="places-badge">National Food Access & Relief Network</span>
+              <h1 className="places-heading">Food Assistance Directory & Map</h1>
               <p className="places-sub">
-                Verified locations offering free groceries, fresh produce, hot meals, and 24/7 community pantries. 
+                Verified locations across the United States offering free groceries, fresh produce, chef-prepared hot meals, and 24/7 community pantries. 
                 Zero judgment, zero paperwork.
               </p>
             </div>
-            
-            <div className="places-stats-pill">
-              <b>{filteredPlaces.length}</b> verified locations found
+
+            <div className="places-action-pills">
+              <button 
+                type="button" 
+                className="hero-action-pill ai-pill"
+                onClick={() => setShowAI(true)}
+              >
+                🤖 Ask AI Assistant
+              </button>
+              <button 
+                type="button" 
+                className="hero-action-pill plan-pill"
+                onClick={() => setShowIntake(true)}
+              >
+                📋 Get Personalized Food Plan
+              </button>
+              <button 
+                type="button" 
+                className={`hero-action-pill ${lowBandwidthMode ? 'active-bandwidth' : ''}`}
+                onClick={() => setLowBandwidthMode(!lowBandwidthMode)}
+              >
+                ⚡ {lowBandwidthMode ? 'Standard View' : 'Low-Bandwidth List Mode'}
+              </button>
             </div>
           </div>
 
@@ -117,7 +223,7 @@ export default function Places({ onNavigateHome }) {
               <input
                 type="text"
                 className="search-input-field"
-                placeholder="Search food banks, pantries, ZIP code (e.g. 50309), or items (e.g. milk, produce)..."
+                placeholder="Search across the US by City (e.g. Chicago, New York, Des Moines), ZIP code (e.g. 50309, 10002), or item (e.g. milk, produce)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -126,6 +232,7 @@ export default function Places({ onNavigateHome }) {
               )}
             </div>
 
+            {/* Category scroll pills */}
             <div className="category-scroll-strip">
               {PLACE_CATEGORIES.map((cat) => (
                 <button
@@ -139,6 +246,52 @@ export default function Places({ onNavigateHome }) {
               ))}
             </div>
 
+            {/* Secondary Advanced Filters Dropdowns */}
+            <div className="advanced-filter-row">
+              <div className="adv-filter-group">
+                <label className="adv-filter-label">Dietary Accommodation:</label>
+                <select
+                  className="adv-filter-select"
+                  value={selectedDiet}
+                  onChange={(e) => setSelectedDiet(e.target.value)}
+                >
+                  <option value="all">All Dietary Types</option>
+                  {DIETARY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="adv-filter-group">
+                <label className="adv-filter-label">Languages Spoken:</label>
+                <select
+                  className="adv-filter-select"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                >
+                  <option value="all">All Languages</option>
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="adv-filter-group">
+                <label className="adv-filter-label">Eligibility / Access:</label>
+                <select
+                  className="adv-filter-select"
+                  value={selectedEligibility}
+                  onChange={(e) => setSelectedEligibility(e.target.value)}
+                >
+                  <option value="all">All Eligibility Rules</option>
+                  {ELIGIBILITY_OPTIONS.map((el) => (
+                    <option key={el} value={el}>{el}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Quick check toggles */}
             <div className="toggle-filters-row">
               <label className="toggle-filter-label">
                 <input
@@ -158,7 +311,16 @@ export default function Places({ onNavigateHome }) {
                 <span>📅 Accepts Free Reservations</span>
               </label>
 
-              {(selectedCategory !== 'all' || openNowOnly || reservationsOnly || searchQuery) && (
+              <label className="toggle-filter-label">
+                <input
+                  type="checkbox"
+                  checked={produceOnly}
+                  onChange={(e) => setProduceOnly(e.target.checked)}
+                />
+                <span>🥬 Fresh Produce In Stock</span>
+              </label>
+
+              {(selectedCategory !== 'all' || openNowOnly || reservationsOnly || produceOnly || selectedDiet !== 'all' || selectedLanguage !== 'all' || selectedEligibility !== 'all' || searchQuery) && (
                 <button 
                   type="button" 
                   className="reset-filters-btn"
@@ -166,10 +328,14 @@ export default function Places({ onNavigateHome }) {
                     setSelectedCategory('all');
                     setOpenNowOnly(false);
                     setReservationsOnly(false);
+                    setProduceOnly(false);
+                    setSelectedDiet('all');
+                    setSelectedLanguage('all');
+                    setSelectedEligibility('all');
                     setSearchQuery('');
                   }}
                 >
-                  Reset filters
+                  Reset all filters
                 </button>
               )}
             </div>
@@ -178,33 +344,35 @@ export default function Places({ onNavigateHome }) {
       </section>
 
       {/* Mobile Switcher (List vs Map) */}
-      <div className="mobile-view-tabs">
-        <button 
-          type="button" 
-          className={`mobile-tab-btn ${mobileTab !== 'map' ? 'is-active' : ''}`}
-          onClick={() => setMobileTab('list')}
-        >
-          📋 List View ({filteredPlaces.length})
-        </button>
-        <button 
-          type="button" 
-          className={`mobile-tab-btn ${mobileTab === 'map' ? 'is-active' : ''}`}
-          onClick={() => setMobileTab('map')}
-        >
-          🗺 Interactive Map
-        </button>
-      </div>
+      {!lowBandwidthMode && (
+        <div className="mobile-view-tabs">
+          <button 
+            type="button" 
+            className={`mobile-tab-btn ${mobileTab !== 'map' ? 'is-active' : ''}`}
+            onClick={() => setMobileTab('list')}
+          >
+            📋 List View ({filteredPlaces.length})
+          </button>
+          <button 
+            type="button" 
+            className={`mobile-tab-btn ${mobileTab === 'map' ? 'is-active' : ''}`}
+            onClick={() => setMobileTab('map')}
+          >
+            🗺 Interactive Map
+          </button>
+        </div>
+      )}
 
       {/* Main Grid: Interactive Map + Place Cards List */}
       <main className="places-main-content shell-contained">
-        <div className="places-split-layout">
+        <div className={`places-split-layout ${lowBandwidthMode ? 'is-low-bandwidth' : ''}`}>
           {/* List Panel */}
-          <div className={`places-cards-column ${mobileTab === 'map' ? 'mobile-hidden' : ''}`}>
+          <div className={`places-cards-column ${mobileTab === 'map' && !lowBandwidthMode ? 'mobile-hidden' : ''}`}>
             {filteredPlaces.length === 0 ? (
               <div className="no-results-box">
                 <span className="no-results-emoji">🌾</span>
                 <h3>No locations match your filter</h3>
-                <p>Try clearing your search term or switching to "All Places".</p>
+                <p>Try broadening your search term or switching to "All Places".</p>
                 <button
                   type="button"
                   className="btn-secondary"
@@ -212,6 +380,10 @@ export default function Places({ onNavigateHome }) {
                     setSelectedCategory('all');
                     setOpenNowOnly(false);
                     setReservationsOnly(false);
+                    setProduceOnly(false);
+                    setSelectedDiet('all');
+                    setSelectedLanguage('all');
+                    setSelectedEligibility('all');
                     setSearchQuery('');
                   }}
                 >
@@ -230,18 +402,20 @@ export default function Places({ onNavigateHome }) {
                       className={`place-card-item ${isSelected ? 'is-selected' : ''}`}
                       onClick={() => setActivePlace(place)}
                     >
-                      <div className="card-thumb-wrap">
-                        <img src={place.images[0]} alt={place.name} className="card-thumb-img" />
-                        <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
-                          {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
-                        </span>
-                        <span className="type-badge-float">{place.typeLabel.split(' ')[0]}</span>
-                      </div>
+                      {!lowBandwidthMode && (
+                        <div className="card-thumb-wrap">
+                          <img src={place.images[0]} alt={place.name} className="card-thumb-img" />
+                          <span className={`status-badge-float ${openStatus.isOpen ? 'is-open' : 'is-closed'}`}>
+                            {openStatus.isOpen ? '🟢 Open Now' : '🔴 Closed'}
+                          </span>
+                          <span className="type-badge-float">{place.typeLabel.split(' ')[0]}</span>
+                        </div>
+                      )}
 
                       <div className="card-info-wrap">
                         <div className="card-top-row">
-                          <span className="card-neighborhood">{place.neighborhood}</span>
-                          <span className="card-verified">✓ Verified</span>
+                          <span className="card-neighborhood">{place.city}, {place.state} ({place.neighborhood})</span>
+                          <span className="card-verified">✓ {place.verifiedDate}</span>
                         </div>
 
                         <h3 className="card-name" onClick={() => setActivePlace(place)}>
@@ -251,9 +425,16 @@ export default function Places({ onNavigateHome }) {
                         <p className="card-address">📍 {place.address}, {place.cityStateZip}</p>
                         <p className="card-hours">⏱ {place.hoursSummary}</p>
 
+                        {/* Call ahead warning if present */}
+                        {place.callAheadWarning && (
+                          <div className="card-warning-pill">
+                            ⚠️ <b>Call ahead:</b> {place.callAheadNote || 'Capacity changes rapidly.'}
+                          </div>
+                        )}
+
                         {/* Top inventory teaser */}
                         <div className="card-inventory-teasers">
-                          <span className="inv-teaser-label">Available now:</span>
+                          <span className="inv-teaser-label">Available inventory:</span>
                           <div className="inv-teaser-chips">
                             {place.inventory.slice(0, 3).map((inv, idx) => (
                               <span key={idx} className="inv-teaser-chip">
@@ -275,7 +456,7 @@ export default function Places({ onNavigateHome }) {
                           >
                             View Details & Inventory
                           </button>
-                          
+
                           {place.acceptsReservations ? (
                             <button
                               type="button"
@@ -303,16 +484,18 @@ export default function Places({ onNavigateHome }) {
             )}
           </div>
 
-          {/* Interactive Map Panel */}
-          <div className={`places-map-column ${mobileTab === 'list' ? 'mobile-hidden' : ''}`}>
-            <div className="sticky-map-frame">
-              <MapView
-                places={filteredPlaces}
-                activeId={activePlace?.id}
-                onSelectPlace={(p) => setActivePlace(p)}
-              />
+          {/* Interactive Map Panel (Hidden in Low Bandwidth mode) */}
+          {!lowBandwidthMode && (
+            <div className={`places-map-column ${mobileTab === 'list' ? 'mobile-hidden' : ''}`}>
+              <div className="sticky-map-frame">
+                <MapView
+                  places={filteredPlaces}
+                  activeId={activePlace?.id}
+                  onSelectPlace={(p) => setActivePlace(p)}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
@@ -339,6 +522,66 @@ export default function Places({ onNavigateHome }) {
         />
       )}
 
+      {/* AI Assistant Modal */}
+      {showAI && (
+        <HarvestLinkAI
+          onClose={() => setShowAI(false)}
+          onSelectPlace={(p) => setActivePlace(p)}
+        />
+      )}
+
+      {/* Intake / Recommendation Plan Modal */}
+      {showIntake && (
+        <ResidentIntakeModal
+          lang={language}
+          onClose={() => setShowIntake(false)}
+          onSelectPlace={(p) => setActivePlace(p)}
+        />
+      )}
+
+      {/* Nonprofit Dashboard Modal */}
+      {showNonprofit && (
+        <NonprofitDashboard
+          onClose={() => setShowNonprofit(false)}
+        />
+      )}
+
+      {/* Volunteer Hub Modal */}
+      {showVolunteer && (
+        <VolunteerHub
+          onClose={() => setShowVolunteer(false)}
+        />
+      )}
+
+      {/* Food Rescue Hub Modal */}
+      {showRescue && (
+        <FoodRescueHub
+          onClose={() => setShowRescue(false)}
+        />
+      )}
+
+      {/* Community Feed Modal */}
+      {showCommunity && (
+        <CommunityFeed
+          onClose={() => setShowCommunity(false)}
+          onOpenReport={() => alert('Report submitted to directory administrators for verification.')}
+        />
+      )}
+
+      {/* Impact Dashboard Modal */}
+      {showImpact && (
+        <ImpactDashboard
+          onClose={() => setShowImpact(false)}
+        />
+      )}
+
+      {/* Admin Portal Modal */}
+      {showAdmin && (
+        <AdminPortal
+          onClose={() => setShowAdmin(false)}
+        />
+      )}
+
       {/* Saved Passes Drawer */}
       {showMyPasses && (
         <div className="modal-backdrop" onClick={() => setShowMyPasses(false)}>
@@ -348,7 +591,7 @@ export default function Places({ onNavigateHome }) {
               <h2>Your Active Pickup Passes</h2>
               <p>Stored locally on this device. Show upon arrival for rapid, discreet pickup.</p>
             </div>
-            
+
             <div className="passes-list">
               {savedReservations.map((pass, idx) => (
                 <div key={idx} className="saved-pass-item">
