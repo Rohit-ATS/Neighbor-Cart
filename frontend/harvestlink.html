@@ -18,5 +18,59 @@
     <p class="foot">HarvestLink is a prototype. Impact figures are simulated demo data and targets, not partner-validated outcomes.</p>
   </main><div class="toast" id="toast" role="status"></div>
   <script>const toast=document.querySelector('#toast');let timer;function show(message){toast.textContent=message;toast.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>toast.classList.remove('show'),2400)}document.querySelectorAll('[data-role]').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('[data-role]').forEach(x=>x.classList.toggle('active',x===tab));document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===tab.dataset.role))}));document.querySelector('#searchForm').addEventListener('submit',e=>{e.preventDefault();show('Showing verified demo resources near '+document.querySelector('#zip').value)});document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>show(button.textContent.trim()+' — demo action recorded')));</script>
+  <script>
+    (() => {
+      const tabs = [...document.querySelectorAll('[data-role]')];
+      const panels = [...document.querySelectorAll('[data-panel]')];
+      const setRole = (role) => {
+        tabs.forEach((tab) => {
+          const active = tab.dataset.role === role;
+          tab.classList.toggle('active', active);
+          tab.setAttribute('aria-selected', String(active));
+        });
+        panels.forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === role));
+        localStorage.setItem('harvestlink-role', role);
+      };
+      setRole(localStorage.getItem('harvestlink-role') || 'resident');
+      tabs.forEach((tab) => tab.addEventListener('click', () => setRole(tab.dataset.role)));
+      const resident = document.querySelector('[data-panel="resident"]');
+      const label = resident?.querySelector('.eyebrow');
+      const tag = resident?.querySelector('.tag');
+      const resources = [...(resident?.querySelectorAll('.resource') || [])];
+      const empty = document.createElement('p');
+      empty.className = 'notice';
+      empty.textContent = 'No verified demo resources found for that ZIP code yet.';
+      empty.hidden = true;
+      resident?.querySelector('.panel')?.append(empty);
+      document.querySelector('#searchForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const zip = document.querySelector('#zip').value.trim();
+        if (!/^\d{5}$/.test(zip)) return window.show?.('Enter a valid 5-digit ZIP code');
+        label.textContent = 'Checking near ' + zip;
+        tag.textContent = 'Searching...';
+        empty.hidden = true;
+        resources.forEach((resource) => { resource.hidden = true; });
+        setTimeout(() => {
+          const found = zip === '50309';
+          resources.forEach((resource) => { resource.hidden = !found; });
+          empty.hidden = found;
+          label.textContent = 'Near ' + zip;
+          tag.textContent = found ? '3 verified' : '0 verified';
+          window.show?.(found ? 'Showing verified demo resources near ' + zip : 'No demo resources found near ' + zip);
+        }, 350);
+      });
+      document.querySelectorAll('[data-action="save"]').forEach((button) => button.addEventListener('click', () => {
+        const saved = button.textContent.trim() === 'Saved';
+        button.textContent = saved ? 'Save option' : 'Saved';
+        button.setAttribute('aria-pressed', String(!saved));
+        window.show?.(saved ? 'Option removed' : 'Option saved on this device');
+      }));
+      document.querySelectorAll('[data-action="request"]').forEach((button) => button.addEventListener('click', () => {
+        button.textContent = 'Requested';
+        button.disabled = true;
+        window.show?.('Help request recorded for this demo');
+      }));
+    })();
+  </script>
 </body>
 </html>
