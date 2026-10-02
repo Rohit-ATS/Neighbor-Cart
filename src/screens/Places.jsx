@@ -15,6 +15,7 @@ import ImpactDashboard from '../components/ImpactDashboard.jsx';
 import AdminPortal from '../components/AdminPortal.jsx';
 import AiLauncher from '../components/AiLauncher.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
+import { parseSearch, SEARCH_EXAMPLES } from '../lib/searchParser.js';
 
 /* Two catalogues describe the same pantry differently, so matching is by
    normalised name plus a ~150m coordinate bucket rather than exact equality. */
@@ -27,6 +28,13 @@ export default function Places({ onNavigateHome }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // The item someone named is matched against inventory, separately from the
+  // place text above: one substring cannot be both a city and a food.
+  const [itemQuery, setItemQuery] = useState('');
+  // The sentence as typed, and what the parser made of it.
+  const [aiQuery, setAiQuery] = useState('');
+  const [understood, setUnderstood] = useState([]);
+  const [showAllFilters, setShowAllFilters] = useState(false);
   const [places, setPlaces] = useState(PLACES);
   const [placesTotal, setPlacesTotal] = useState(PLACES.length);
   const [userPosition, setUserPosition] = useState(null);
@@ -145,6 +153,61 @@ export default function Places({ onNavigateHome }) {
 
   const [aiMatchIds, setAiMatchIds] = useState(null);
 
+  const resetFilters = () => {
+    setSelectedCategory('all');
+    setOpenNowOnly(false);
+    setReservationsOnly(false);
+    setProduceOnly(false);
+    setSelectedDiet('all');
+    setSelectedLanguage('all');
+    setSelectedEligibility('all');
+    setSearchQuery('');
+    setItemQuery('');
+    setUnderstood([]);
+    setAiQuery('');
+  };
+
+  /* One sentence in, the whole filter set out. The chips it produces are the
+     receipt: everything it decided is visible and individually removable, so a
+     wrong guess costs one click rather than a confusing result list. */
+  const runAiSearch = (text) => {
+    const query = (text ?? aiQuery).trim();
+    setAiQuery(query);
+    if (!query) { resetFilters(); return; }
+
+    const { filters, understood: chips } = parseSearch(query);
+    setSelectedCategory(filters.category);
+    setOpenNowOnly(filters.openNow);
+    setReservationsOnly(filters.reservations);
+    setProduceOnly(filters.produce);
+    setSelectedDiet(filters.diet);
+    setSelectedLanguage(filters.language);
+    setSelectedEligibility(filters.eligibility);
+    setSearchQuery(filters.where);
+    setItemQuery(filters.item);
+    setUnderstood(chips);
+    setAiMatchIds(null);
+  };
+
+  const dropChip = (chip) => {
+    ({
+      category: () => setSelectedCategory('all'),
+      openNow: () => setOpenNowOnly(false),
+      reservations: () => setReservationsOnly(false),
+      produce: () => setProduceOnly(false),
+      diet: () => setSelectedDiet('all'),
+      language: () => setSelectedLanguage('all'),
+      eligibility: () => setSelectedEligibility('all'),
+      where: () => setSearchQuery(''),
+      item: () => setItemQuery(''),
+    })[chip.key]?.();
+    setUnderstood((prev) => prev.filter((item) => item.id !== chip.id));
+  };
+
+  const hasAnyFilter = selectedCategory !== 'all' || openNowOnly || reservationsOnly
+    || produceOnly || selectedDiet !== 'all' || selectedLanguage !== 'all'
+    || selectedEligibility !== 'all' || searchQuery || itemQuery;
+
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
       // A match set handed over by the AI navigator overrides the filters,
@@ -188,6 +251,18 @@ export default function Places({ onNavigateHome }) {
         return false;
       }
 
+      // A named item is matched against stock only. Any one of the words is
+      // enough: someone asking for "rice and beans" is better served a pantry
+      // with one of them than an empty list.
+      if (itemQuery.trim()) {
+        const words = itemQuery.toLowerCase().split(/\s+/).filter(Boolean);
+        const stocked = place.inventory.some((i) => {
+          const hay = `${i.item} ${i.category}`.toLowerCase();
+          return words.some((word) => hay.includes(word));
+        });
+        if (!stocked) return false;
+      }
+
       // Search query (matches city, state, zip, name, address, neighborhood, or inventory items)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -204,7 +279,7 @@ export default function Places({ onNavigateHome }) {
 
       return true;
     });
-  }, [places, searchQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
+  }, [places, searchQuery, itemQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
 
   const verifiedCount = useMemo(
     () => filteredPlaces.filter((place) => place.verifiedBadge).length,
@@ -640,42 +715,84 @@ export default function Places({ onNavigateHome }) {
             </div>
           </div>
 
-          {/* Search Input & Filter Controls */}
+          {/* One sentence replaces the search field, the city pills, the
+              category pills, three dropdowns and three checkboxes. Those
+              controls still exist, folded away below for anyone who would
+              rather browse the options than describe what they need. */}
           <div className="places-filter-card">
-            {/* Search Input Box */}
-            <div className="search-bar-row">
-              <span className="search-icon">🔍</span>
+            <form
+              className="ai-search-row"
+              onSubmit={(e) => { e.preventDefault(); runAiSearch(); }}
+            >
+              <span className="ai-search-spark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9Z" />
+                  <path d="M19 15l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9Z" opacity=".55" />
+                </svg>
+              </span>
               <input
                 type="text"
-                className="search-input-field"
-                placeholder="Search by city (e.g. Des Moines, NYC, LA, Chicago, Miami, Seattle), ZIP code, or food item..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                className="ai-search-field"
+                placeholder="Describe what you need — “hot meals near me tonight, no ID”"
+                aria-label="Describe what food help you need"
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
               />
-              {searchQuery && (
-                <button type="button" className="clear-search-btn" onClick={() => setSearchQuery('')} aria-label="Clear search">×</button>
+              {aiQuery && (
+                <button type="button" className="ai-search-clear" onClick={resetFilters} aria-label="Clear search">×</button>
               )}
-            </div>
+              <button type="submit" className="ai-search-go">Search</button>
+            </form>
 
-            {/* Quick Cities Pills */}
-            <div className="quick-cities-strip">
-              <span className="quick-city-label">Popular Cities:</span>
-              {['Des Moines, IA', 'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Seattle, WA', 'Miami, FL', 'Boston, MA'].map((cityStr) => {
-                const cityName = cityStr.split(',')[0];
-                const isActive = searchQuery.toLowerCase().includes(cityName.toLowerCase());
-                return (
+            {understood.length > 0 ? (
+              <div className="ai-search-understood">
+                <span className="ai-understood-label">Searching for</span>
+                <ul>
+                  {understood.map((chip) => (
+                    <li key={chip.id}>
+                      <button
+                        type="button"
+                        className="ai-understood-chip"
+                        onClick={() => dropChip(chip)}
+                        title={`Remove ${chip.label}`}
+                        aria-label={`Remove ${chip.label}`}
+                      >
+                        {chip.label}<i aria-hidden="true">×</i>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <button type="button" className="ai-understood-reset" onClick={resetFilters}>Clear all</button>
+              </div>
+            ) : (
+              <div className="ai-search-examples">
+                <span className="ai-understood-label">Try</span>
+                {SEARCH_EXAMPLES.slice(0, 3).map((example) => (
                   <button
-                    key={cityStr}
+                    key={example}
                     type="button"
-                    className={`quick-city-pill ${isActive ? 'is-active' : ''}`}
-                    onClick={() => setSearchQuery(isActive ? '' : cityName)}
+                    className="ai-example-chip"
+                    onClick={() => runAiSearch(example)}
                   >
-                    📍 {cityStr}
+                    {example}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
 
+            <button
+              type="button"
+              className={`ai-filters-toggle${showAllFilters ? ' is-open' : ''}`}
+              aria-expanded={showAllFilters}
+              onClick={() => setShowAllFilters((open) => !open)}
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+              {showAllFilters ? 'Hide all filters' : 'Browse all filters'}
+            </button>
+
+            <div className={`ai-filters-panel${showAllFilters ? ' is-open' : ''}`} hidden={!showAllFilters}>
             {/* Category scroll pills */}
             <div className="category-scroll-strip">
               {PLACE_CATEGORIES.map((cat) => (
@@ -771,24 +888,12 @@ export default function Places({ onNavigateHome }) {
                 <span className="toggle-text">🥬 <b>Fresh Produce In Stock</b></span>
               </label>
 
-              {(selectedCategory !== 'all' || openNowOnly || reservationsOnly || produceOnly || selectedDiet !== 'all' || selectedLanguage !== 'all' || selectedEligibility !== 'all' || searchQuery) && (
-                <button 
-                  type="button" 
-                  className="reset-filters-btn"
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setOpenNowOnly(false);
-                    setReservationsOnly(false);
-                    setProduceOnly(false);
-                    setSelectedDiet('all');
-                    setSelectedLanguage('all');
-                    setSelectedEligibility('all');
-                    setSearchQuery('');
-                  }}
-                >
+              {hasAnyFilter && (
+                <button type="button" className="reset-filters-btn" onClick={resetFilters}>
                   ✕ Reset filters
                 </button>
               )}
+            </div>
             </div>
           </div>
         </div>

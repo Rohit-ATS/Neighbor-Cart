@@ -1499,6 +1499,188 @@ h2 em {
   box-shadow: 0 8px 26px rgba(24, 53, 45, 0.06);
 }
 
+/* ---- the one-sentence search ----
+
+   It replaces twenty controls, so it gets the weight the whole card used to
+   carry: a single field, what it understood underneath, and the full set of
+   filters folded away for anyone who would rather browse than describe. */
+.ai-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 6px 18px;
+  background: var(--panel, #fff);
+  border: 1.5px solid #ded6c8;
+  border-radius: 999px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.ai-search-row:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(146, 7, 17, .09);
+}
+.ai-search-spark { flex: none; display: grid; place-items: center; color: var(--green); }
+
+.ai-search-field {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0;
+  border: 0;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 15.5px;
+  color: var(--ink);
+}
+.ai-search-field:focus { outline: none; }
+.ai-search-field::placeholder { color: var(--ink-45); }
+
+.ai-search-clear {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--ink-45);
+  cursor: pointer;
+}
+.ai-search-clear:hover { background: var(--panel-2); color: var(--ink); }
+
+.ai-search-go {
+  flex: none;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff7e8;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease, transform .18s cubic-bezier(.2, 1.3, .4, 1);
+}
+.ai-search-go:hover { background: var(--green-deep); }
+.ai-search-go:active { transform: scale(.96); }
+
+/* What it understood, as chips — the receipt for a search nobody clicked
+   together themselves. Each one removes just its own filter. */
+.ai-search-understood,
+.ai-search-examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+}
+.ai-search-understood ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ai-understood-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+.ai-understood-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 13px;
+  border: 1px solid rgba(146, 7, 17, .22);
+  border-radius: 999px;
+  background: var(--mint-soft);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--green-deep);
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+.ai-understood-chip i { font-style: normal; font-size: 14px; line-height: 1; color: var(--ink-45); }
+.ai-understood-chip:hover { border-color: var(--green); background: var(--mint); }
+.ai-understood-chip:hover i { color: var(--green); }
+
+.ai-understood-reset {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.ai-example-chip {
+  padding: 6px 13px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12.5px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease;
+}
+.ai-example-chip:hover { border-style: solid; border-color: var(--green); color: var(--green-deep); }
+
+/* The original controls, kept and folded away rather than deleted: the
+   dropdowns are still the only way to see what the options actually are. */
+.ai-filters-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ai-filters-toggle:hover { color: var(--green); }
+.ai-filters-toggle svg { transition: transform .22s cubic-bezier(.22, .9, .3, 1); }
+.ai-filters-toggle.is-open svg { transform: rotate(180deg); }
+
+.ai-filters-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-light);
+  animation: ai-filters-open .26s cubic-bezier(.22, .9, .3, 1) both;
+}
+/* A class rule's `display` beats the `hidden` attribute's UA style, so the
+   collapsed panel has to say so itself. */
+.ai-filters-panel[hidden] { display: none; }
+
+@keyframes ai-filters-open {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+@media (max-width: 720px) {
+  .ai-search-row { padding-left: 14px; gap: 8px; }
+  .ai-search-field { font-size: 15px; }
+  .ai-search-go { padding: 11px 16px; }
+  .ai-understood-reset { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-filters-panel { animation: none; }
+  .ai-search-go:active { transform: none; }
+}
+
 .search-bar-row {
   position: relative;
   display: flex;
