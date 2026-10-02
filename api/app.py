@@ -25,9 +25,44 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote_plus, urlencode, urlsplit
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_dotenv(path: Path = ROOT / ".env") -> None:
+    """Read KEY=VALUE lines from .env into the environment.
+
+    .env.example tells people to put their keys in .env, but nothing was
+    reading that file, so a key set there was silently ignored and Google
+    features stayed off with no clue why. Written by hand rather than adding
+    python-dotenv, since the API otherwise has no dependency but boto3.
+
+    A value already present in the real environment always wins, so a
+    container or CI secret is never overwritten by a stray local file.
+    """
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return  # no .env is the normal case in production
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key.startswith("export "):
+            key = key[len("export "):].strip()
+        value = value.strip()
+        # Strip one matching pair of surrounding quotes, if present.
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_dotenv()
+
 DEFAULT_DB_PATH = ROOT / "data" / "neighbor-cart.db"
 SEED_PATH = Path(__file__).resolve().parent / "demo_places.json"
 OSM_SEED_PATH = Path(__file__).resolve().parent / "osm_places.json"
@@ -785,15 +820,55 @@ def google_key() -> str:
     return os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
 
 
-def google_get(path: str, params: dict) -> dict:
-    """One Google Maps Platform call. The key never leaves the server."""
-    url = f"https://maps.googleapis.com/maps/api/{path}?{urlencode({**params, 'key': google_key()})}"
-    with urlopen(url, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
-        body = json.loads(response.read().decode("utf-8"))
-    if body.get("status") not in {"OK", "ZERO_RESULTS"}:
-        raise ValueError(f"Google replied {body.get('status')}")
-    return body
+PLACES_V1 = "https://places.googleapis.com/v1"
 
+# Google bills Places API (New) by the fields requested, so this mask stays
+# narrow — only what the directory actually renders.
+SEARCH_FIELD_MASK = ",".join((
+    "places.id",
+    "places.displayName",
+    "places.formattedAddress",
+    "places.location",
+    "places.rating",
+    "places.userRatingCount",
+    "places.photos",
+    "places.nationalPhoneNumber",
+    "places.websiteUri",
+    "places.currentOpeningHours.openNow",
+    "places.businessStatus",
+    "places.primaryTypeDisplayName",
+    "places.types",
+))
+
+
+def places_post(path: str, body: dict, field_mask: str) -> dict:
+    """One Places API (New) call. The key travels in a header, never a query string."""
+    request = Request(
+        f"{PLACES_V1}/{path}",
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": google_key(),
+            "X-Goog-FieldMask": field_mask,
+        },
+        method="POST",
+    )
+    with urlopen(request, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
+        return json.loads(response.read().decode("utf-8"))
+
+
+def places_text_search(text_query: str, latitude: float, longitude: float, radius_m: int) -> list[dict]:
+    body = {
+        "textQuery": text_query,
+        "pageSize": 20,
+        "locationBias": {
+            "circle": {
+                "center": {"latitude": latitude, "longitude": longitude},
+                "radius": float(radius_m),
+            }
+        },
+    }
+    return places_post("places:searchText", body, SEARCH_FIELD_MASK).get("places") or []
 
 def clean_enrich_places(value: object) -> list[dict]:
     if not isinstance(value, list) or not value:
@@ -835,7 +910,12 @@ def clean_origin(value: object) -> dict | None:
 
 
 def google_place_details(place: dict) -> dict:
-    """Rating, review count, and a couple of recent reviews for one location."""
+    """Rating, review count and a photo for one of our own records.
+
+    Matches our stored place to Google's listing by name and location, which
+    is how an OpenStreetMap record (which carries no photo at all) gets a real
+    photograph attached at display time.
+    """
     cache_key = f"{place['id']}|{place['lat']:.5f},{place['lng']:.5f}"
     cached = google_details_cache.get(cache_key)
     if cached is not None:
@@ -843,63 +923,97 @@ def google_place_details(place: dict) -> dict:
 
     details: dict = {}
     try:
-        found = google_get("place/findplacefromtext/json", {
-            "input": f"{place['name']} {place['address']}".strip(),
-            "inputtype": "textquery",
-            "fields": "place_id",
-            "locationbias": f"point:{place['lat']},{place['lng']}",
-        })
-        candidates = found.get("candidates") or []
-        if candidates:
-            place_id = candidates[0].get("place_id")
-            detail = google_get("place/details/json", {
-                "place_id": place_id,
-                "fields": "rating,user_ratings_total,reviews,url,opening_hours,photos",
-                "reviews_sort": "newest",
-            }).get("result") or {}
+        query = f"{place['name']} {place['address']}".strip()
+        results = places_text_search(query, place["lat"], place["lng"], 3_000)
+        if results:
+            match = results[0]
+            photos = match.get("photos") or []
+            photo_name = (photos[0] or {}).get("name") if photos else None
             details = {
-                "placeId": place_id,
-                "rating": detail.get("rating"),
-                "ratingCount": detail.get("user_ratings_total"),
-                "mapsUrl": detail.get("url"),
-                # A reference, never the image itself: Google requires photos
-                # be served live from their endpoint rather than copied into
-                # our storage, and the key must stay server-side.
+                "placeId": match.get("id"),
+                "rating": match.get("rating"),
+                "ratingCount": match.get("userRatingCount"),
+                "mapsUrl": (
+                    "https://www.google.com/maps/search/?api=1"
+                    f"&query_place_id={match.get('id')}"
+                ),
+                "openNow": (match.get("currentOpeningHours") or {}).get("openNow"),
                 "photoUrl": (
-                    "/api/v1/places/photo?ref="
-                    + quote_plus((detail.get("photos") or [{}])[0].get("photo_reference", ""))
-                    + "&w=640"
-                ) if (detail.get("photos") or [{}])[0].get("photo_reference") else None,
-                "openNow": (detail.get("opening_hours") or {}).get("open_now"),
-                "reviews": [
-                    {
-                        "author": str(review.get("author_name", ""))[:80],
-                        "rating": review.get("rating"),
-                        "text": str(review.get("text", ""))[:280],
-                        "when": str(review.get("relative_time_description", ""))[:60],
-                    }
-                    for review in (detail.get("reviews") or [])[:2]
-                ],
+                    f"/api/v1/places/photo?ref={quote_plus(photo_name)}&w=640"
+                    if photo_name else None
+                ),
+                "reviews": [],
             }
     except (HTTPError, URLError, socket.timeout, ValueError, KeyError, TypeError, json.JSONDecodeError):
-        # A missing rating is a cosmetic loss; the verified record still stands.
+        # A missing rating or photo is cosmetic; the stored record still stands.
         details = {}
 
     google_details_cache.put(cache_key, details)
     return details
 
-
-
-# --------------------------------------------------------------------------
-# Live Google discovery
+# Searching "soup kitchen" or "free meals" also surfaces taco stands and
+# burger counters, and Google types them identically to real soup kitchens
+# (primaryType "food", types ['service','food','point_of_interest',
+# 'establishment']) — there is no type signal that separates them.
 #
-# Google knows essentially every food assistance site in the country, but its
-# terms (Maps Platform §3.2.3) forbid pre-fetching that catalogue into our own
-# database. So we never store it: results are fetched for the area the visitor
-# is actually looking at, held in a short-lived in-process cache, and merged on
-# top of the OpenStreetMap records we are licensed to keep. The visitor sees
-# everything Google has; we persist nothing we may not.
-# --------------------------------------------------------------------------
+# So trust is granted two ways. Places Google types as an organisation,
+# charity, church or community centre are accepted outright. Anything with the
+# ambiguous "food" type must also *read* like food assistance by name.
+#
+# This deliberately errs toward dropping a real pantry with an unusual name,
+# because the opposite error sends a hungry person to a restaurant expecting a
+# free meal. OpenStreetMap still covers what this rejects.
+
+ASSISTANCE_TYPES = frozenset({
+    "association_or_organization",
+    "non_profit_organization",
+    "charity",
+    "church",
+    "place_of_worship",
+    "community_center",
+    "social_services",
+    "food_bank",
+    "meal_delivery",
+    "homeless_shelter",
+    "welfare_office",
+})
+
+ASSISTANCE_NAME_WORDS = (
+    "food bank", "foodbank", "food pantry", "pantry", "soup kitchen",
+    "community kitchen", "free meal", "meals on wheels", "mission",
+    "charity", "charities", "outreach", "ministries", "ministry",
+    "salvation army", "community fridge", "fridge", "cupboard", "larder",
+    "feeding", "hunger", "relief", "shelter", "harvest", "food distribution",
+    "food closet", "nourish", "rescue mission", "benevolence", "giving",
+    "helping", "care center", "care centre", "community center",
+    "community centre", "resource center", "food share", "foodshare",
+)
+
+COMMERCIAL_TYPES = frozenset({
+    "cafe", "coffee_shop", "bakery", "bar", "pub", "night_club",
+    "meal_takeaway", "fast_food_restaurant", "ice_cream_shop", "sandwich_shop",
+    "grocery_store", "supermarket", "convenience_store", "liquor_store",
+    "department_store", "shopping_mall", "gas_station", "hotel", "lodging",
+})
+
+
+def looks_like_food_assistance(name: str, types: list[str]) -> bool:
+    """Whether a Google listing is plausibly a food assistance site."""
+    entries = set(types or [])
+
+    for entry in entries:
+        if entry.endswith("_restaurant") or entry == "restaurant":
+            return False
+        if entry in COMMERCIAL_TYPES:
+            return False
+
+    if entries & ASSISTANCE_TYPES:
+        return True
+
+    # Ambiguous "food"/"service" listing: the name has to carry the meaning.
+    haystack = name.casefold()
+    return any(word in haystack for word in ASSISTANCE_NAME_WORDS)
+
 
 GOOGLE_TYPE_HINTS = (
     ("fridge", "community-fridge"),
@@ -922,8 +1036,8 @@ def google_place_category(name: str, keyword: str) -> str:
 def google_discover(latitude: float, longitude: float, radius_m: int) -> list[dict]:
     """Every food assistance place Google lists around a point.
 
-    One Nearby Search per keyword, deduplicated by place_id. Cached on a
-    coarse grid so a city block of visitors shares one set of billed calls.
+    One text search per phrase, deduplicated by place id. Cached on a coarse
+    grid so a city block of visitors shares one set of billed calls.
     """
     cache_key = f"{latitude:.2f},{longitude:.2f}|{radius_m}"
     cached = google_discover_cache.get(cache_key)
@@ -933,57 +1047,55 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
     found: dict[str, dict] = {}
     for keyword in GOOGLE_DISCOVER_KEYWORDS:
         try:
-            body = google_get("place/nearbysearch/json", {
-                "location": f"{latitude},{longitude}",
-                "radius": radius_m,
-                "keyword": keyword,
-            })
+            results = places_text_search(keyword, latitude, longitude, radius_m)
         except (HTTPError, URLError, socket.timeout, ValueError, json.JSONDecodeError):
-            # One keyword failing should not lose the other four.
+            # One phrase failing should not lose the others.
             continue
 
-        for result in body.get("results") or []:
-            place_id = result.get("place_id")
-            location = ((result.get("geometry") or {}).get("location")) or {}
-            if not place_id or "lat" not in location or "lng" not in location:
+        for result in results:
+            place_id = result.get("id")
+            location = result.get("location") or {}
+            name = ((result.get("displayName") or {}).get("text") or "").strip()
+            if not place_id or not name or "latitude" not in location:
                 continue
-            if result.get("business_status") == "CLOSED_PERMANENTLY":
+            if result.get("businessStatus") == "CLOSED_PERMANENTLY":
+                continue
+            if not looks_like_food_assistance(name, result.get("types") or []):
                 continue
             if place_id in found:
                 continue
 
             photos = result.get("photos") or []
-            photo_ref = (photos[0] or {}).get("photo_reference") if photos else None
-            name = str(result.get("name", "")).strip()
-            if not name:
-                continue
+            photo_name = (photos[0] or {}).get("name") if photos else None
+            address = str(result.get("formattedAddress", ""))[:200]
+            open_now = (result.get("currentOpeningHours") or {}).get("openNow")
 
             found[place_id] = {
                 "id": f"google-{place_id}",
                 "googlePlaceId": place_id,
                 "name": name[:160],
                 "type": google_place_category(name, keyword),
-                "typeLabel": "Food Assistance (Google listing)",
+                "typeLabel": ((result.get("primaryTypeDisplayName") or {}).get("text")
+                              or "Food Assistance (Google listing)"),
                 "tagline": "",
                 "neighborhood": "",
-                "address": str(result.get("vicinity", ""))[:200],
+                "address": address,
                 "city": "",
                 "state": "",
                 "zip": "",
-                "cityStateZip": str(result.get("vicinity", ""))[:200],
-                "lat": float(location["lat"]),
-                "lng": float(location["lng"]),
-                "phone": "",
+                "cityStateZip": address,
+                "lat": float(location["latitude"]),
+                "lng": float(location["longitude"]),
+                "phone": str(result.get("nationalPhoneNumber", ""))[:40],
                 "email": "",
-                "website": "",
+                "website": str(result.get("websiteUri", ""))[:300],
                 "directionsUrl": (
                     "https://www.google.com/maps/search/?api=1"
                     f"&query={quote_plus(name)}&query_place_id={place_id}"
                 ),
                 "verifiedBadge": False,
                 "verifiedDate": "",
-                # Google's open_now is a live signal, so trust it when present.
-                "callAheadWarning": ((result.get("opening_hours") or {}).get("open_now")) is None,
+                "callAheadWarning": open_now is None,
                 "requirements": "",
                 "languages": [],
                 "dietary": [],
@@ -993,9 +1105,13 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
                 "eligibilityTags": [],
                 # A reference, not a stored image: the client fetches it back
                 # through our proxy so the API key stays server-side.
-                "photoRef": photo_ref,
-                "images": [f"/api/v1/places/photo?ref={quote_plus(photo_ref)}&w=640"] if photo_ref else [],
-                "hoursSummary": "Hours from Google — call ahead",
+                "photoRef": photo_name,
+                "images": (
+                    [f"/api/v1/places/photo?ref={quote_plus(photo_name)}&w=640"] if photo_name else []
+                ),
+                "hoursSummary": "Hours from Google — call ahead" if open_now is None else (
+                    "Open now (per Google)" if open_now else "Closed now (per Google)"
+                ),
                 "hoursKnown": False,
                 "weeklyHours": [],
                 "services": [],
@@ -1004,8 +1120,8 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
                 "acceptsReservations": False,
                 "reservationWindows": [],
                 "rating": result.get("rating"),
-                "ratingCount": result.get("user_ratings_total"),
-                "openNow": (result.get("opening_hours") or {}).get("open_now"),
+                "ratingCount": result.get("userRatingCount"),
+                "openNow": open_now,
                 "dataSource": "google",
                 "attribution": "Listing data © Google",
             }
@@ -1014,22 +1130,34 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
     google_discover_cache.put(cache_key, places)
     return places
 
-
 def google_photo(reference: str, width: int) -> tuple[bytes, str]:
     """Stream one Places photo through our server.
 
-    Google requires photos be served live from their endpoint rather than
-    copied into our own storage, and the API key must not reach the browser,
-    so the bytes are proxied per request and never written to disk.
+    `reference` is a Places API (New) photo resource name
+    ("places/<id>/photos/<token>"). Google requires photos be served live from
+    their endpoint rather than copied into our storage, and the key must not
+    reach the browser, so the bytes are proxied per request.
     """
-    url = (
-        "https://maps.googleapis.com/maps/api/place/photo?"
-        + urlencode({"photo_reference": reference, "maxwidth": width, "key": google_key()})
-    )
+    url = f"{PLACES_V1}/{reference}/media?" + urlencode({"maxWidthPx": width, "key": google_key()})
     with urlopen(url, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
         return response.read(), response.headers.get("Content-Type", "image/jpeg")
 
+ROUTES_TRAVEL_MODE = {
+    "driving": "DRIVE",
+    "walking": "WALK",
+    "transit": "TRANSIT",
+    "bicycling": "BICYCLE",
+}
+
+
 def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, dict]:
+    """Real travel time from one origin to each place, via the Routes API.
+
+    The legacy Distance Matrix endpoint is disabled for new Cloud projects, so
+    this uses routes.googleapis.com computeRouteMatrix. If the Routes API is
+    not enabled on the key the call fails and callers fall back to the
+    straight-line distance the API already computes.
+    """
     cache_key = f"{mode}|{origin['lat']:.4f},{origin['lng']:.4f}|" + ",".join(place["id"] for place in places)
     cached = google_distance_cache.get(cache_key)
     if cached is not None:
@@ -1037,21 +1165,47 @@ def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, d
 
     distances: dict[str, dict] = {}
     try:
-        body = google_get("distancematrix/json", {
-            "origins": f"{origin['lat']},{origin['lng']}",
-            "destinations": "|".join(f"{place['lat']},{place['lng']}" for place in places),
-            "mode": mode,
-            "units": "imperial",
-        })
-        elements = (body.get("rows") or [{}])[0].get("elements") or []
-        for place, element in zip(places, elements):
-            if element.get("status") != "OK":
+        request = Request(
+            "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+            data=json.dumps({
+                "origins": [{
+                    "waypoint": {"location": {"latLng": {
+                        "latitude": origin["lat"], "longitude": origin["lng"],
+                    }}},
+                }],
+                "destinations": [
+                    {"waypoint": {"location": {"latLng": {
+                        "latitude": place["lat"], "longitude": place["lng"],
+                    }}}}
+                    for place in places
+                ],
+                "travelMode": ROUTES_TRAVEL_MODE.get(mode, "DRIVE"),
+            }).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": google_key(),
+                "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,condition",
+            },
+            method="POST",
+        )
+        with urlopen(request, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
+            elements = json.loads(response.read().decode("utf-8"))
+
+        for element in elements:
+            index = element.get("destinationIndex")
+            if index is None or not (0 <= index < len(places)):
                 continue
-            distances[place["id"]] = {
-                "distanceText": (element.get("distance") or {}).get("text"),
-                "distanceMeters": (element.get("distance") or {}).get("value"),
-                "durationText": (element.get("duration") or {}).get("text"),
-                "durationSeconds": (element.get("duration") or {}).get("value"),
+            if element.get("condition") not in (None, "ROUTE_EXISTS"):
+                continue
+            metres = element.get("distanceMeters")
+            # Routes returns duration as a string of seconds, e.g. "930s".
+            seconds_raw = str(element.get("duration") or "").rstrip("s")
+            seconds = int(seconds_raw) if seconds_raw.isdigit() else None
+            distances[places[index]["id"]] = {
+                "distanceText": f"{metres / 1609.344:.1f} mi" if metres is not None else None,
+                "distanceMeters": metres,
+                "durationText": f"{round(seconds / 60)} min" if seconds is not None else None,
+                "durationSeconds": seconds,
                 "travelMode": mode,
             }
     except (HTTPError, URLError, socket.timeout, ValueError, KeyError, TypeError, json.JSONDecodeError):
@@ -1059,7 +1213,6 @@ def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, d
 
     google_distance_cache.put(cache_key, distances)
     return distances
-
 
 def enrich_places(payload: dict) -> dict:
     """Google ratings, reviews, and travel time for the places the navigator picked.

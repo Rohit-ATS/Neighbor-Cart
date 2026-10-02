@@ -13,7 +13,10 @@
    Loaded after app.css so it settles the look.
    ========================================================================== */
 
-.modal-backdrop {
+/* Shared tokens for every surface this stylesheet owns — the popups and the
+   dashboard top bar. Previously scoped to .modal-backdrop, which silently
+   broke every var() used outside a modal. */
+:root {
   --d-ink: #2d0407;
   --d-brown: #482820;
   --d-muted: #7f675c;
@@ -1370,4 +1373,230 @@
   text-transform: uppercase;
   backdrop-filter: blur(4px);
   pointer-events: none;
+}
+
+/* ==========================================================================
+   DASHBOARD TOP BAR
+   Rebuilt to match the landing page: a floating cream pill on the crimson
+   band rather than a flat dark strip, same Tanker wordmark, same amber
+   pulse dot, same button language. Loaded after app.css so it wins.
+   ========================================================================== */
+
+.places-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 14px 20px 0;
+  /* No band behind the pill — it floats on the page background. */
+  background: transparent;
+  box-shadow: none;
+  transition: padding .3s var(--d-ease);
+}
+
+.places-topbar-inner {
+  max-width: 1400px;
+  height: 68px;
+  margin: 0 auto;
+  padding: 0 12px 0 24px;
+  gap: 20px;
+  border-radius: 999px;
+  background: rgba(255, 247, 232, .88);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(72, 40, 32, .1);
+  box-shadow: 0 2px 6px rgba(45, 4, 7, .05), 0 14px 36px rgba(45, 4, 7, .12);
+}
+
+/* ---- wordmark ---- */
+
+.places-topbar .places-brand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--d-crimson);
+  font-family: Tanker, 'Arial Narrow', Impact, sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+}
+.places-topbar .places-brand-btn b { font-weight: 400; color: var(--d-crimson); }
+
+/* The two-piece cart mark becomes the landing page's single amber dot. */
+.places-topbar .places-brand-mark {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--d-amber);
+  animation: fb-ping 2.4s var(--d-ease) infinite;
+}
+.places-topbar .places-brand-mark i,
+.places-topbar .places-brand-mark b { display: none; }
+@keyframes fb-ping {
+  0%   { box-shadow: 0 0 0 0 rgba(252, 158, 37, .75); }
+  70%  { box-shadow: 0 0 0 11px rgba(252, 158, 37, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(252, 158, 37, 0); }
+}
+
+.places-topbar .topbar-live-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(146, 7, 17, .08);
+  border: 1px solid rgba(146, 7, 17, .18);
+  color: var(--d-crimson);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- centre hub links: text links like the landing nav, not chips ---- */
+
+.places-topbar .topbar-center-hubs-strip {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin: 0 auto;
+}
+
+.places-topbar .quick-hub-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--d-brown);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .2s var(--d-ease);
+}
+/* the landing page's underline-on-hover */
+.places-topbar .quick-hub-pill::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--d-crimson);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .26s var(--d-ease);
+}
+.places-topbar .quick-hub-pill:hover { color: var(--d-crimson); }
+.places-topbar .quick-hub-pill:hover::after,
+.places-topbar .quick-hub-pill.is-active::after { transform: scaleX(1); }
+.places-topbar .quick-hub-pill.is-active { color: var(--d-crimson); font-weight: 600; }
+.places-topbar .quick-hub-pill svg { opacity: .8; }
+
+/* ---- right-hand actions ---- */
+
+.places-topbar .places-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.places-topbar .lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(72, 40, 32, .16);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--d-brown);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s var(--d-ease), border-color .2s var(--d-ease);
+}
+.places-topbar .lang-toggle-btn:hover { background: var(--d-cream-2); border-color: rgba(146, 7, 17, .3); }
+
+.places-topbar .my-passes-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(180, 84, 10, .3);
+  border-radius: 999px;
+  background: rgba(252, 158, 37, .16);
+  color: var(--d-warn);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.places-topbar .my-passes-btn:hover { background: rgba(252, 158, 37, .26); }
+
+/* the primary action, matching the landing page's filled pill */
+.places-topbar .nav-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--d-crimson-deep);
+  color: var(--d-cream);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .22s var(--d-spring), background .22s var(--d-ease), box-shadow .22s var(--d-ease);
+}
+.places-topbar .nav-text-btn:hover {
+  background: #7a0510;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(95, 7, 13, .34);
+}
+.places-topbar .nav-text-btn:active { transform: scale(.97); }
+
+/* mobile drawer trigger */
+.places-topbar .lexis-rail-toggle-btn {
+  width: 42px; height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(72, 40, 32, .16);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--d-brown);
+  cursor: pointer;
+}
+.places-topbar .lexis-rail-toggle-btn:hover { background: var(--d-cream-2); }
+
+@media (max-width: 1180px) {
+  .places-topbar .topbar-center-hubs-strip { gap: 18px; }
+  .places-topbar .topbar-live-tag { display: none; }
+}
+
+@media (max-width: 980px) {
+  .places-topbar .topbar-center-hubs-strip { display: none; }
+}
+
+@media (max-width: 680px) {
+  .places-topbar { padding: 10px 12px 0; }
+  .places-topbar-inner { height: 60px; padding: 0 8px 0 14px; gap: 10px; }
+  .places-topbar .places-brand-btn { font-size: 20px; }
+  .places-topbar .lang-toggle-btn span { display: none; }
+  .places-topbar .nav-text-btn { height: 40px; padding: 0 16px; font-size: 13.5px; }
 }
