@@ -4,6 +4,7 @@ import { askHarvestLink } from '../lib/api.js';
 import { useUserLocation } from '../lib/geo.js';
 import AskBar from './AskBar.jsx';
 import AiMiniMap from './AiMiniMap.jsx';
+import LocationButton from './LocationButton.jsx';
 import { getSectionKnowledge } from '../lib/pageContext.js';
 import { classifyMessage, mergeNeeds } from '../lib/needs.js';
 
@@ -379,14 +380,6 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     };
   };
 
-  const locationLabel = {
-    idle: 'Use my location',
-    asking: 'Finding you…',
-    ready: 'Sorting by distance from you',
-    denied: 'Location blocked — tell me a ZIP instead',
-    unsupported: 'Location unavailable on this device',
-  }[locationStatus];
-
   return (
     <div className={`ai-chat ai-chat--${variant}`}>
       <header className="ai-chat-header">
@@ -414,18 +407,11 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         </div>
 
         <div className="ai-header-tools">
-          <button
-            type="button"
-            className={`ai-location-btn${locationStatus === 'ready' ? ' is-on' : ''}`}
-            onClick={() => (locationStatus === 'ready' ? clearLocation() : requestLocation())}
-            disabled={locationStatus === 'asking' || locationStatus === 'unsupported'}
-          >
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            {locationLabel}
-          </button>
+          <LocationButton
+            status={locationStatus}
+            onRequest={requestLocation}
+            onClear={clearLocation}
+          />
           {onClose && (
             <button className="modal-close-simple" onClick={onClose} aria-label="Close assistant">×</button>
           )}
