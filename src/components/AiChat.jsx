@@ -4,6 +4,8 @@ import { askHarvestLink } from '../lib/api.js';
 import { useUserLocation } from '../lib/geo.js';
 import AskBar from './AskBar.jsx';
 import AiMiniMap from './AiMiniMap.jsx';
+import { getSectionKnowledge } from '../lib/pageContext.js';
+import { classifyMessage, mergeNeeds } from '../lib/needs.js';
 
 /* The conversation itself.
 
@@ -19,40 +21,72 @@ const GREETING = {
   timestamp: 'Just now',
 };
 
+// Three starters, no more: a short label to scan and the full question it
+// actually asks, so the tray stays one calm row instead of a wall of text.
 const SAMPLE_QUESTIONS = [
-  'What food assistance is open right now?',
-  'Where can I get Halal food with no ID required?',
-  'Free pantries reachable by public transit in Chicago?',
-  'Where is baby formula and diapers available in Iowa?',
-  'Free hot meal kitchens open 7 days a week?',
+  { label: 'Open right now', prompt: 'What food assistance is open right now?' },
+  { label: 'Halal, no ID', prompt: 'Where can I get Halal food with no ID required?' },
+  { label: 'No car needed', prompt: 'Free pantries reachable by public transit near me?' },
 ];
 
-const isConversationOnly = (text) => /^(hi|hello|hey|thanks|thank you|good (morning|afternoon|evening))[!.\s]*$/i.test(text.trim());
+/* Opening on a section: name where they are, say what it is, then get out of
+   the way. The explainer is the same knowledge the model is given, so the
+   first thing they read matches whatever they ask next. */
+const sectionGreeting = (section) => ({
+  sender: 'ai',
+  text: `${section.explainer}\n\nAsk me anything about this, or tell me what you need — a diet, a neighborhood, no car, no ID, kids at home — and I’ll find verified food help that fits.`,
+  citations: [],
+  sectionLabel: section.label,
+  timestamp: 'Just now',
+});
+
+/* Unreadable input gets a short, unembarrassed ask — never "I've noted that",
+   which is what made a stray keystroke look like a recorded requirement. */
+const unreadableReply = (text, kind) => ({
+  sender: 'ai',
+  text: kind === 'gibberish'
+    ? `I couldn’t read “${text.length > 24 ? `${text.slice(0, 24)}…` : text}” — it may have been a slip of the keyboard. Tell me what you need in a few words: a diet, a neighborhood, no car, no ID, kids at home.`
+    : 'I’m not sure what to do with that one. Tell me what you need — a diet, a neighborhood, no car, no ID, kids at home — or ask me to find food near you.',
+  citations: [],
+  warning: null,
+  timestamp: clockTime(),
+});
+
 // "What is open right now?" is a request for places, not a stray detail to
 // remember; the phrasings people actually use all have to land here.
 const isPlaceSearchIntent = (text) => /\b(where|find|suggest|recommend|show|near|nearby|location|place|pantry|food bank|foodbank|open\s+(right\s+)?now|open\s+today|options|hot meal|meal site|get food|assistance|grocery|groceries)\b/i.test(text);
 const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 const clockTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-export default function AiChat({ variant = 'section', onClose, onSelectPlace, onShowMatches }) {
-  const [messages, setMessages] = useState([GREETING]);
+export default function AiChat({ variant = 'section', sectionId = null, onClose, onSelectPlace, onShowMatches }) {
+  // What the person was looking at when they opened the navigator. It shapes
+  // the opener, the starters, and the context the model is given.
+  const section = sectionId ? getSectionKnowledge(sectionId) : null;
+
+  const [messages, setMessages] = useState(() => (section ? [sectionGreeting(section)] : [GREETING]));
   const [isThinking, setIsThinking] = useState(false);
   const [chosenId, setChosenId] = useState(null);
   const streamRef = useRef(null);
   const { origin, status: locationStatus, request: requestLocation, clear: clearLocation } = useUserLocation();
 
+  /* Memory holds recognized facts — {id, label} — never the raw message, so a
+     mistyped line can no longer become a standing requirement. The key is
+     versioned because older sessions stored raw text under the previous one. */
   const [rememberedNeeds, setRememberedNeeds] = useState(() => {
     try {
-      const saved = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs') || '[]');
-      return Array.isArray(saved) ? saved.filter((item) => typeof item === 'string').slice(-12) : [];
+      const saved = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs-v2') || '[]');
+      return Array.isArray(saved)
+        ? saved.filter((item) => item && typeof item.id === 'string' && typeof item.label === 'string').slice(-12)
+        : [];
     } catch {
       return [];
     }
   });
 
   useEffect(() => {
-    sessionStorage.setItem('harvestlink-ai-needs', JSON.stringify(rememberedNeeds));
+    sessionStorage.setItem('harvestlink-ai-needs-v2', JSON.stringify(rememberedNeeds));
   }, [rememberedNeeds]);
+
 
   // Land on the top of the newest answer rather than the bottom of the thread,
   // so the reply and the map it brings are both in view.
@@ -81,12 +115,22 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
     const question = (queryText || '').trim();
     if (!question) return;
 
-    const nextNeeds = isConversationOnly(question)
-      ? rememberedNeeds
-      : [...rememberedNeeds, question].filter((item, index, list) => list.indexOf(item) === index).slice(-12);
+    /* Read the message before answering it: only recognized facts are kept,
+       and an unreadable line is handled here rather than filed and forwarded. */
+    const reading = classifyMessage(question);
+    const nextNeeds = reading.facts.length > 0 ? mergeNeeds(rememberedNeeds, reading.facts) : rememberedNeeds;
+    const nextLabels = nextNeeds.map((need) => need.label);
 
     setMessages((prev) => [...prev, { sender: 'user', text: question, timestamp: clockTime() }]);
     setRememberedNeeds(nextNeeds);
+
+    // Nothing readable to send anywhere: ask for it again and keep the memory
+    // untouched, rather than spending a model call on a keyboard slip.
+    if (reading.kind === 'gibberish' || reading.kind === 'unclear') {
+      setMessages((prev) => [...prev, unreadableReply(question, reading.kind)]);
+      return;
+    }
+
     setIsThinking(true);
 
     try {
@@ -94,7 +138,13 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
         role: message.sender === 'ai' ? 'assistant' : 'user',
         text: message.text,
       }));
-      const answer = await askHarvestLink({ message: question, history, catalog: verifiedCatalog, memory: nextNeeds });
+      const answer = await askHarvestLink({
+        message: question,
+        history,
+        catalog: verifiedCatalog,
+        memory: nextLabels,
+        context: section?.summary || '',
+      });
       const citations = (answer.placeIds || [])
         .map((placeId) => PLACES.find((place) => place.id === placeId))
         .filter(Boolean)
@@ -114,14 +164,14 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
         citations,
         // every match drives the map; citations stay the top few for reading
         matchIds: (answer.placeIds || []).filter((id) => PLACES.some((place) => place.id === id)),
-        matchedOn: nextNeeds.filter((need) => !isConversationOnly(need)),
+        matchedOn: nextLabels,
         warning: answer.warning || null,
         timestamp: clockTime(),
       }]);
     } catch {
       // The verified local matcher keeps the navigator useful if Bedrock is
       // temporarily unavailable or the server has not yet received an IAM role.
-      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds)]);
+      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading)]);
     } finally {
       setIsThinking(false);
     }
@@ -153,11 +203,15 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
     }]);
   };
 
-  const groundedAnswer = (query, needs = rememberedNeeds) => {
-    const lower = [...needs, query].join(' ').toLowerCase();  // everything we know so far
+  const groundedAnswer = (query, needs = rememberedNeeds, reading = classifyMessage(query)) => {
+    const lower = [...needs.map((need) => need.label), query].join(' ').toLowerCase();  // everything we know so far
     const nowTime = clockTime();
 
-    if (isConversationOnly(query)) {
+    if (reading.kind === 'gibberish' || reading.kind === 'unclear') {
+      return unreadableReply(query, reading.kind);
+    }
+
+    if (reading.kind === 'greeting') {
       return {
         sender: 'ai',
         text: 'Hi! I’m here to help you find food support that fits your situation. You can tell me what you need, or ask me to find a pantry, meal site, or grocery resource near you.',
@@ -171,9 +225,19 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
     // without prematurely sending a location list; the next explicit request
     // for places will use the combined remembered context above.
     if (!isPlaceSearchIntent(query)) {
+      // A question about the section they opened this from deserves the
+      // section's own answer, not a note that it was remembered.
+      const aboutThisSection = section && /\b(what|how|why|who|explain|tell me about|is this|does this)\b/i.test(query);
+      // Naming the recorded facts back is the only way the person can tell
+      // what was understood — and correct it when it was not.
+      const recorded = reading.facts.map((fact) => fact.label).join(', ');
       return {
         sender: 'ai',
-        text: 'I’ve noted that. When you’re ready, ask me to find or suggest nearby food options and I’ll use everything you’ve shared so far to narrow them down.',
+        text: aboutThisSection
+          ? `${section.explainer} If you want, tell me your city or ZIP and I’ll find verified places that fit.`
+          : recorded
+            ? `Noted: ${recorded}. I’ll apply that to every search from here. When you’re ready, ask me to find food near you.`
+            : 'Got it. When you’re ready, ask me to find or suggest nearby food options and I’ll use everything you’ve shared so far to narrow them down.',
         citations: [],
         warning: null,
         timestamp: nowTime,
@@ -309,7 +373,7 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
       citations,
       // every match drives the map; citations stay the top few for reading
       matchIds: matchedPlaces.map((place) => place.id),
-      matchedOn: needs.filter((need) => !isConversationOnly(need)),
+      matchedOn: needs.map((need) => need.label),
       warning: warningNote,
       timestamp: nowTime,
     };
@@ -337,7 +401,15 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
           </span>
           <div>
             <h3 className="ai-header-title">HarvestLink AI Navigator</h3>
-            <p className="ai-header-sub">Grounded in verified US food assistance records, with sources on every answer.</p>
+            {section ? (
+              <p className="ai-header-sub">
+                {/* Say out loud which part of the site this answer is grounded in. */}
+                <span className="ai-header-context">Reading: {section.label}</span>
+                Grounded in verified US food assistance records, with sources on every answer.
+              </p>
+            ) : (
+              <p className="ai-header-sub">Grounded in verified US food assistance records, with sources on every answer.</p>
+            )}
           </div>
         </div>
 
@@ -440,15 +512,31 @@ export default function AiChat({ variant = 'section', onClose, onSelectPlace, on
         {/* Composer: springs open on focus, suggestions ride in its tray */}
         <AskBar
           placeholder="Ask anything about food help near you…"
-          chips={SAMPLE_QUESTIONS}
+          chips={section?.starters || SAMPLE_QUESTIONS}
           onSubmit={handleAsk}
           disabled={isThinking}
         />
         {rememberedNeeds.length > 0 && (
           <div className="ai-memory-strip" aria-label="Remembered food access needs">
             <span>Remembering your needs</span>
-            <p>{rememberedNeeds.slice(-3).join(' · ')}</p>
-            <button type="button" onClick={() => setRememberedNeeds([])}>Clear context</button>
+            {/* Each fact is removable on its own: the list is only trustworthy
+                if a wrong entry can be taken off without wiping the rest. */}
+            <ul className="ai-need-chips">
+              {rememberedNeeds.map((need) => (
+                <li key={need.id}>
+                  <button
+                    type="button"
+                    className="ai-need-chip"
+                    onClick={() => setRememberedNeeds((prev) => prev.filter((item) => item.id !== need.id))}
+                    aria-label={`Forget ${need.label}`}
+                    title={`Forget ${need.label}`}
+                  >
+                    {need.label}<i aria-hidden="true">×</i>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setRememberedNeeds([])}>Clear all</button>
           </div>
         )}
       </div>

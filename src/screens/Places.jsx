@@ -13,6 +13,8 @@ import FoodRescueHub from '../components/FoodRescueHub.jsx';
 import CommunityFeed from '../components/CommunityFeed.jsx';
 import ImpactDashboard from '../components/ImpactDashboard.jsx';
 import AdminPortal from '../components/AdminPortal.jsx';
+import AiLauncher from '../components/AiLauncher.jsx';
+import { useSectionContext } from '../lib/pageContext.js';
 
 /* Two catalogues describe the same pantry differently, so matching is by
    normalised name plus a ~150m coordinate bucket rather than exact equality. */
@@ -54,6 +56,21 @@ export default function Places({ onNavigateHome }) {
   const [showCommunity, setShowCommunity] = useState(false);
   const [showImpact, setShowImpact] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+
+  /* Whichever panel is open is what the person is working in; a click inside a
+     tagged region refines it further (a place card, the passes drawer). */
+  const openPanel = showAdmin ? 'admin'
+    : showImpact ? 'impact'
+    : showCommunity ? 'community'
+    : showRescue ? 'rescue'
+    : showVolunteer ? 'volunteer'
+    : showNonprofit ? 'nonprofit'
+    : showIntake ? 'intake'
+    : showMyPasses ? 'passes'
+    : placeToReserve ? 'reservation'
+    : activePlace ? 'place-detail'
+    : 'directory';
+  const aiSection = useSectionContext(openPanel);
 
   useEffect(() => { refreshReservations(); }, []);
 
@@ -577,7 +594,7 @@ export default function Places({ onNavigateHome }) {
       ) : (
       <>
       {/* Hero / Filter Section */}
-      <section className="places-hero-bar">
+      <section className="places-hero-bar" data-ai-section="directory">
         <div className="shell-contained">
           <div className="places-title-row">
             <div className="places-title-copy">
@@ -796,7 +813,7 @@ export default function Places({ onNavigateHome }) {
       </div>
 
       {/* Main Grid: Interactive Map + Place Cards List */}
-      <main className="places-main-content shell-contained">
+      <main className="places-main-content shell-contained" data-ai-section="directory">
         <div className="places-split-layout">
           {/* List Panel */}
           <div className={`places-cards-column ${mobileTab === 'map' ? 'mobile-hidden' : ''}`}>
@@ -1049,7 +1066,7 @@ export default function Places({ onNavigateHome }) {
 
       {/* Saved Passes Drawer */}
       {showMyPasses && (
-        <div className="modal-backdrop" onClick={() => setShowMyPasses(false)}>
+        <div className="modal-backdrop" data-ai-section="passes" onClick={() => setShowMyPasses(false)}>
           <div className="passes-modal-card" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowMyPasses(false)}>×</button>
             <div className="passes-header">
@@ -1082,6 +1099,18 @@ export default function Places({ onNavigateHome }) {
         </div>
       )}
         </div> {/* /.places-workspace-main */}
+
+        {/* The navigator, floating over whichever panel is open. Hidden while
+            the workspace is already showing the full conversation. */}
+        <AiLauncher
+          sectionId={aiSection}
+          hidden={workspaceView === 'chat'}
+          onSelectPlace={(place) => setActivePlace(place)}
+          onShowMatches={(matches) => {
+            setAiMatchIds(matches.map((match) => match.id));
+            setWorkspaceView('directory');
+          }}
+        />
       </div> {/* /.places-workspace-frame */}
     </div>
   );

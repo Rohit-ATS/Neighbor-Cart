@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PLACES } from '../data/places.js';
 import { IMPACT_METRICS } from '../data/communityData.js';
 
 export default function NonprofitDashboard({ onClose }) {
   const [selectedOrgId, setSelectedOrgId] = useState('food-bank-iowa');
+  const [isOrgMenuOpen, setIsOrgMenuOpen] = useState(false);
+  const orgMenuRef = useRef(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'services' | 'inventory' | 'urgent' | 'referrals' | 'export'
   const [isServiceActive, setIsServiceActive] = useState(true);
   const [urgentNeedInput, setUrgentNeedInput] = useState('');
@@ -20,6 +22,24 @@ export default function NonprofitDashboard({ onClose }) {
   ]);
 
   const currentOrg = PLACES.find((p) => p.id === selectedOrgId) || PLACES[0];
+
+  useEffect(() => {
+    if (!isOrgMenuOpen) return undefined;
+
+    const closeMenu = (event) => {
+      if (!orgMenuRef.current?.contains(event.target)) setIsOrgMenuOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setIsOrgMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', closeMenu);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeMenu);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isOrgMenuOpen]);
 
   const handleVerifyNow = () => {
     const todayStr = 'Verified today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -57,15 +77,39 @@ export default function NonprofitDashboard({ onClose }) {
             <span className="np-badge">🏢 Nonprofit Portal</span>
             <div className="np-title-row">
               <h2 className="np-title">{currentOrg.name}</h2>
-              <select 
-                className="np-org-select"
-                value={selectedOrgId}
-                onChange={(e) => setSelectedOrgId(e.target.value)}
-              >
-                {PLACES.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.city}, {p.state})</option>
-                ))}
-              </select>
+              <div className="np-org-picker" ref={orgMenuRef}>
+                <button
+                  type="button"
+                  className="np-org-select"
+                  aria-haspopup="listbox"
+                  aria-expanded={isOrgMenuOpen}
+                  onClick={() => setIsOrgMenuOpen((open) => !open)}
+                >
+                  <span className="np-org-select-label">{currentOrg.name} · {currentOrg.city}, {currentOrg.state}</span>
+                  <span className="np-org-chevron" aria-hidden="true">⌄</span>
+                </button>
+                {isOrgMenuOpen && (
+                  <div className="np-org-options" role="listbox" aria-label="Choose organization">
+                    {PLACES.map((place, index) => (
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={place.id === selectedOrgId}
+                        className={`np-org-option${place.id === selectedOrgId ? ' is-selected' : ''}`}
+                        key={place.id}
+                        style={{ '--option-index': index }}
+                        onClick={() => {
+                          setSelectedOrgId(place.id);
+                          setIsOrgMenuOpen(false);
+                        }}
+                      >
+                        <span>{place.name}</span>
+                        <small>{place.city}, {place.state}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <p className="np-sub">{currentOrg.address}, {currentOrg.cityStateZip} · Last verified: <b>{lastVerifiedDate}</b></p>
           </div>

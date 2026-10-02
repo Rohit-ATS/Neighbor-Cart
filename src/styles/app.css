@@ -2208,6 +2208,18 @@ h2 em {
   place-items: center;
   padding: 20px 14px;
   overflow-y: auto;
+  animation: modal-backdrop-in .26s ease-out both;
+}
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(6px); }
+}
+
+@keyframes intake-modal-pop-in {
+  0% { opacity: 0; transform: translateY(22px) scale(.965); }
+  65% { opacity: 1; transform: translateY(-2px) scale(1.006); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Place Detail Modal */
@@ -3263,8 +3275,18 @@ h2 em {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(17, 38, 32, 0.28);
-  animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  animation: intake-modal-pop-in .46s cubic-bezier(.16, 1, .3, 1) both;
   box-sizing: border-box;
+}
+
+.detail-modal-card,
+.modal-card,
+.passes-modal-card {
+  transform-origin: center center;
+  will-change: transform, opacity;
+  animation: intake-modal-pop-in .46s cubic-bezier(.16, 1, .3, 1) both;
 }
 
 .np-badge {
@@ -3545,6 +3567,9 @@ h2 em {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  animation: intake-modal-pop-in .46s cubic-bezier(.16, 1, .3, 1) both;
 }
 
 /* Modal Header Bar */
@@ -4603,16 +4628,35 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .askbar-send:disabled { background: rgba(27, 28, 20, .12); color: var(--ink-45); cursor: not-allowed; }
 
 .askbar-tray { overflow: hidden; }
-.askbar-chips {
+
+/* Caption and keyboard hint share one line so the tray costs two rows, not four. */
+.askbar-tray-head {
   display: flex;
-  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+.askbar-tray-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+
+/* Three starters, one even band — each chip takes a third of the width. */
+.askbar-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  padding: 14px 0 0;
+  padding: 8px 0 2px;
   margin: 0;
   list-style: none;
 }
 .askbar-chip {
-  padding: 9px 15px;
+  width: 100%;
+  padding: 9px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--panel);
@@ -4620,11 +4664,14 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   font-size: 13.5px;
   font-weight: 500;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: border-color .16s ease, color .16s ease, transform .16s cubic-bezier(.2, 1.4, .4, 1);
 }
 .askbar-chip:hover { border-color: var(--green); color: var(--green-deep); transform: translateY(-1px); }
 
-.askbar-hint { padding-top: 10px; font-size: 12px; color: var(--ink-45); }
+.askbar-hint { font-size: 12px; color: var(--ink-45); }
 .askbar-hint kbd {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
@@ -4637,6 +4684,9 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 @media (max-width: 620px) {
   .askbar { max-width: 100%; padding-left: 14px; }
   .askbar.is-open { max-width: 100%; }
+  /* Narrow screens cannot hold three across; stack them and drop the hint. */
+  .askbar-chips { grid-template-columns: minmax(0, 1fr); }
+  .askbar-tray-head .askbar-hint { display: none; }
 }
 
 /* ---- nav: white floating capsule, dark type ---- */
@@ -4693,10 +4743,48 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 }
 .ai-memory-strip > span { color: var(--green); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
 .ai-memory-strip p { overflow: hidden; margin: 0; text-overflow: ellipsis; white-space: nowrap; }
-.ai-memory-strip button { color: var(--green); font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.ai-memory-strip > button { color: var(--green); font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+
+/* One chip per remembered fact, each removable on its own, so a wrong entry
+   can come off without clearing everything the person has told us. */
+.ai-need-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ai-need-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border: 1px solid rgba(146, 7, 17, .22);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green-deep);
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
+}
+.ai-need-chip i {
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink-45);
+}
+.ai-need-chip:hover { border-color: var(--green); background: var(--mint); }
+.ai-need-chip:hover i { color: var(--green); }
+
 @media (max-width: 560px) {
   .ai-memory-strip { grid-template-columns: 1fr auto; }
   .ai-memory-strip p { display: none; }
+  /* The chips are the content on a narrow screen, so they get the full row. */
+  .ai-memory-strip > span { grid-column: 1 / -1; }
+  .ai-need-chips { grid-column: 1; }
 }
 
 /* Smooth sidebar collapse: labels fade and clip in-place instead of being
@@ -4811,6 +4899,18 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   .lexis-new-btn,
   .lexis-nav-btn,
   .lexis-foot-btn { transition-duration: .01ms !important; }
+  .modal-backdrop,
+  .intake-modal-card.lexis-modal,
+  .ai-modal-card,
+  .detail-modal-card,
+  .modal-card,
+  .passes-modal-card,
+  .nonprofit-modal-card,
+  .volunteer-modal-card,
+  .rescue-modal-card,
+  .community-modal-card,
+  .impact-modal-card,
+  .admin-modal-card { animation-duration: .01ms !important; }
 }
 
 /* ==========================================================================
@@ -5007,15 +5107,82 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .np-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .np-header-left { display: grid; gap: 6px; }
 .np-top-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.np-org-picker { position: relative; z-index: 20; }
 .np-org-select {
-  height: 42px;
-  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px 0 16px;
   border-radius: 999px;
   border: 1.5px solid var(--border);
   background: var(--surface);
   font: inherit;
   font-size: 14px;
+  font-weight: 650;
   color: var(--ink);
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.np-org-select:hover,
+.np-org-select[aria-expanded="true"] {
+  border-color: var(--orange);
+  box-shadow: 0 5px 16px rgba(85, 46, 36, .12);
+}
+.np-org-select:active { transform: translateY(1px); }
+.np-org-select-label { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-org-chevron { font-size: 21px; line-height: 1; transform: translateY(-2px); transition: transform .25s ease; }
+.np-org-select[aria-expanded="true"] .np-org-chevron { transform: rotate(180deg) translateY(2px); }
+.np-org-options {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  /* Keep the menu inside the portal card instead of allowing its content
+     to size it wider than the available viewport. */
+  width: 520px;
+  max-width: calc(100vw - 112px);
+  max-height: min(500px, 60vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 18px 45px rgba(49, 30, 22, .22);
+  animation: np-org-menu-in .24s cubic-bezier(.22, 1, .36, 1) both;
+}
+.np-org-option {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0;
+  animation: np-org-option-in .32s cubic-bezier(.22, 1, .36, 1) both;
+  animation-delay: calc(min(var(--option-index), 14) * 42ms + 55ms);
+  transition: background .18s ease, color .18s ease;
+}
+.np-org-option > span { min-width: 0; font-size: 14px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.np-org-option small { color: var(--muted); font-size: 12px; }
+.np-org-option:hover,
+.np-org-option:focus-visible { background: var(--panel-2); outline: none; }
+.np-org-option.is-selected { background: var(--tag-bg); color: var(--orange); }
+.np-org-option.is-selected::after { content: '✓'; position: absolute; right: 18px; color: var(--orange); font-weight: 800; }
+.np-org-option { position: relative; padding-right: 38px; }
+@keyframes np-org-menu-in {
+  from { opacity: 0; transform: translateY(-7px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes np-org-option-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .np-status-toggle-wrap { display: inline-flex; align-items: center; gap: 10px; }
 .np-status-label { font-size: 13.5px; font-weight: 600; color: var(--muted); }
@@ -5169,4 +5336,4 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 }
 .ai-match-banner:hover { background: rgba(146, 7, 17, .14); }
 
-.ai-chat-composer .askbar-chips { padding-top: 12px; }
+.ai-chat-composer .askbar-tray-head { padding-top: 10px; }

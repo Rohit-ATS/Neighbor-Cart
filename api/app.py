@@ -727,11 +727,19 @@ def clean_ai_memory(value: object) -> list[str]:
     return [item.strip()[:AI_MAX_MESSAGE] for item in value[-12:] if isinstance(item, str) and item.strip()]
 
 
+def clean_ai_context(value: object) -> str:
+    """The page section the question was asked from; absent or unusable is fine."""
+    if not isinstance(value, str):
+        return ""
+    return value.strip()[:600]
+
+
 def bedrock_chat(payload: dict) -> dict:
     """Call Converse server-side and accept only catalog IDs in the response."""
     message = ai_text(payload.get("message"), "message", AI_MAX_MESSAGE)
     catalog = clean_ai_catalog(payload.get("catalog"))
     memory = clean_ai_memory(payload.get("memory"))
+    page_context = clean_ai_context(payload.get("context"))
     valid_ids = {place["id"] for place in catalog}
     if not catalog:
         raise ApiError(HTTPStatus.BAD_REQUEST, "catalog must contain at least one verified location")
@@ -748,6 +756,8 @@ def bedrock_chat(payload: dict) -> dict:
         "hours, inventory, eligibility rule, or availability. Do not make medical or eligibility decisions. "
         "For greetings or general small talk, return an empty placeIds list and warmly ask what food help is needed. "
         "When a customer only shares a requirement (for example a diet, budget, no-car need, language, children, or ID concern) without asking to find or suggest a place, acknowledge that you will remember it and return an empty placeIds list. Recommend locations only after an explicit request to find, show, suggest, or recommend food options. "
+        "If a message is unreadable, a stray keystroke, or carries no request or requirement, do not treat it as a requirement and do not claim to have noted it: say you could not read it, ask for it again in a few words, and return an empty placeIds list. "
+        "CUSTOMER_REQUIREMENTS_MEMORY contains only requirements already recognised; treat it as established fact and never add to it from an unclear message. "
         "When the customer asks to find food but has not provided a city, neighborhood, or ZIP code, ask for that location first and return an empty placeIds list rather than guessing. "
         "Return ONLY JSON: {\"reply\":\"...\",\"placeIds\":[\"verified-id\"],\"warning\":\"optional\","
         "\"followUps\":[\"...\"]}. Include at most three place IDs.\n\nVERIFIED_CATALOG:\n"
@@ -755,6 +765,15 @@ def bedrock_chat(payload: dict) -> dict:
         + "\n\nCUSTOMER_REQUIREMENTS_MEMORY (use these conditions together with the newest message):\n"
         + json.dumps(memory, separators=(",", ":"))
     )
+    if page_context:
+        # Where on the site the question came from. It answers "what is this?"
+        # and nothing more: it never licenses a place that is not in the catalog.
+        system += (
+            "\n\nPAGE_CONTEXT (the part of the site the customer is looking at right now; "
+            "use it to answer questions about what they are seeing, and still recommend only "
+            "VERIFIED_CATALOG locations):\n"
+            + page_context
+        )
     try:
         client = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "us-east-1"))
         response = client.converse(

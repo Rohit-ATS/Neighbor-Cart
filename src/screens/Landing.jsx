@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion, useScroll, useSpring } from 'framer-motion';
+import AiLauncher from '../components/AiLauncher.jsx';
+import { useSectionContext } from '../lib/pageContext.js';
 import '../styles/freshbox.css';
 
 /* Photography comes from Unsplash, the source this project already uses for
@@ -275,6 +277,10 @@ export default function Landing({ onNavigatePlaces }) {
     };
   }, [menuOpen]);
 
+  /* Scroll position says which section they are in; a click inside one says
+     it louder. The launcher carries whichever is newer. */
+  const aiSection = useSectionContext(active);
+
   const go = (id) => { setMenuOpen(false); scrollToId(id); };
   const findFood = () => { setMenuOpen(false); onNavigatePlaces(); };
 
@@ -328,7 +334,7 @@ export default function Landing({ onNavigatePlaces }) {
       </div>
 
       {/* ------------------------------------------------------------ hero */}
-      <header className="fb-hero" id="top" ref={heroRef}>
+      <header className="fb-hero" id="top" data-ai-section="top" ref={heroRef}>
         <Loop className="fb-hero-video" />
         <div className="fb-hero-scrim" aria-hidden="true" />
         <div className="fb-hero-grain" aria-hidden="true" />
@@ -402,7 +408,7 @@ export default function Landing({ onNavigatePlaces }) {
       </div>
 
       {/* ------------------------------------------------------ how it works */}
-      <section className="fb-section" id="how">
+      <section className="fb-section" id="how" data-ai-section="how">
         <div className="fb-shell">
           <Reveal className="fb-section-head">
             <span className="fb-kicker">How it works</span>
@@ -425,7 +431,7 @@ export default function Landing({ onNavigatePlaces }) {
       </section>
 
       {/* ------------------------------------------------------- video reel */}
-      <section className="fb-reel" id="reel">
+      <section className="fb-reel" id="reel" data-ai-section="reel">
         <div className="fb-shell">
           <Reveal className="fb-section-head">
             <span className="fb-kicker">What you find</span>
@@ -447,7 +453,7 @@ export default function Landing({ onNavigatePlaces }) {
       </section>
 
       {/* ----------------------------------------------------------- places */}
-      <section className="fb-section" id="places">
+      <section className="fb-section" id="places" data-ai-section="places">
         <div className="fb-shell">
           <Reveal className="fb-section-head">
             <span className="fb-kicker">Near you</span>
@@ -457,7 +463,7 @@ export default function Landing({ onNavigatePlaces }) {
 
           <motion.div className="fb-places" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}>
             {PLACES.map((p) => (
-              <motion.article key={p.name} className="fb-place" variants={reveal}>
+              <motion.article key={p.name} className="fb-place" data-ai-section="places" variants={reveal}>
                 <div className="fb-place-media">
                   <img src={p.img} alt="" loading="lazy" />
                   <span className="fb-pill">
@@ -480,7 +486,7 @@ export default function Landing({ onNavigatePlaces }) {
       </section>
 
       {/* ------------------------------------------------------------ stats */}
-      <section className="fb-stats" id="about">
+      <section className="fb-stats" id="about" data-ai-section="about">
         <div className="fb-shell">
           <motion.div className="fb-stats-grid" variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
             {STATS.map((s) => (
@@ -522,7 +528,7 @@ export default function Landing({ onNavigatePlaces }) {
       </section>
 
       {/* ----------------------------------------------------------- footer */}
-      <footer className="fb-footer">
+      <footer className="fb-footer" data-ai-section="about">
         <div className="fb-shell">
           <div className="fb-footer-grid">
             <div>
@@ -548,6 +554,9 @@ export default function Landing({ onNavigatePlaces }) {
           </div>
         </div>
       </footer>
+
+      {/* The navigator rides along, knowing whichever section is in view. */}
+      <AiLauncher sectionId={aiSection} />
     </div>
   );
 }

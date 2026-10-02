@@ -7,7 +7,10 @@ import { AnimatePresence, motion } from 'framer-motion';
    stretched across the panel. Clicking in springs it open: the field grows,
    the suggested prompts slide out beneath it, and the textarea keeps growing
    with the text up to six lines. It settles back down on blur, but only while
-   it is still empty, so a half-written question is never thrown away. */
+   it is still empty, so a half-written question is never thrown away.
+
+   The tray keeps to one line of starters: a caption and the keyboard hint
+   share a row, and the chips sit under them in a single even band. */
 
 const SPRING = { type: 'spring', stiffness: 220, damping: 26, mass: 0.7 };
 const MAX_ROWS = 6;
@@ -89,25 +92,32 @@ export default function AskBar({
             exit={{ opacity: 0, height: 0 }}
             transition={SPRING}
           >
+            <div className="askbar-tray-head">
+              {chips.length > 0 && <span className="askbar-tray-label">Try asking</span>}
+              <p className="askbar-hint">
+                <kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line
+              </p>
+            </div>
             {chips.length > 0 && (
               <ul className="askbar-chips">
-                {chips.map((c) => (
-                  <li key={c}>
-                    <button
-                      type="button"
-                      className="askbar-chip"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => submit(c)}
-                    >
-                      {c}
-                    </button>
-                  </li>
-                ))}
+                {chips.map((chip) => {
+                  const { label, prompt } = typeof chip === 'string' ? { label: chip, prompt: chip } : chip;
+                  return (
+                    <li key={prompt}>
+                      <button
+                        type="button"
+                        className="askbar-chip"
+                        title={prompt}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => submit(prompt)}
+                      >
+                        {label}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-            <p className="askbar-hint">
-              <kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line
-            </p>
           </motion.div>
         )}
       </AnimatePresence>

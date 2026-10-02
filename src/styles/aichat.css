@@ -546,3 +546,121 @@
   .ai-map-head { flex-direction: column; }
   .ai-map-expand { width: 100%; text-align: center; }
 }
+
+/* ---- the floating navigator, bottom-right of every screen ---- */
+
+/* It names the section it is sitting over, so the offer is specific — "Ask
+   about How it works" rather than a bubble with a question mark in it. */
+.ai-launcher {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 900; /* under the modal it opens (1000), over everything else */
+}
+
+.ai-launcher-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  height: 58px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff7e8;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(146, 7, 17, .32), 0 2px 6px rgba(72, 40, 32, .18);
+  transition: box-shadow .2s ease, transform .2s cubic-bezier(.2, 1.3, .4, 1), background .2s ease;
+}
+.ai-launcher-btn:hover { background: var(--green-deep); transform: translateY(-2px); }
+.ai-launcher-btn:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+
+.ai-launcher-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  color: var(--amber);
+}
+
+/* The label is collapsed at rest and opens on hover, focus, or the one
+   timed tease — so the corner stays quiet but the offer is never a mystery. */
+.ai-launcher-copy {
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+  opacity: 0;
+  transition: max-width .34s cubic-bezier(.22, .9, .3, 1),
+              opacity .22s ease,
+              padding .34s cubic-bezier(.22, .9, .3, 1);
+}
+.ai-launcher-btn:hover .ai-launcher-copy,
+.ai-launcher-btn:focus-visible .ai-launcher-copy,
+.ai-launcher.is-teased .ai-launcher-copy {
+  max-width: 260px;
+  padding-right: 22px;
+  opacity: 1;
+}
+.ai-launcher-copy b {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: rgba(255, 247, 232, .72);
+}
+.ai-launcher-copy i {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -.1px;
+  color: #fff7e8;
+}
+
+/* A slow ring, so the button reads as live without ever blinking at anyone. */
+.ai-launcher-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--amber);
+  opacity: 0;
+  animation: ai-launcher-ring 3.6s cubic-bezier(.22, .9, .3, 1) infinite;
+  pointer-events: none;
+}
+@keyframes ai-launcher-ring {
+  0% { transform: scale(1); opacity: .5; }
+  70%, 100% { transform: scale(1.22); opacity: 0; }
+}
+
+/* The section the conversation was opened from, named in the header. */
+.ai-header-context {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--green-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  vertical-align: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-launcher-pulse { animation: none; }
+  .ai-launcher-btn:hover { transform: none; }
+}
+
+@media (max-width: 620px) {
+  .ai-launcher { right: 14px; bottom: 14px; }
+  .ai-launcher-btn { height: 52px; }
+  .ai-launcher-mark { width: 52px; height: 52px; }
+  /* No room for a label beside a thumb-sized target; the aria-label carries it. */
+  .ai-launcher-btn:hover .ai-launcher-copy,
+  .ai-launcher.is-teased .ai-launcher-copy { max-width: 0; padding-right: 0; opacity: 0; }
+}

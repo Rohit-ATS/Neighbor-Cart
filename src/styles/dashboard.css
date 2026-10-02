@@ -739,6 +739,24 @@
   cursor: pointer;
 }
 
+/* The organization list is a custom popover.  Keep its inline size explicit:
+   an auto-sized absolutely-positioned box would otherwise grow to the longest
+   organization name and get clipped by the modal's rounded edge. */
+.modal-backdrop .np-org-picker { position: relative; }
+.modal-backdrop .np-org-options {
+  box-sizing: border-box;
+  /* At browser zoom levels a fixed 520px menu can be wider than the modal.
+     Scale down before that happens, while retaining a comfortable desktop size. */
+  inline-size: clamp(280px, 46vw, 460px) !important;
+  max-inline-size: calc(100vw - 48px) !important;
+  left: auto !important;
+  right: 28px !important;
+}
+
+@media (max-width: 680px) {
+  .modal-backdrop .np-org-options { right: 8px !important; }
+}
+
 .modal-backdrop .np-top-controls {
   flex: none;
   display: flex;
@@ -981,7 +999,7 @@
 .modal-backdrop .impact-counters-grid {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
   gap: 12px;
   padding: 22px 30px;
   background: var(--d-cream);
@@ -1599,4 +1617,601 @@
   .places-topbar .places-brand-btn { font-size: 20px; }
   .places-topbar .lang-toggle-btn span { display: none; }
   .places-topbar .nav-text-btn { height: 40px; padding: 0 16px; font-size: 13.5px; }
+}
+
+/* ==========================================================================
+   IMPACT REPORT  (.ir-*)
+
+   The impact modal was rebuilt as an operations report: headline outcomes with
+   their own trend, the resident journey, a live activity monitor, and the
+   detail tables behind each number. These rules are scoped to `.ir-` so the
+   other dashboards keep the shared bar and panel styling above.
+
+   One rule governs colour here: length encodes magnitude, so magnitude bars
+   are a single flat crimson rather than the shared crimson→amber gradient,
+   which would spend a second channel on nothing. Status colours are reserved
+   for health and always ship beside a word.
+   ========================================================================== */
+
+.modal-backdrop .impact-modal-card { max-width: 1180px; }
+
+.modal-backdrop .ir-head-copy { min-width: 0; }
+.modal-backdrop .ir-head-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.modal-backdrop .ir-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--d-line);
+  font-weight: 650;
+  color: var(--d-muted);
+  white-space: nowrap;
+}
+.modal-backdrop .ir-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--d-ok);
+  box-shadow: 0 0 0 3px rgba(29, 122, 68, .16);
+  animation: irPulse 2.4s ease-in-out infinite;
+}
+@keyframes irPulse { 50% { box-shadow: 0 0 0 6px rgba(29, 122, 68, 0); } }
+
+.modal-backdrop .ir-range {
+  display: flex;
+  padding: 3px;
+  background: var(--d-cream-2);
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+}
+.modal-backdrop .ir-range-btn {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--d-muted);
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+.modal-backdrop .ir-range-btn.is-active {
+  background: var(--d-surface);
+  color: var(--d-crimson);
+  box-shadow: 0 1px 3px rgba(72, 40, 32, .14);
+}
+
+.modal-backdrop .ir-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--d-brown);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease;
+}
+.modal-backdrop .ir-export:hover { border-color: var(--d-crimson); color: var(--d-crimson); }
+
+/* ---- headline cards ---- */
+
+.modal-backdrop .ic-card { gap: 7px; }
+.modal-backdrop .ic-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.modal-backdrop .ic-card .ic-val { font-size: 25px; white-space: nowrap; }
+.modal-backdrop .ir-spark { flex: none; margin-top: 2px; max-width: 42%; height: auto; }
+
+.modal-backdrop .ir-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--d-ok);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ir-delta.is-down { color: var(--d-warn); }
+.modal-backdrop .ir-delta em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--d-muted);
+}
+
+/* ---- report body ---- */
+
+.modal-backdrop .ir-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  /* Panels in the same row share a height, so the report reads as a grid of
+     cards rather than a ragged column. */
+  align-items: stretch;
+  padding: 22px 30px 26px;
+  overflow-y: auto;
+}
+.modal-backdrop .ir-span-2 { grid-column: 1 / -1; }
+
+.modal-backdrop .ir-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.modal-backdrop .ir-panel-head h3 { display: flex; align-items: center; gap: 8px; }
+.modal-backdrop .ir-panel-head .np-desc { margin: 4px 0 0; }
+.modal-backdrop .ir-panel-stat {
+  flex: none;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--d-cream);
+  border: 1px solid var(--d-line-soft);
+  font-size: 12px;
+  color: var(--d-muted);
+  white-space: nowrap;
+}
+.modal-backdrop .ir-panel-stat b { color: var(--d-crimson); font-size: 14px; }
+
+.modal-backdrop .ir-note {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--d-line-soft);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--d-muted);
+}
+.modal-backdrop .ir-note b { color: var(--d-brown); }
+
+/* ---- the single magnitude mark ---- */
+
+.modal-backdrop .ir-bar-track {
+  height: 9px;
+  background: var(--d-cream-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.modal-backdrop .ir-bar-fill {
+  height: 100%;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #b5222c;
+}
+
+/* ---- funnel ---- */
+
+.modal-backdrop .ir-funnel {
+  display: grid;
+  gap: 15px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.modal-backdrop .ir-funnel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.modal-backdrop .ir-funnel-name { font-size: 13px; font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .ir-funnel-count {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--d-crimson);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ir-funnel-track {
+  height: 12px;
+  background: var(--d-cream-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.modal-backdrop .ir-funnel-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #b5222c;
+}
+.modal-backdrop .ir-funnel-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--d-muted);
+}
+.modal-backdrop .ir-funnel-rate { flex: none; font-weight: 650; font-variant-numeric: tabular-nums; }
+.modal-backdrop .ir-funnel-rate.is-low { color: var(--d-warn); }
+
+/* ---- live monitor ---- */
+
+.modal-backdrop .ir-attention-count { color: var(--d-warn); }
+
+.modal-backdrop .ir-pause {
+  flex: none;
+  padding: 8px 14px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--d-muted);
+  cursor: pointer;
+}
+.modal-backdrop .ir-pause.is-paused { color: var(--d-crimson); border-color: var(--d-crimson); }
+
+.modal-backdrop .ir-feed-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.modal-backdrop .ir-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--d-line);
+  border-radius: 999px;
+  background: var(--d-surface);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--d-muted);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
+}
+.modal-backdrop .ir-chip i { width: 8px; height: 8px; border-radius: 999px; }
+.modal-backdrop .ir-chip.is-active {
+  background: var(--d-cream);
+  border-color: var(--d-crimson);
+  color: var(--d-crimson);
+}
+
+.modal-backdrop .ir-feed {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--d-line-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--d-line-soft);
+}
+.modal-backdrop .ir-feed-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 15px;
+  background: var(--d-surface);
+  font-size: 12.5px;
+  animation: irFeedIn .3s var(--d-ease);
+}
+@keyframes irFeedIn { from { opacity: 0; transform: translateY(-5px); } }
+.modal-backdrop .ir-feed-row.is-attention { background: #fffaf2; }
+.modal-backdrop .ir-feed-dot { width: 8px; height: 8px; border-radius: 999px; }
+.modal-backdrop .ir-feed-text {
+  color: var(--d-brown);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modal-backdrop .ir-feed-status {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--d-ok);
+}
+.modal-backdrop .ir-feed-status.is-attention { color: var(--d-warn); }
+.modal-backdrop .ir-feed-time {
+  font-size: 11px;
+  color: var(--d-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 52px;
+  text-align: right;
+}
+.modal-backdrop .ir-feed-empty {
+  padding: 18px 15px;
+  background: var(--d-surface);
+  font-size: 12.5px;
+  color: var(--d-muted);
+  text-align: center;
+}
+
+/* ---- hour-of-day bars ---- */
+
+.modal-backdrop .ir-hours-plot {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 132px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--d-line);
+}
+.modal-backdrop .ir-hour-bar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px 4px 0 0;
+  background: rgba(181, 34, 44, .32);
+  cursor: pointer;
+  transition: background .14s ease;
+}
+.modal-backdrop .ir-hour-bar.is-peak { background: rgba(181, 34, 44, .62); }
+.modal-backdrop .ir-hour-bar:hover,
+.modal-backdrop .ir-hour-bar.is-hovered,
+.modal-backdrop .ir-hour-bar:focus-visible { background: #b5222c; outline: none; }
+
+.modal-backdrop .ir-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 1px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: var(--d-ink);
+  color: #fff7e8;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: 0 8px 20px rgba(45, 4, 7, .28);
+}
+.modal-backdrop .ir-tooltip b { font-size: 12px; }
+
+.modal-backdrop .ir-hours-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  font-size: 10.5px;
+  color: var(--d-muted);
+}
+
+/* ---- channel split ---- */
+
+.modal-backdrop .ir-channel-bar {
+  display: flex;
+  gap: 2px; /* a surface gap, so adjacent fills never read as one mark */
+  height: 14px;
+  margin-bottom: 14px;
+}
+.modal-backdrop .ir-channel-seg:first-child { border-radius: 999px 0 0 999px; }
+.modal-backdrop .ir-channel-seg:last-child { border-radius: 0 999px 999px 0; }
+
+.modal-backdrop .ir-channel-legend {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.modal-backdrop .ir-channel-legend li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+.modal-backdrop .ir-channel-legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.modal-backdrop .ir-channel-legend b { color: var(--d-brown); font-weight: 650; }
+.modal-backdrop .ir-channel-legend span {
+  margin-left: auto;
+  color: var(--d-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-backdrop .ir-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .ir-mini-grid b {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--d-crimson);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ir-mini-grid span { font-size: 11px; font-weight: 600; color: var(--d-muted); }
+
+/* ---- the ZIP table ---- */
+
+.modal-backdrop .ir-table-wrap { overflow-x: auto; }
+.modal-backdrop .ir-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.modal-backdrop .ir-table th {
+  padding: 0 0 9px;
+  border-bottom: 1px solid var(--d-line);
+  text-align: left;
+  font-weight: 650;
+  color: var(--d-muted);
+  white-space: nowrap;
+}
+.modal-backdrop .ir-table th.is-right { text-align: right; }
+.modal-backdrop .ir-table th button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.modal-backdrop .ir-table th button:hover { color: var(--d-crimson); }
+.modal-backdrop .ir-table th.is-sorted button { color: var(--d-crimson); }
+.modal-backdrop .ir-table th i { font-style: normal; font-size: 9px; opacity: .7; }
+.modal-backdrop .ir-table td {
+  padding: 11px 12px 11px 0;
+  border-bottom: 1px solid var(--d-line-soft);
+  color: var(--d-brown);
+  vertical-align: middle;
+}
+.modal-backdrop .ir-table td.is-right { text-align: right; padding-right: 0; }
+.modal-backdrop .ir-table tr:last-child td { border-bottom: 0; }
+.modal-backdrop .ir-num { font-variant-numeric: tabular-nums; }
+.modal-backdrop .ir-zip-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--d-crimson);
+}
+.modal-backdrop .ir-zip-city { display: block; font-weight: 600; }
+/* The bar under the city is the magnitude read; the column beside it is the value. */
+.modal-backdrop .ir-zip-bar {
+  display: block;
+  height: 5px;
+  margin-top: 5px;
+  max-width: 190px;
+  background: var(--d-cream-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.modal-backdrop .ir-zip-bar i { display: block; height: 100%; border-radius: 999px; background: #b5222c; }
+
+.modal-backdrop .ir-trend { font-weight: 650; font-variant-numeric: tabular-nums; color: var(--d-ok); }
+.modal-backdrop .ir-trend.is-down { color: var(--d-muted); }
+
+.modal-backdrop .ir-unmet {
+  display: inline-block;
+  min-width: 46px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ir-unmet.is-ok { background: rgba(29, 122, 68, .12); color: var(--d-ok); }
+.modal-backdrop .ir-unmet.is-warn { background: rgba(180, 84, 10, .13); color: var(--d-warn); }
+.modal-backdrop .ir-unmet.is-critical { background: rgba(146, 7, 17, .12); color: var(--d-crimson); }
+
+/* ---- categories ---- */
+
+.modal-backdrop .ir-fill-rate { font-size: 11.5px; font-weight: 600; color: var(--d-ok); }
+.modal-backdrop .ir-fill-rate.is-warn { color: var(--d-warn); }
+.modal-backdrop .ir-fill-rate.is-critical { color: var(--d-crimson); }
+
+/* ---- service health ---- */
+
+.modal-backdrop .impact-section-panel { display: flex; flex-direction: column; }
+.modal-backdrop .ir-health {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.modal-backdrop .ir-health-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border: 1px solid var(--d-line-soft);
+  border-radius: 12px;
+  background: var(--d-tint);
+}
+.modal-backdrop .ir-health-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(29, 122, 68, .14);
+  color: var(--d-ok);
+}
+.modal-backdrop .ir-health-row.is-warning .ir-health-mark { background: rgba(180, 84, 10, .14); color: var(--d-warn); }
+.modal-backdrop .ir-health-copy { display: grid; gap: 2px; min-width: 0; }
+.modal-backdrop .ir-health-copy b { font-size: 12.5px; font-weight: 650; color: var(--d-brown); }
+.modal-backdrop .ir-health-copy span { font-size: 11px; color: var(--d-muted); }
+.modal-backdrop .ir-health-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--d-brown);
+  font-variant-numeric: tabular-nums;
+}
+.modal-backdrop .ir-health-state {
+  grid-column: 3;
+  grid-row: 2;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--d-ok);
+}
+.modal-backdrop .ir-health-row.is-warning .ir-health-state { color: var(--d-warn); }
+
+/* ---- methodology ---- */
+
+.modal-backdrop .ir-foot {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 18px 30px 22px;
+  background: var(--d-cream);
+  border-top: 1px solid var(--d-line-soft);
+}
+.modal-backdrop .ir-foot p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--d-muted);
+}
+.modal-backdrop .ir-foot b { color: var(--d-brown); }
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop .ir-live-dot { animation: none; }
+  .modal-backdrop .ir-feed-row { animation: none; }
+}
+
+@media (max-width: 1020px) {
+  .modal-backdrop .ir-body { grid-template-columns: minmax(0, 1fr); }
+  .modal-backdrop .ir-foot { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 860px) {
+  .modal-backdrop .ir-body { padding-inline: 18px; }
+  .modal-backdrop .ir-foot { padding-inline: 18px; }
+  .modal-backdrop .ir-head-tools { flex-wrap: wrap; justify-content: flex-end; }
+  .modal-backdrop .ir-panel-head { flex-direction: column; }
+  .modal-backdrop .ir-funnel-foot { flex-direction: column; gap: 3px; }
+  /* The status word and the clock survive; the long sentence wraps instead. */
+  .modal-backdrop .ir-feed-row { grid-template-columns: 10px minmax(0, 1fr) auto; }
+  .modal-backdrop .ir-feed-text { white-space: normal; }
+  .modal-backdrop .ir-feed-status { grid-column: 2; }
+  .modal-backdrop .ir-feed-time { grid-column: 3; grid-row: 1; }
+  .modal-backdrop .ir-mini-grid { grid-template-columns: 1fr; }
 }
