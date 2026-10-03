@@ -23,7 +23,9 @@ const CURTAIN_LABEL = {
 export default function App() {
   const [view, setView] = useState(viewFromUrl);
   const [curtain, setCurtain] = useState(null);   // the view being travelled to
-  const [landingPanel, setLandingPanel] = useState(null);   // a workspace panel to open on arrival
+  /* Where the next page should land: a workspace panel id, or a landing
+     section to scroll to. The search dock sets it from either page. */
+  const [target, setTarget] = useState(null);
   const timers = useRef([]);
   const reduceMotion = useReducedMotion();
 
@@ -42,10 +44,10 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [show]);
 
-  const navigateTo = useCallback((next, panel = null) => {
+  const navigateTo = useCallback((next, to = null) => {
     if (curtain) return;
-    setLandingPanel(panel);
-    if (next === view) { if (panel) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    setTarget(to);
+    if (next === view) return;
 
     const url = next === 'places' ? '/places' : '/';
     if (window.location.pathname !== url) window.history.pushState(null, '', url);
@@ -68,12 +70,16 @@ export default function App() {
     <div className="app-root">
       {view === 'places' ? (
         <Places
-          onNavigateHome={() => navigateTo('landing')}
-          initialPanel={landingPanel}
-          onPanelOpened={() => setLandingPanel(null)}
+          onNavigateHome={(section) => navigateTo('landing', section)}
+          initialPanel={target}
+          onPanelOpened={() => setTarget(null)}
         />
       ) : (
-        <Landing onNavigatePlaces={(panel) => navigateTo('places', panel)} />
+        <Landing
+          onNavigatePlaces={(panel) => navigateTo('places', panel)}
+          initialScrollTo={target}
+          onScrolled={() => setTarget(null)}
+        />
       )}
 
       <PageTransition active={Boolean(curtain)} label={curtain ? CURTAIN_LABEL[curtain] : null} />

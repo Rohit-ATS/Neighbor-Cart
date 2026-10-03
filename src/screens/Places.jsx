@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILITY_OPTIONS, getIsOpenNow } from '../data/places.js';
 import MapView from '../components/MapView.jsx';
@@ -15,6 +15,7 @@ import CommunityFeed from '../components/CommunityFeed.jsx';
 import ImpactDashboard from '../components/ImpactDashboard.jsx';
 import AdminPortal from '../components/AdminPortal.jsx';
 import AiLauncher from '../components/AiLauncher.jsx';
+import ExpandingSearchDock from '../components/ExpandingSearchDock.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
 import { parseSearch, SEARCH_EXAMPLES } from '../lib/searchParser.js';
 
@@ -94,8 +95,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
   /* Arriving from a search result that named a panel: open it, then tell the
      app so a later visit here does not reopen it unasked. */
-  useEffect(() => {
-    if (!initialPanel) return;
+  const openWorkspacePanel = useCallback((panel) => {
     ({
       directory: () => setWorkspaceView('directory'),
       intake: () => setShowIntake(true),
@@ -105,9 +105,14 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       nonprofit: () => setShowNonprofit(true),
       impact: () => setShowImpact(true),
       admin: () => setShowAdmin(true),
-    })[initialPanel]?.();
+    })[panel]?.();
+  }, []);
+
+  useEffect(() => {
+    if (!initialPanel) return;
+    openWorkspacePanel(initialPanel);
     onPanelOpened?.();
-  }, [initialPanel, onPanelOpened]);
+  }, [initialPanel, onPanelOpened, openWorkspacePanel]);
 
   useEffect(() => { refreshReservations(); }, []);
 
@@ -392,6 +397,13 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               <span>neighbor<b>cart</b></span>
             </button>
             <span className="topbar-live-tag">● Nationwide Access</span>
+
+            {/* The same search, beside the same name. Here a workspace result
+                opens its panel directly; a landing section sends them home. */}
+            <ExpandingSearchDock
+              onScrollTo={(section) => onNavigateHome(section)}
+              onOpenWorkspace={(panel) => { openWorkspacePanel(panel); setMobileMenuOpen(false); }}
+            />
           </div>
 
           <div className="topbar-center-hubs-strip">

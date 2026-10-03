@@ -203,7 +203,7 @@ function Loop({ className, rate = 1, start = 0, objectPosition, poster = LOOP_PO
 
 /* ----------------------------------------------------------------- page */
 
-export default function Landing({ onNavigatePlaces }) {
+export default function Landing({ onNavigatePlaces, initialScrollTo = null, onScrolled }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [stuck, setStuck] = useState(false);
   const [active, setActive] = useState('top');
@@ -281,6 +281,14 @@ export default function Landing({ onNavigatePlaces }) {
   /* Scroll position says which section they are in; a click inside one says
      it louder. The launcher carries whichever is newer. */
   const aiSection = useSectionContext(active);
+
+  /* Arrived from a search result picked over in the workspace: go to the
+     section it named, once the page has laid out. */
+  useEffect(() => {
+    if (!initialScrollTo) return undefined;
+    const timer = setTimeout(() => { scrollToId(initialScrollTo); onScrolled?.(); }, 80);
+    return () => clearTimeout(timer);
+  }, [initialScrollTo, onScrolled]);
 
   const go = (id) => { setMenuOpen(false); scrollToId(id); };
   const findFood = () => { setMenuOpen(false); onNavigatePlaces(); };
