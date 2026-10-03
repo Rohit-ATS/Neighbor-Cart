@@ -81,6 +81,10 @@ AI_MAX_MESSAGE = 2000
 SESSION_TTL_DAYS = 30
 BOOKING_HORIZON_DAYS = 30
 MAX_RESERVATIONS_PER_SESSION_PER_DAY = 1
+# One network may hold one online pickup at the same location on a day. This
+# keeps the no-ID flow intact while making a single network unable to mint
+# disposable sessions to consume every pickup window.
+MAX_RESERVATIONS_PER_NETWORK_PER_LOCATION_PER_DAY = 1
 MAX_SESSIONS_PER_NETWORK_PER_DAY = 4
 MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE = 5
 MAX_AI_CONCURRENT_REQUESTS = 2
@@ -252,8 +256,6 @@ class Database:
                   lng REAL
                 );
                 CREATE INDEX IF NOT EXISTS locations_category_idx ON locations(category);
-                CREATE INDEX IF NOT EXISTS locations_latlng_idx ON locations(lat, lng);
-                CREATE INDEX IF NOT EXISTS locations_category_idx ON locations(category);
 
                 CREATE TABLE IF NOT EXISTS reservations (
                   id TEXT PRIMARY KEY,
@@ -263,6 +265,7 @@ class Database:
                   location_id TEXT NOT NULL REFERENCES locations(id),
                   pickup_date TEXT NOT NULL,
                   time_slot TEXT NOT NULL,
+                  network_fingerprint TEXT NOT NULL DEFAULT 'legacy',
                   household_size TEXT NOT NULL,
                   dietary_json TEXT NOT NULL,
                   needs_curbside INTEGER NOT NULL CHECK (needs_curbside IN (0, 1)),
@@ -275,6 +278,10 @@ class Database:
                   ON reservations(session_id, created_at DESC);
                 CREATE INDEX IF NOT EXISTS reservations_slot_idx
                   ON reservations(location_id, pickup_date, time_slot);
+                CREATE TABLE IF NOT EXISTS internal_secrets (
+                  name TEXT PRIMARY KEY,
+                  value BLOB NOT NULL
+                );
 
                 CREATE TABLE IF NOT EXISTS anonymous_sessions (
                   id TEXT PRIMARY KEY,
@@ -286,6 +293,7 @@ class Database:
                 """
             )
             self._migrate(connection)
+            self._network_fingerprint_secret = self._persistent_secret(connection, "reservation-network-fingerprint")
             self._seed_locations(connection)
         finally:
             connection.close()
@@ -298,10 +306,31 @@ class Database:
         would quietly return nothing.
         """
         # Raw connection (no row_factory): PRAGMA rows are plain tuples.
-        existing = {row[1] for row in connection.execute("PRAGMA table_info(locations)")}
+        location_columns = {row[1] for row in connection.execute("PRAGMA table_info(locations)")}
         for column in ("lat", "lng"):
-            if column not in existing:
+            if column not in location_columns:
                 connection.execute(f"ALTER TABLE locations ADD COLUMN {column} REAL")
+        connection.execute("CREATE INDEX IF NOT EXISTS locations_latlng_idx ON locations(lat, lng)")
+        reservation_columns = {row[1] for row in connection.execute("PRAGMA table_info(reservations)")}
+        if "network_fingerprint" not in reservation_columns:
+            # Older rows have no trustworthy network identity. Mark them
+            # explicitly so the new guard fails closed for that location/date
+            # during the remaining booking horizon instead of treating them as
+            # an unbounded new network.
+            connection.execute("ALTER TABLE reservations ADD COLUMN network_fingerprint TEXT NOT NULL DEFAULT 'legacy'")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS reservations_network_location_date_idx "
+            "ON reservations(network_fingerprint, location_id, pickup_date)"
+        )
+
+    @staticmethod
+    def _persistent_secret(connection: sqlite3.Connection, name: str) -> bytes:
+        row = connection.execute("SELECT value FROM internal_secrets WHERE name = ?", (name,)).fetchone()
+        if row is not None:
+            return bytes(row[0])
+        secret = secrets.token_bytes(32)
+        connection.execute("INSERT INTO internal_secrets (name, value) VALUES (?, ?)", (name, secret))
+        return secret
 
     def _seed_locations(self, connection: sqlite3.Connection) -> None:
         if not SEED_PATH.exists():
@@ -479,7 +508,7 @@ class Database:
             ],
         }
 
-    def create_reservation(self, session_id: str, idempotency_key: str | None, payload: dict) -> dict:
+    def create_reservation(self, session_id: str, idempotency_key: str | None, payload: dict, peer: str) -> dict:
         location_id = require_text(payload, "locationId", 96)
         location = self.location(location_id)
         if not location.get("acceptsReservations"):
@@ -498,6 +527,9 @@ class Database:
             raise ApiError(HTTPStatus.BAD_REQUEST, "needsCurbside must be true or false")
         guest_name = optional_text(payload.get("guestName"), "Neighbor Guest", 64)
         contact = optional_text(payload.get("contact"), None, 200)
+        network_fingerprint = hmac.new(
+            self._network_fingerprint_secret, peer.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
 
         # BEGIN IMMEDIATE serializes writes before counting reservations. This makes
         # the capacity check and insert one atomic operation even with concurrent users.
@@ -521,6 +553,20 @@ class Database:
             if session_reservations >= MAX_RESERVATIONS_PER_SESSION_PER_DAY:
                 raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "This device already has a pickup reservation for that day")
 
+            network_reservations = connection.execute(
+                """
+                SELECT COUNT(*) FROM reservations
+                WHERE network_fingerprint IN (?, '', 'legacy') AND location_id = ? AND pickup_date = ?
+                """,
+                (network_fingerprint, location_id, pickup_date),
+            ).fetchone()[0]
+            if network_reservations >= MAX_RESERVATIONS_PER_NETWORK_PER_LOCATION_PER_DAY:
+                raise ApiError(
+                    HTTPStatus.TOO_MANY_REQUESTS,
+                    "This network already has an online pickup reservation at this location for that day. "
+                    "Please choose another location or contact the pantry for help.",
+                )
+
             capacity = slot_capacity(location)
             reserved = connection.execute(
                 """
@@ -543,8 +589,8 @@ class Database:
                         """
                         INSERT INTO reservations (
                           id, confirmation_code, session_id, idempotency_key, location_id, pickup_date,
-                          time_slot, household_size, dietary_json, needs_curbside, guest_name, contact, created_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          time_slot, network_fingerprint, household_size, dietary_json, needs_curbside, guest_name, contact, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             reservation_id,
@@ -554,6 +600,7 @@ class Database:
                             location_id,
                             pickup_date,
                             time_slot,
+                            network_fingerprint,
                             household_size,
                             json.dumps(dietary),
                             int(needs_curbside),
@@ -769,7 +816,6 @@ def clean_ai_resident_profile(value: object) -> dict:
     cleaned = {}
     for key, limit in {
         "location": 160,
-        "address": 180,
         "householdSize": 48,
         "urgency": 48,
         "transportation": 48,
@@ -790,7 +836,11 @@ def bedrock_chat(payload: dict) -> dict:
     catalog = clean_ai_catalog(payload.get("catalog"))
     memory = clean_ai_memory(payload.get("memory"))
     page_context = clean_ai_context(payload.get("context"))
-    resident_profile = clean_ai_resident_profile(payload.get("residentProfile"))
+    resident_profile = (
+        clean_ai_resident_profile(payload.get("residentProfile"))
+        if payload.get("bedrockProfileConsent") is True
+        else {}
+    )
     valid_ids = {place["id"] for place in catalog}
     if not catalog:
         raise ApiError(HTTPStatus.BAD_REQUEST, "catalog must contain at least one verified location")
@@ -823,7 +873,7 @@ def bedrock_chat(payload: dict) -> dict:
         system += (
             "\n\nCUSTOMER_INTAKE_PROFILE (the customer explicitly saved these details for personalized help). "
             "Use the location, household, timing, transportation, and dietary details to tailor your answer. "
-            "Do not repeat a street address back to the customer or claim an exact travel distance; use the city, ZIP, or neighborhood to guide matching instead:\n"
+            "Do not claim an exact travel distance; use the city, ZIP, or neighborhood to guide matching instead:\n"
             + json.dumps(resident_profile, separators=(",", ":"))
         )
     if page_context:
@@ -1385,7 +1435,9 @@ def enrich_places(payload: dict, database: Database) -> dict:
     than breaking.
     """
     places = catalog_enrich_places(payload.get("places"), database)
-    origin = clean_origin(payload.get("origin"))
+    # Precise browser coordinates are sent to Google Routes only after the
+    # client has collected the dedicated, feature-specific consent flag.
+    origin = clean_origin(payload.get("origin")) if payload.get("googleRoutesConsent") is True else None
     mode = payload.get("mode") if payload.get("mode") in {"driving", "walking", "transit", "bicycling"} else "driving"
 
     if not google_key():
@@ -1489,6 +1541,8 @@ def make_handler(database: Database):
                     point = optional_point(query.get("lat", [None])[0], query.get("lng", [None])[0])
                     if point is None:
                         raise ApiError(HTTPStatus.BAD_REQUEST, "lat and lng are required")
+                    if query.get("googlePlacesConsent", ["false"])[0].lower() != "true":
+                        return self.send_json(HTTPStatus.OK, {"places": [], "provider": "none"})
                     radius_m = int(bounded_float(
                         query.get("radiusM", [None])[0], 16_000.0, 500.0,
                         float(GOOGLE_DISCOVER_MAX_RADIUS_M), "radiusM",
@@ -1577,7 +1631,7 @@ def make_handler(database: Database):
                 key = self.headers.get("Idempotency-Key")
                 if key is not None and not IDEMPOTENCY_RE.fullmatch(key):
                     raise ApiError(HTTPStatus.BAD_REQUEST, "Idempotency-Key must be 8-128 URL-safe characters")
-                reservation = database.create_reservation(session_id(self.headers, database), key, read_json(self))
+                reservation = database.create_reservation(session_id(self.headers, database), key, read_json(self), peer)
                 self.send_json(HTTPStatus.CREATED, {"reservation": reservation})
             except ApiError as error:
                 self.send_json(error.status, {"error": error.message})

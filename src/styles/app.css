@@ -1903,6 +1903,9 @@ h2 em {
   font-weight: 600;
 }
 
+.google-places-consent { max-width: 430px; }
+.google-places-consent small { display: block; margin-top: 2px; font-weight: 400; line-height: 1.35; }
+
 .reset-filters-btn {
   font-size: 12.5px;
   font-weight: 700;

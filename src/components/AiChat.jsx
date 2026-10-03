@@ -112,7 +112,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
      versioned because older sessions stored raw text under the previous one. */
   const [rememberedNeeds, setRememberedNeeds] = useState(() => {
     try {
-      const saved = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs-v2') || '[]');
+      const saved = JSON.parse(sessionStorage.getItem('harvestlink-ai-needs-v3') || '[]');
       return Array.isArray(saved)
         ? saved.filter((item) => item && typeof item.id === 'string' && typeof item.label === 'string').slice(-12)
         : [];
@@ -121,9 +121,11 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     }
   });
   const [residentProfile, setResidentProfile] = useState(() => getResidentProfile());
+  const [bedrockProfileConsent, setBedrockProfileConsent] = useState(false);
+  const [googleRoutesConsent, setGoogleRoutesConsent] = useState(false);
 
   useEffect(() => {
-    sessionStorage.setItem('harvestlink-ai-needs-v2', JSON.stringify(rememberedNeeds));
+    sessionStorage.setItem('harvestlink-ai-needs-v3', JSON.stringify(rememberedNeeds));
   }, [rememberedNeeds]);
 
   // The intake can remain open beside the navigator. Listen for its save event
@@ -148,9 +150,9 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     el.scrollTo({ top: Math.max(0, last.offsetTop - el.offsetTop - 8), behavior: 'smooth' });
   }, [messages, isThinking]);
 
-  /* The hosted model is told how far each place is, not where the person is.
-     That is the part it needs in order to answer "nearby", and it means a
-     coordinate never leaves for a third-party service. */
+  /* The hosted model receives a catalog with local, straight-line distances.
+     Precise coordinates stay in the browser unless the resident separately
+     opts into Google Routes for real travel times below. */
   const verifiedCatalog = PLACES.map((place) => {
     const miles = origin ? haversineMiles(origin, { lat: place.lat, lng: place.lng }) : null;
     return {
@@ -176,10 +178,16 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     const profileFacts = residentProfileFacts(residentProfile);
     const memoryWithProfile = mergeNeeds(rememberedNeeds, profileFacts);
     const nextNeeds = reading.facts.length > 0 ? mergeNeeds(memoryWithProfile, reading.facts) : memoryWithProfile;
+    // Keep saved intake facts out of provider-bound memory. The resident's
+    // own chat facts remain eligible because they submitted that message.
+    const nextRememberedNeeds = reading.facts.length > 0
+      ? mergeNeeds(rememberedNeeds, reading.facts)
+      : rememberedNeeds;
+    const providerLabels = nextRememberedNeeds.map((need) => need.label);
     const nextLabels = nextNeeds.map((need) => need.label);
 
     setMessages((prev) => [...prev, { sender: 'user', text: question, timestamp: clockTime() }]);
-    setRememberedNeeds(nextNeeds);
+    setRememberedNeeds(nextRememberedNeeds);
 
     // Nothing readable to send anywhere: ask for it again and keep the memory
     // untouched, rather than spending a model call on a keyboard slip.
@@ -199,9 +207,12 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         message: question,
         history,
         catalog: verifiedCatalog,
-        memory: nextLabels,
+        memory: providerLabels,
         context: section?.summary || '',
-        residentProfile,
+        // Street address is never sent. The remaining saved details are only
+        // included after the resident explicitly opts into Bedrock tailoring.
+        residentProfile: bedrockProfileConsent ? residentProfile : null,
+        bedrockProfileConsent,
       });
       const citations = (answer.placeIds || [])
         .map((placeId) => PLACES.find((place) => place.id === placeId))
@@ -599,6 +610,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
                   places={message.matchIds.map((id) => PLACES.find((place) => place.id === id)).filter(Boolean)}
                   matchedOn={message.matchedOn}
                   origin={origin}
+                  googleRoutesConsent={googleRoutesConsent}
                   chosenId={chosenId}
                   onChoose={handleChoose}
                   onOpenPlace={(place) => { onSelectPlace?.(place); onClose?.(); }}
@@ -659,6 +671,26 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       </div>
 
       <div className="ai-chat-composer">
+        <fieldset className="ai-provider-consent">
+          <legend>Privacy choices for optional services</legend>
+          <p>AI answers send this chat message and recent chat to Amazon Bedrock. Your street address stays on this device.</p>
+          <label>
+            <input
+              type="checkbox"
+              checked={bedrockProfileConsent}
+              onChange={(event) => setBedrockProfileConsent(event.target.checked)}
+            />
+            Also share my saved ZIP/city, household size, timing, transportation, and food needs with Amazon Bedrock for a tailored answer.
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={googleRoutesConsent}
+              onChange={(event) => setGoogleRoutesConsent(event.target.checked)}
+            />
+            Share my precise location with Google Maps/Routes for real travel times. Without this, maps use local straight-line distance.
+          </label>
+        </fieldset>
         {/* Composer: springs open on focus, suggestions ride in its tray */}
         <AskBar
           placeholder="Ask anything about food help near you…"

@@ -122,11 +122,12 @@ export async function askHarvestLink(payload) {
  * stored, because Google's terms forbid keeping a copy of their catalogue.
  * Returns `{ places: [], provider: 'none' }` when no API key is configured.
  */
-export async function discoverPlaces({ lat, lng, radiusM = 25000 }) {
+export async function discoverPlaces({ lat, lng, radiusM = 25000, googlePlacesConsent = false }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lng),
     radiusM: String(radiusM),
+    googlePlacesConsent: String(googlePlacesConsent),
   });
   return request(`/api/v1/places/discover?${params}`, {}, false);
 }

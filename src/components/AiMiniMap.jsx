@@ -30,6 +30,7 @@ export default function AiMiniMap({
   places,
   matchedOn = [],
   origin = null,
+  googleRoutesConsent = false,
   onOpenPlace,
   onShowAll,
   onChoose,
@@ -43,14 +44,15 @@ export default function AiMiniMap({
   const [enrichment, setEnrichment] = useState({});
   const [provider, setProvider] = useState(null);
 
-  /* Google ratings, reviews and real travel time, once a key is configured.
-     Everything below degrades to straight-line distance without one. */
+  /* Google ratings/reviews work when configured. Precise route time is
+     separate and requires the resident's feature-specific consent. */
   useEffect(() => {
     let cancelled = false;
     if (places.length === 0) return undefined;
     enrichPlaces({
       places: places.map((p) => ({ id: p.id, name: p.name, address: `${p.address}, ${p.cityStateZip}`, lat: p.lat, lng: p.lng })),
-      origin,
+      origin: googleRoutesConsent ? origin : null,
+      googleRoutesConsent,
     })
       .then((result) => {
         if (cancelled) return;
@@ -61,7 +63,7 @@ export default function AiMiniMap({
         if (!cancelled) setProvider('none');
       });
     return () => { cancelled = true; };
-  }, [places, origin]);
+  }, [places, origin, googleRoutesConsent]);
 
   /* Nearest first when we know where the person is, so the first card in the
      list is the one they can actually reach. */

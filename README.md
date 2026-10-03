@@ -49,7 +49,8 @@ anonymous, device-scoped pickup pass instead of an account or ID requirement.
 #### Google Maps Platform (optional)
 
 Set `GOOGLE_MAPS_API_KEY` in the API's environment to switch on Google ratings,
-recent reviews, and real driving/transit times in the navigator's mini map. The
+recent reviews, live nearby discovery, and (after explicit, separate resident
+opt-ins) real driving/transit times in the navigator's mini map. The
 key is read only by the Python API and never reaches the browser; enable the
 **Places API** and **Distance Matrix API** on it. Responses are cached in
 process (6h for place details, 30m for distances) to keep billing down.
@@ -68,11 +69,21 @@ the current process when it is not set.
 Each reservable window has a default capacity of 12 passes per day. A future
 data source can override it with a positive integer `slotCapacity` on a place.
 The reservation write uses a SQLite transaction, so concurrent requests cannot
-overbook a window. Sessions are server-issued, expire after 30 days, and may
-create one pass per device per pickup day; pickup dates are limited to the next
-30 days. The API also bounds HTTP workers and request-body reads, and the AI
-route is session-gated, rate-limited, and capped at two simultaneous Bedrock
-calls. Run its integration suite with `npm run test:api`.
+overbook a window. To keep no-ID reservations from being mass-created with
+disposable sessions, one network can make one online reservation at a location
+per pickup day; the error directs shared-network residents to the pantry for
+help. Sessions are server-issued, expire after 30 days, and may create one pass
+per device per pickup day; pickup dates are limited to the next 30 days.
+
+The AI navigator always sends the chat message and recent chat to Amazon
+Bedrock when that optional service is configured. A resident must separately
+opt in before saved profile details are sent, and street addresses are never
+sent to Bedrock. Precise browser coordinates are sent to Google Places and
+Google Routes only after their separate opt-ins; otherwise the built-in
+directory and local straight-line distance remain available.
+The API also bounds HTTP workers and request-body reads, and the AI route is
+session-gated, rate-limited, and capped at two simultaneous Bedrock calls. Run
+its integration suite with `npm run test:api`.
 
 For a direct deployment, rate limits use the TCP peer address. Behind a reverse
 proxy, set `NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES` to a comma-separated allowlist

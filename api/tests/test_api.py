@@ -1,8 +1,11 @@
 import json
 import socket
+import sqlite3
+import sys
 import tempfile
 import threading
 import time
+import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
@@ -74,11 +77,13 @@ class ApiTests(unittest.TestCase):
             "guestName": "Alex",
         }
 
-    def enrichment_payload(self, origin=None):
+    def enrichment_payload(self, origin=None, google_routes_consent=False):
         place = self.server.database.locations(None, None, False, limit=1)[0]
         payload = {"places": [{"id": place["id"]}]}
         if origin is not None:
             payload["origin"] = origin
+        if google_routes_consent:
+            payload["googleRoutesConsent"] = True
         return payload
 
     def new_session(self):
@@ -247,8 +252,13 @@ class ApiTests(unittest.TestCase):
         capacity = slot["capacity"]
 
         def reserve(index):
-            headers = self.headers(f"capacity-request-{index:016d}", self.new_session())
-            return self.request("POST", "/api/v1/reservations", payload, headers)[0]
+            try:
+                self.server.database.create_reservation(
+                    self.new_session(), f"capacity-request-{index:016d}", payload, f"198.51.100.{index + 1}"
+                )
+                return 201
+            except app.ApiError as error:
+                return error.status
 
         with ThreadPoolExecutor(max_workers=capacity + 2) as executor:
             statuses = list(executor.map(reserve, range(capacity + 2)))
@@ -261,6 +271,100 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(slot["reserved"], capacity)
         self.assertEqual(slot["available"], 0)
         self.assertFalse(slot["isAvailable"])
+
+    def test_network_reservation_limit_blocks_disposable_sessions_but_allows_another_location(self):
+        payload = self.reservation_payload()
+        first_headers = self.headers("network-limit-0001", self.new_session())
+        status, _ = self.request("POST", "/api/v1/reservations", payload, first_headers)
+        self.assertEqual(status, 201)
+
+        status, body = self.request(
+            "POST", "/api/v1/reservations", payload, self.headers("network-limit-0002", self.new_session())
+        )
+        self.assertEqual(status, 429)
+        self.assertIn("network", body["error"])
+
+        reservable = self.server.database.locations(None, None, True, limit=10)
+        alternative = next(place for place in reservable if place["id"] != payload["locationId"])
+        alternative_payload = {**payload, "locationId": alternative["id"], "timeSlot": alternative["reservationWindows"][0]}
+        status, _ = self.request(
+            "POST", "/api/v1/reservations", alternative_payload, self.headers("network-limit-0003", self.new_session())
+        )
+        self.assertEqual(status, 201)
+
+    def test_network_reservation_limit_survives_a_database_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database_path = Path(directory) / "persistent-limit.db"
+            first_database = app.Database(database_path)
+            payload = first_database.locations(None, None, True, limit=1)[0]
+            reservation = {
+                "locationId": payload["id"],
+                "pickupDate": (date.today() + timedelta(days=1)).isoformat(),
+                "timeSlot": payload["reservationWindows"][0],
+                "householdSize": "2-3 people",
+                "dietary": [],
+                "needsCurbside": False,
+            }
+            first_database.create_reservation(first_database.issue_session()["id"], "restart-limit-0001", reservation, "198.51.100.80")
+            first_database.close()
+
+            restarted_database = app.Database(database_path)
+            with self.assertRaises(app.ApiError) as error:
+                restarted_database.create_reservation(
+                    restarted_database.issue_session()["id"], "restart-limit-0002", reservation, "198.51.100.80"
+                )
+            restarted_database.close()
+
+        self.assertEqual(error.exception.status, 429)
+
+    def test_legacy_reservations_fail_closed_for_their_remaining_pickup_date(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database_path = Path(directory) / "legacy-limit.db"
+            place = json.loads(app.SEED_PATH.read_text(encoding="utf-8"))[0]
+            pickup_date = (date.today() + timedelta(days=1)).isoformat()
+            with sqlite3.connect(database_path) as connection:
+                connection.executescript(
+                    """
+                    CREATE TABLE locations (
+                      id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL,
+                      accepts_reservations INTEGER NOT NULL, data_json TEXT NOT NULL, updated_at TEXT NOT NULL
+                    );
+                    CREATE TABLE reservations (
+                      id TEXT PRIMARY KEY, confirmation_code TEXT NOT NULL UNIQUE, session_id TEXT NOT NULL,
+                      idempotency_key TEXT, location_id TEXT NOT NULL, pickup_date TEXT NOT NULL,
+                      time_slot TEXT NOT NULL, household_size TEXT NOT NULL, dietary_json TEXT NOT NULL,
+                      needs_curbside INTEGER NOT NULL, guest_name TEXT NOT NULL, contact TEXT, created_at TEXT NOT NULL,
+                      UNIQUE(session_id, idempotency_key)
+                    );
+                    CREATE TABLE anonymous_sessions (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, expires_at TEXT NOT NULL);
+                    """
+                )
+                connection.execute(
+                    "INSERT INTO locations VALUES (?, ?, ?, ?, ?, ?)",
+                    (place["id"], place["name"], place["type"], int(place["acceptsReservations"]), json.dumps(place), "2026-01-01T00:00:00+00:00"),
+                )
+                connection.execute(
+                    "INSERT INTO reservations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    ("legacy-reservation", "NC-LEGACY", "legacy-session", "legacy-key", place["id"], pickup_date,
+                     place["reservationWindows"][0], "2-3 people", "[]", 0, "Neighbor Guest", None, "2026-01-01T00:00:00+00:00"),
+                )
+
+            first_database = app.Database(database_path)
+            reservation = {
+                "locationId": place["id"],
+                "pickupDate": pickup_date,
+                "timeSlot": place["reservationWindows"][0],
+                "householdSize": "2-3 people",
+                "dietary": [],
+                "needsCurbside": False,
+            }
+            with self.assertRaises(app.ApiError) as error:
+                first_database.create_reservation(
+                    first_database.issue_session()["id"], "legacy-limit-0002", reservation, "198.51.100.82"
+                )
+            first_database.close()
+
+        self.assertEqual(error.exception.status, 429)
 
     def test_one_pickup_per_session_per_day_preserves_idempotent_retry(self):
         payload = self.reservation_payload()
@@ -330,7 +434,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual((args[1], args[2]), (float(stored["lat"]), float(stored["lng"])))
 
     def test_place_enrichment_merges_ratings_with_travel_time(self):
-        payload = self.enrichment_payload({"lat": 41.59, "lng": -93.62})
+        payload = self.enrichment_payload({"lat": 41.59, "lng": -93.62}, google_routes_consent=True)
         details = [{
             "id": "g-1", "rating": 4.6, "userRatingCount": 212,
             "photos": [{"name": "places/g-1/photos/photo-token"}],
@@ -354,6 +458,61 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(place["distanceText"], "1.4 mi")
         self.assertEqual(place["durationText"], "6 min")
         self.assertIn("signature=", place["photoUrl"])
+
+    def test_place_enrichment_does_not_send_an_origin_without_google_consent(self):
+        payload = self.enrichment_payload({"lat": 41.59, "lng": -93.62})
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.places_text_search", return_value=[]), patch("api.app.google_distances") as distances:
+                status, body = self.request("POST", "/api/v1/places/enrich", payload, {"X-Neighbor-Session": self.session})
+        self.assertEqual(status, 200)
+        self.assertEqual(body["provider"], "google")
+        distances.assert_not_called()
+
+    def test_place_discovery_does_not_call_google_without_explicit_consent(self):
+        path = "/api/v1/places/discover?lat=41.59&lng=-93.62&radiusM=25000"
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.google_discover", return_value=[{"id": "google-1"}]) as discover:
+                status, body = self.request("GET", path)
+                self.assertEqual(status, 200)
+                self.assertEqual(body, {"places": [], "provider": "none"})
+                discover.assert_not_called()
+
+                status, body = self.request("GET", path + "&googlePlacesConsent=true")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["provider"], "google")
+        discover.assert_called_once_with(41.59, -93.62, 25000)
+
+    def test_bedrock_profile_requires_consent_and_never_includes_an_address(self):
+        class FakeBotoCoreError(Exception):
+            pass
+
+        class FakeClientError(Exception):
+            pass
+
+        response = {"output": {"message": {"content": [{"text": '{"reply":"Try Place","placeIds":["place-1"]}'}]}}}
+        converse = unittest.mock.Mock(return_value=response)
+        boto3_module = types.ModuleType("boto3")
+        boto3_module.client = unittest.mock.Mock(return_value=types.SimpleNamespace(converse=converse))
+        botocore_module = types.ModuleType("botocore")
+        exceptions_module = types.ModuleType("botocore.exceptions")
+        exceptions_module.BotoCoreError = FakeBotoCoreError
+        exceptions_module.ClientError = FakeClientError
+        payload = {
+            "message": "Where can I find food?",
+            "catalog": [{"id": "place-1", "name": "Place"}],
+            "residentProfile": {"address": "123 Private Street", "location": "50309", "householdSize": "2-3 people"},
+        }
+        with patch.dict(sys.modules, {"boto3": boto3_module, "botocore": botocore_module, "botocore.exceptions": exceptions_module}):
+            app.bedrock_chat(payload)
+            system_without_consent = converse.call_args.kwargs["system"][0]["text"]
+            self.assertNotIn("CUSTOMER_INTAKE_PROFILE", system_without_consent)
+
+            payload["bedrockProfileConsent"] = True
+            app.bedrock_chat(payload)
+            system_with_consent = converse.call_args.kwargs["system"][0]["text"]
+
+        self.assertIn("50309", system_with_consent)
+        self.assertNotIn("123 Private Street", system_with_consent)
 
     def test_place_enrichment_survives_a_google_outage(self):
         payload = self.enrichment_payload()

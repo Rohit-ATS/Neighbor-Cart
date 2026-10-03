@@ -196,7 +196,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
               <div className="lexis-privacy-callout">
                 <span className="lpc-icon">🛡️</span>
                 <div className="lpc-text">
-                  <strong>100% Confidential & Secure:</strong> No ID, proof of income, or legal documentation required. Food assistance is open to all community members.
+                  <strong>No ID or paperwork required:</strong> Your intake plan stays on this device. If you later choose AI personalization or Google travel times, we will ask before sharing details with those services.
                 </div>
               </div>
 

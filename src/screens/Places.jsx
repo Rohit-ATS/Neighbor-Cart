@@ -104,6 +104,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const [places, setPlaces] = useState(PLACES);
   const [placesTotal, setPlacesTotal] = useState(PLACES.length);
   const [userPosition, setUserPosition] = useState(null);
+  const [googlePlacesConsent, setGooglePlacesConsent] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [reservationsOnly, setReservationsOnly] = useState(false);
@@ -200,26 +201,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         setPlacesTotal(total);
         setUserPosition(position);
 
-        // Then widen to everything Google lists around the visitor. This is
-        // fetched live rather than stored, so coverage is near-complete
-        // without keeping a copy of Google's catalogue.
-        if (position) {
-          try {
-            const { places: live } = await discoverPlaces({ ...position, radiusM: 25_000 });
-            if (cancelled || !live?.length) return;
-
-            // Our own records win on a collision: they carry inventory,
-            // languages and reservation windows that a Google pin has not.
-            const seen = new Set(found.map((p) => nearKey(p)));
-            const additions = live.filter((p) => !seen.has(nearKey(p)));
-            if (additions.length) {
-              setPlaces([...found, ...additions]);
-              setPlacesTotal(total + additions.length);
-            }
-          } catch {
-            // No key, rate limit, or Google down — the stored directory stands.
-          }
-        }
       } catch {
         // Keep the checked-in demo snapshot visible while a local API is starting.
       }
@@ -227,6 +208,29 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!googlePlacesConsent || !userPosition) return undefined;
+
+    // Google Places receives precise coordinates only after this dedicated
+    // choice. The built-in directory remains available without it.
+    discoverPlaces({ ...userPosition, radiusM: 25_000, googlePlacesConsent: true })
+      .then(({ places: live }) => {
+        if (cancelled || !live?.length) return;
+        setPlaces((current) => {
+          const seen = new Set(current.map((place) => nearKey(place)));
+          const additions = live.filter((place) => !seen.has(nearKey(place)));
+          if (additions.length === 0) return current;
+          setPlacesTotal((total) => total + additions.length);
+          return [...current, ...additions];
+        });
+      })
+      .catch(() => {
+        // No key, rate limit, or Google down — the stored directory stands.
+      });
+    return () => { cancelled = true; };
+  }, [googlePlacesConsent, userPosition]);
 
 
   const refreshReservations = async () => {
@@ -972,6 +976,15 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
             {/* Quick check toggles */}
             <motion.div className="toggle-filters-row" variants={DRAWER_ROW}>
+              <label className="toggle-filter-label google-places-consent">
+                <input
+                  type="checkbox"
+                  checked={googlePlacesConsent}
+                  onChange={(event) => setGooglePlacesConsent(event.target.checked)}
+                />
+                <span className="toggle-text">📍 <b>Use my location with Google Places</b><small> Google receives precise coordinates to find additional nearby resources.</small></span>
+              </label>
+
               <label className="toggle-filter-label">
                 <input
                   type="checkbox"

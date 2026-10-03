@@ -106,6 +106,35 @@
   gap: 10px;
 }
 
+.ai-provider-consent {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ai-provider-consent legend {
+  padding: 0 4px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.ai-provider-consent p { margin: 0 0 6px; }
+
+.ai-provider-consent label {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.ai-provider-consent input { margin-top: 2px; }
+
 /* Sharing a location is an offer, never a prompt the person did not ask for. */
 .ai-location-btn {
   display: inline-flex;
