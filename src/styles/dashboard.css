@@ -634,9 +634,9 @@
 .modal-backdrop .np-tabs-nav {
   flex: none;
   display: flex;
-  gap: 4px;
-  padding: 0 30px;
-  background: var(--d-surface);
+  gap: 8px;
+  padding: 10px 30px;
+  background: linear-gradient(180deg, var(--d-surface), var(--d-cream));
   border-bottom: 1px solid var(--d-line-soft);
   overflow-x: auto;
   scrollbar-width: none;
@@ -647,21 +647,43 @@
 .modal-backdrop .admin-tab-btn,
 .modal-backdrop .np-tab-btn {
   flex: none;
-  padding: 14px 14px 12px;
-  border: 0;
-  border-bottom: 2.5px solid transparent;
-  background: none;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
   color: var(--d-muted);
   font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
   cursor: pointer;
-  transition: color .18s var(--d-ease), border-color .18s var(--d-ease);
+  transition: color .18s var(--d-ease), border-color .18s var(--d-ease), background .18s var(--d-ease), box-shadow .18s var(--d-ease), transform .18s var(--d-ease);
 }
 .modal-backdrop .admin-tab-btn:hover,
-.modal-backdrop .np-tab-btn:hover { color: var(--d-brown); }
+.modal-backdrop .np-tab-btn:hover { color: var(--d-brown); background: rgba(255, 255, 255, .72); border-color: var(--d-line); }
 .modal-backdrop .admin-tab-btn.is-active,
-.modal-backdrop .np-tab-btn.is-active { color: var(--d-crimson); border-bottom-color: var(--d-crimson); }
+.modal-backdrop .np-tab-btn.is-active {
+  color: var(--d-crimson);
+  border-color: rgba(146, 7, 17, .2);
+  background: var(--d-surface);
+  box-shadow: 0 3px 10px rgba(72, 40, 32, .1);
+}
+.modal-backdrop .admin-tab-btn:active,
+.modal-backdrop .np-tab-btn:active { transform: translateY(1px); }
+
+/* Keep the admin portal's existing compact underline treatment; this raised
+   tab treatment belongs to the nonprofit workflow shown above. */
+.modal-backdrop .admin-tabs-strip { gap: 4px; padding: 0 30px; background: var(--d-surface); }
+.modal-backdrop .admin-tab-btn {
+  padding: 14px 14px 12px;
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  transition: color .18s var(--d-ease), border-color .18s var(--d-ease);
+}
+.modal-backdrop .admin-tab-btn:hover { background: none; border-color: transparent; color: var(--d-brown); }
+.modal-backdrop .admin-tab-btn.is-active { background: none; border-color: transparent; border-bottom-color: var(--d-crimson); box-shadow: none; }
 
 .modal-backdrop .admin-content-pane > h3,
 .modal-backdrop .np-demand-section > h3,
