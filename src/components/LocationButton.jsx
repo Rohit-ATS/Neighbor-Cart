@@ -15,12 +15,15 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 const SPRING = { type: 'spring', stiffness: 420, damping: 34, mass: 0.7 };
 
+/* Short labels: the full sentence lived in the button and made it wide enough
+   to crowd the header, so the detail moved to `hint` and the button kept the
+   state. */
 const STATES = {
-  idle: { label: 'Use my location', mark: 'pin' },
-  asking: { label: 'Finding you…', mark: 'searching' },
-  ready: { label: 'Sorting by distance from you', mark: 'check' },
-  denied: { label: 'Location blocked — tell me a ZIP instead', mark: 'blocked' },
-  unsupported: { label: 'Location unavailable on this device', mark: 'blocked' },
+  idle: { label: 'Use my location', mark: 'pin', hint: 'Sort results by how far they are from you' },
+  asking: { label: 'Finding you…', mark: 'searching', hint: 'Waiting for your browser to share a location' },
+  ready: { label: 'Sorted by distance', mark: 'check', hint: 'Sorting by distance from you — click to stop' },
+  denied: { label: 'Location blocked', mark: 'blocked', hint: 'Your browser blocked location — tell me a ZIP code instead' },
+  unsupported: { label: 'Location unavailable', mark: 'blocked', hint: 'This device cannot share a location — tell me a ZIP code instead' },
 };
 
 const STROKE = {
@@ -68,6 +71,7 @@ export default function LocationButton({ status = 'idle', onRequest, onClear }) 
       className={`ai-location-btn${isReady ? ' is-on' : ''}${isBusy ? ' is-busy' : ''}${status === 'denied' ? ' is-denied' : ''}`}
       onClick={() => (isReady ? onClear?.() : onRequest?.())}
       disabled={disabled}
+      title={state.hint}
       whileTap={reduce || disabled ? undefined : { scale: 0.955 }}
     >
       <span className="ai-location-mark">

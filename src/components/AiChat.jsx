@@ -18,7 +18,7 @@ import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts } from
 
 const GREETING = {
   sender: 'ai',
-  text: 'Hi, I’m the HarvestLink navigator. Tell me what you need — a diet, a neighborhood, no car, no ID, kids at home — and I’ll find verified food help that fits, and put it on a map for you.',
+  text: 'Hi, I’m the Neighbor Navigator. Tell me what you need — a diet, a neighborhood, no car, no ID, kids at home — and I’ll find verified food help that fits, and put it on a map for you.',
   citations: [],
   timestamp: 'Just now',
 };
@@ -56,7 +56,39 @@ const unreadableReply = (text, kind) => ({
 
 // "What is open right now?" is a request for places, not a stray detail to
 // remember; the phrasings people actually use all have to land here.
-const isPlaceSearchIntent = (text) => /\b(where|find|suggest|recommend|show|near|nearby|location|place|pantry|food bank|foodbank|open\s+(right\s+)?now|open\s+today|options|hot meal|meal site|get food|assistance|grocery|groceries)\b/i.test(text);
+/* Asking for places, however it is phrased. The plural forms matter: `\bplace\b`
+   never matched "places", so "can you provide me places…" fell through to the
+   "tell me when you're ready" reply while plainly being a request for places. */
+const isPlaceSearchIntent = (text) => /\b(where|find|finding|suggest|recommend|show|provide|give|list|get me|take me|point me|look(ing)? for|need|want|any(where|thing)?|somewhere|near|nearby|close by|around me|location|locations|place|places|spot|spots|site|sites|pantry|pantries|food ?bank|food ?banks|fridge|fridges|kitchen|kitchens|open\s+(right\s+)?now|open\s+today|option|options|hot meal|hot meals|meal site|get food|assistance|grocery|groceries|distribution|distributions)\b/i.test(text);
+
+/* "Places that do not sell beans" is a request for places, with a thing to
+   leave out. Reading only the noun would return exactly the places the person
+   asked to avoid, so the negation has to be lifted out before matching. */
+const EXCLUSION_STOPWORDS = new Set([
+  // these follow "no" as a requirement about access, never about stock
+  'id', 'ids', 'identification', 'car', 'cost', 'costs', 'money', 'fee', 'fees',
+  'papers', 'paperwork', 'appointment', 'appointments', 'kitchen', 'questions',
+  'income', 'proof', 'address', 'account', 'registration', 'longer', 'one',
+  // verbs and filler that ride along after the negation
+  'sell', 'sells', 'selling', 'have', 'has', 'carry', 'carries', 'stock',
+  'stocks', 'give', 'gives', 'offer', 'offers', 'serve', 'serves', 'any', 'the',
+  'a', 'an', 'that', 'with', 'of', 'me', 'please', 'it', 'them',
+]);
+
+export const parseExclusions = (text) => {
+  const found = [];
+  const pattern = /\b(?:not|no|without|don'?t|doesn'?t|dont|avoid|exclude|except|other than|besides|allergic to)\b([^.,;?!]*)/gi;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    (match[1] || '')
+      .toLowerCase()
+      .split(/[^a-zà-ÿ'-]+/)
+      .filter((word) => word.length > 2 && !EXCLUSION_STOPWORDS.has(word))
+      .slice(0, 3)
+      .forEach((word) => { if (!found.includes(word)) found.push(word); });
+  }
+  return found;
+};
 const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 const clockTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -336,11 +368,37 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       return { places: keyword, reasoning: 'Based on your request, I matched these verified food access resources:' };
     };
 
-    const fromQuery = matchFor(query.toLowerCase());
+    /* Anything the person asked to leave out is pulled before matching, so the
+       words naming it cannot be read as a request for it. */
+    const exclusions = parseExclusions(query);
+    const positive = exclusions.reduce(
+      (text, word) => text.replace(new RegExp(`\\b${word}\\w*`, 'gi'), ' '),
+      query.toLowerCase(),
+    ).replace(/\s+/g, ' ').trim();
+
+    const fromQuery = matchFor(positive || query.toLowerCase());
     const match = fromQuery.places.length > 0 ? fromQuery : matchFor(lower);
     let matchedPlaces = match.places;
-    const reasoning = match.reasoning;
+    let reasoning = match.reasoning;
     const warningNote = match.warning || null;
+
+    /* "Somewhere that doesn't stock beans" names no place to look for, so the
+       whole verified directory is the starting point and the exclusion does
+       the narrowing. */
+    if (exclusions.length > 0) {
+      if (matchedPlaces.length === 0) matchedPlaces = PLACES;
+      const stocks = (place, word) => `${place.inventory.map((i) => `${i.item} ${i.category}`).join(' ')} ${place.services.join(' ')}`
+        .toLowerCase()
+        .includes(word);
+      const kept = matchedPlaces.filter((place) => !exclusions.some((word) => stocks(place, word)));
+      const listed = exclusions.join(' or ');
+      if (kept.length > 0) {
+        matchedPlaces = kept;
+        reasoning = `Here are verified places that do not list ${listed}:`;
+      } else {
+        reasoning = `Every verified place I have lists ${listed}, so I could not rule it out. These are the closest options — their stock changes often, so it is worth calling ahead:`;
+      }
+    }
 
     /* Everything the person has told us still has to hold. A Halal
        requirement from an earlier message survives a later "what's open?". */
@@ -361,10 +419,24 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
 
     if (matchedPlaces.length === 0) {
       if (!hasLocation(query) && !profile?.location) {
+        /* Returning nothing and asking for a ZIP leaves someone who needs food
+           with an empty screen. Show what the directory has and let the ZIP
+           narrow it, rather than making the question a toll gate. */
+        const sample = PLACES.slice(0, 3);
         return {
           sender: 'ai',
-          text: 'I can help with that. I’ve noted what you told me, and I’ll look for places with published accommodation information. What city or ZIP code should I search near? You can also share your location and I’ll sort everything by how far it is.',
-          citations: [],
+          text: 'I don’t have your area yet, so here are verified places from across the directory. Tell me a city or ZIP code — or share your location — and I’ll narrow this to what you can actually reach.',
+          citations: sample.map((place) => ({
+            placeId: place.id,
+            name: place.name,
+            address: `${place.address}, ${place.cityStateZip}`,
+            verifiedDate: place.verifiedDate,
+            hours: place.hoursSummary,
+            phone: place.phone,
+            callAhead: place.callAheadWarning,
+          })),
+          matchIds: sample.map((place) => place.id),
+          matchedOn: needs.map((need) => need.label),
           warning: null,
           timestamp: nowTime,
         };
@@ -412,17 +484,28 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
               <line x1="10" y1="17" x2="14" y2="17" />
             </svg>
           </span>
-          <div>
-            <h3 className="ai-header-title">HarvestLink AI Navigator</h3>
-            {section ? (
-              <p className="ai-header-sub">
-                {/* Say out loud which part of the site this answer is grounded in. */}
-                <span className="ai-header-context">Reading: {section.label}</span>
-                Grounded in verified US food assistance records, with sources on every answer.
-              </p>
-            ) : (
-              <p className="ai-header-sub">Grounded in verified US food assistance records, with sources on every answer.</p>
-            )}
+          {/* Name, then two short facts about this conversation — where it is
+              reading from and what it is grounded in. The long sentence that
+              used to sit here wrapped onto a second line and collided with the
+              context chip; it survives as the trust chip's tooltip. */}
+          <div className="ai-header-id">
+            <h3 className="ai-header-title">Neighbor Navigator</h3>
+            <div className="ai-header-meta">
+              {section && (
+                <span className="ai-header-context" title={`Answering about: ${section.label}`}>
+                  {section.label}
+                </span>
+              )}
+              <span
+                className="ai-header-trust"
+                title="Grounded in verified US food assistance records, with sources on every answer."
+              >
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="4 12.5 9.5 18 20 6.5" />
+                </svg>
+                Verified sources
+              </span>
+            </div>
           </div>
         </div>
 

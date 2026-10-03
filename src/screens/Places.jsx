@@ -470,7 +470,7 @@ export default function Places({ onNavigateHome }) {
             type="button" 
             className={`lexis-new-btn${workspaceView === 'chat' ? ' is-active' : ''}`}
             onClick={() => { setWorkspaceView('chat'); setMobileMenuOpen(false); }}
-            title="Ask HarvestLink AI"
+            title="Ask the Navigator"
           >
             <span className="lexis-new-icon">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -480,7 +480,7 @@ export default function Places({ onNavigateHome }) {
                 <line x1="10" y1="17" x2="14" y2="17" />
               </svg>
             </span>
-            <span className="lexis-btn-label">Ask HarvestLink AI</span>
+            <span className="lexis-btn-label">Ask the Navigator</span>
           </button>
 
           {/* Navigation Groups */}
@@ -1223,6 +1223,7 @@ export default function Places({ onNavigateHome }) {
         <AiLauncher
           sectionId={aiSection}
           hidden={workspaceView === 'chat'}
+          onOpenTextBoard={() => setWorkspaceView('chat')}
           onSelectPlace={(place) => setActivePlace(place)}
           onShowMatches={(matches) => {
             setAiMatchIds(matches.map((match) => match.id));
