@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PLACES, getIsOpenNow } from '../data/places.js';
 import { askHarvestLink } from '../lib/api.js';
-import { useUserLocation } from '../lib/geo.js';
+import { formatMiles, haversineMiles, useUserLocation } from '../lib/geo.js';
 import AskBar from './AskBar.jsx';
 import AiMiniMap from './AiMiniMap.jsx';
 import LocationButton from './LocationButton.jsx';
@@ -59,7 +59,11 @@ const unreadableReply = (text, kind) => ({
 /* Asking for places, however it is phrased. The plural forms matter: `\bplace\b`
    never matched "places", so "can you provide me places…" fell through to the
    "tell me when you're ready" reply while plainly being a request for places. */
-const isPlaceSearchIntent = (text) => /\b(where|find|finding|suggest|recommend|show|provide|give|list|get me|take me|point me|look(ing)? for|need|want|any(where|thing)?|somewhere|near|nearby|close by|around me|location|locations|place|places|spot|spots|site|sites|pantry|pantries|food ?bank|food ?banks|fridge|fridges|kitchen|kitchens|open\s+(right\s+)?now|open\s+today|option|options|hot meal|hot meals|meal site|get food|assistance|grocery|groceries|distribution|distributions)\b/i.test(text);
+const asksNearMe = (text) => /\b(near( ?by)?|nearest|closest|close to me|close by|around me|my area|walking distance|within \d+ ?(mi|miles|minutes))\b/i.test(text);
+
+/* Asking to be sent somewhere counts however it is worded, so a question that
+   names no category — "what's closest to me?" — is still a request for places. */
+const isPlaceSearchIntent = (text) => asksNearMe(text) || /\b(where|find|finding|suggest|recommend|show|provide|give|list|get me|take me|point me|look(ing)? for|need|want|any(where|thing)?|somewhere|near|nearby|close by|around me|location|locations|place|places|spot|spots|site|sites|pantry|pantries|food ?bank|food ?banks|fridge|fridges|kitchen|kitchens|open\s+(right\s+)?now|open\s+today|option|options|hot meal|hot meals|meal site|get food|assistance|grocery|groceries|distribution|distributions)\b/i.test(text);
 
 /* "Places that do not sell beans" is a request for places, with a thing to
    leave out. Reading only the noun would return exactly the places the person
@@ -144,15 +148,23 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     el.scrollTo({ top: Math.max(0, last.offsetTop - el.offsetTop - 8), behavior: 'smooth' });
   }, [messages, isThinking]);
 
-  const verifiedCatalog = PLACES.map((place) => ({
-    id: place.id,
-    name: place.name,
-    address: `${place.address}, ${place.cityStateZip}`,
-    city: place.city,
-    services: place.services,
-    dietary: place.dietary,
-    hours: place.hoursSummary,
-  }));
+  /* The hosted model is told how far each place is, not where the person is.
+     That is the part it needs in order to answer "nearby", and it means a
+     coordinate never leaves for a third-party service. */
+  const verifiedCatalog = PLACES.map((place) => {
+    const miles = origin ? haversineMiles(origin, { lat: place.lat, lng: place.lng }) : null;
+    return {
+      id: place.id,
+      name: place.name,
+      address: `${place.address}, ${place.cityStateZip}`,
+      city: place.city,
+      services: place.services,
+      dietary: place.dietary,
+      hours: place.hoursSummary,
+      reservations: Boolean(place.acceptsReservations),
+      ...(miles == null ? {} : { milesAway: Math.round(miles * 10) / 10 }),
+    };
+  });
 
   const handleAsk = async (queryText) => {
     const question = (queryText || '').trim();
@@ -323,6 +335,14 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
           warning: 'Infant formula supplies fluctuate rapidly. We strongly advise calling ahead to ensure the specific brand and size is on hand.',
         };
       }
+      if (text.includes('reserv') || text.includes('pickup slot') || text.includes('pick-up slot')
+        || text.includes('book a') || text.includes('appointment') || text.includes('express pickup')) {
+        const places = PLACES.filter((place) => place.acceptsReservations);
+        return {
+          places,
+          reasoning: `${places.length} verified ${places.length === 1 ? 'location lets' : 'locations let'} you hold a pickup slot ahead of time, so your food is set aside before you arrive.`,
+        };
+      }
       if (text.includes('hot meal') || text.includes('soup kitchen') || text.includes('dinner') || text.includes('lunch') || text.includes('kitchen')) {
         return {
           places: PLACES.filter((place) => place.type === 'hot-meal'),
@@ -417,8 +437,27 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       if (narrowed.length > 0) matchedPlaces = narrowed;
     }
 
+    /* A shared location is an answer to "where are you", so the matcher has to
+       hold it. Without this the navigator kept asking for a ZIP code someone
+       had already supplied by pressing "Use my location", and "nearby" meant
+       nothing to it. */
+    const distanceTo = (place) => haversineMiles(origin, { lat: place.lat, lng: place.lng });
+
+    if (origin) {
+      // "Which nearby places…" is a real constraint once coordinates exist, so
+      // an empty match becomes the whole directory, ordered by how far it is.
+      if (matchedPlaces.length === 0 && asksNearMe(query)) matchedPlaces = PLACES;
+      matchedPlaces = [...matchedPlaces].sort((a, b) => (distanceTo(a) ?? Infinity) - (distanceTo(b) ?? Infinity));
+
+      const nearest = matchedPlaces[0] ? formatMiles(distanceTo(matchedPlaces[0])) : null;
+      if (nearest) {
+        matchedPlaces = matchedPlaces.slice(0, 6);
+        reasoning = `${reasoning} Sorted by distance from you — the closest is ${nearest}.`;
+      }
+    }
+
     if (matchedPlaces.length === 0) {
-      if (!hasLocation(query) && !profile?.location) {
+      if (!hasLocation(query) && !profile?.location && !origin) {
         /* Returning nothing and asking for a ZIP leaves someone who needs food
            with an empty screen. Show what the directory has and let the ZIP
            narrow it, rather than making the question a toll gate. */
@@ -436,6 +475,28 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
             callAhead: place.callAheadWarning,
           })),
           matchIds: sample.map((place) => place.id),
+          matchedOn: needs.map((need) => need.label),
+          warning: null,
+          timestamp: nowTime,
+        };
+      }
+      if (origin) {
+        const nearest = [...PLACES]
+          .sort((a, b) => (distanceTo(a) ?? Infinity) - (distanceTo(b) ?? Infinity))
+          .slice(0, 3);
+        return {
+          sender: 'ai',
+          text: `I could not find a verified match for “${query}”, but I do have your location. These are the closest verified places to you — the nearest is ${formatMiles(distanceTo(nearest[0]))}.`,
+          citations: nearest.map((place) => ({
+            placeId: place.id,
+            name: place.name,
+            address: `${place.address}, ${place.cityStateZip}`,
+            verifiedDate: place.verifiedDate,
+            hours: place.hoursSummary,
+            phone: place.phone,
+            callAhead: place.callAheadWarning,
+          })),
+          matchIds: nearest.map((place) => place.id),
           matchedOn: needs.map((need) => need.label),
           warning: null,
           timestamp: nowTime,

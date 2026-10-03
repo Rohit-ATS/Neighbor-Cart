@@ -709,7 +709,7 @@ def clean_ai_catalog(value: object) -> list[dict]:
     for place in value[:40]:
         if not isinstance(place, dict) or not isinstance(place.get("id"), str) or not isinstance(place.get("name"), str):
             continue
-        cleaned.append({
+        entry = {
             "id": place["id"][:96],
             "name": place["name"][:120],
             "address": str(place.get("address", ""))[:180],
@@ -717,7 +717,14 @@ def clean_ai_catalog(value: object) -> list[dict]:
             "services": [str(item)[:80] for item in place.get("services", [])[:8]],
             "dietary": [str(item)[:80] for item in place.get("dietary", [])[:8]],
             "hours": str(place.get("hours", ""))[:180],
-        })
+            "reservations": bool(place.get("reservations")),
+        }
+        # Distance is sent only when the customer has shared a location; their
+        # own coordinates never are.
+        miles = place.get("milesAway")
+        if isinstance(miles, (int, float)) and 0 <= miles < 25000:
+            entry["milesAway"] = round(float(miles), 1)
+        cleaned.append(entry)
     return cleaned
 
 
@@ -786,6 +793,7 @@ def bedrock_chat(payload: dict) -> dict:
         "If a message is unreadable, a stray keystroke, or carries no request or requirement, do not treat it as a requirement and do not claim to have noted it: say you could not read it, ask for it again in a few words, and return an empty placeIds list. "
         "CUSTOMER_REQUIREMENTS_MEMORY contains only requirements already recognised; treat it as established fact and never add to it from an unclear message. "
         "When the customer asks to find food but has not provided a city, neighborhood, or ZIP code, still return up to three catalog locations and ask for their area so you can narrow it — an empty list leaves a hungry person with nothing on screen. "
+        "If catalog entries carry milesAway, the customer has already shared their location: never ask them where they are, prefer the closest entries, and say how far away they are. An entry with reservations true can hold a pickup slot ahead of time. "
         "When the customer asks to avoid something (no beans, nothing with peanuts, no pork), treat it as an exclusion: recommend locations that do not list it, and say so plainly. Never return the very thing they asked to avoid. "
         "Read a request for places however it is phrased — \"any places\", \"can you provide\", \"what is around\", \"I need somewhere\" are all requests to recommend locations. "
         "Return ONLY JSON: {\"reply\":\"...\",\"placeIds\":[\"verified-id\"],\"warning\":\"optional\","
