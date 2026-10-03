@@ -24,11 +24,11 @@ const SPRING = { type: 'spring', stiffness: 300, damping: 30 };
 /* Which sections a visitor can actually be sent to, and how. Landing sections
    scroll; the rest live in the workspace and are opened there. */
 const ROUTES = [
-  { id: 'top', kind: 'scroll', group: 'This page' },
-  { id: 'how', kind: 'scroll', group: 'This page' },
-  { id: 'reel', kind: 'scroll', group: 'This page' },
-  { id: 'places', kind: 'scroll', group: 'This page' },
-  { id: 'about', kind: 'scroll', group: 'This page' },
+  { id: 'top', kind: 'scroll' },
+  { id: 'how', kind: 'scroll' },
+  { id: 'reel', kind: 'scroll' },
+  { id: 'places', kind: 'scroll' },
+  { id: 'about', kind: 'scroll' },
   { id: 'directory', kind: 'workspace', group: 'Find food' },
   { id: 'intake', kind: 'workspace', group: 'Find food' },
   { id: 'community', kind: 'workspace', group: 'Find food' },
@@ -66,25 +66,40 @@ const CloseIcon = (props) => (
 
 export default function ExpandingSearchDock({
   placeholder = 'Search the site…',
+  expandedWidth = 268,
+  context = 'landing',   // where it is being used, which renames one group
   onScrollTo,
   onOpenWorkspace,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  /* The recommendations wait for the field to finish opening. Dropping them in
+     while it is still growing put a 360px panel under a 44px button, which read
+     as the panel arriving before the thing it belongs to. */
+  const [fieldSettled, setFieldSettled] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const dock = useRef(null);
   const field = useRef(null);
 
+  /* The landing sections are "This page" only when you are on it; from the
+     workspace they are somewhere else, and saying otherwise is just wrong. */
+  const entries = useMemo(
+    () => ENTRIES.map((entry) => (entry.kind === 'scroll'
+      ? { ...entry, group: context === 'workspace' ? 'Home page' : 'This page' }
+      : entry)),
+    [context],
+  );
+
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ENTRIES;
+    if (!q) return entries;
     const words = q.split(/\s+/);
-    return ENTRIES.filter((entry) => words.every((word) => entry.haystack.includes(word)));
-  }, [query]);
+    return entries.filter((entry) => words.every((word) => entry.haystack.includes(word)));
+  }, [query, entries]);
 
   useEffect(() => { setActive(0); }, [query]);
 
-  const collapse = () => { setIsExpanded(false); setQuery(''); };
+  const collapse = () => { setIsExpanded(false); setFieldSettled(false); setQuery(''); };
 
   // Clicking anywhere else, or pressing Escape, puts it away.
   useEffect(() => {
@@ -131,7 +146,10 @@ export default function ExpandingSearchDock({
             type="button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            /* A spring settling to scale 0 held the swap for half a second
+               before the field could even start growing, so the icon leaves on
+               a short tween and the field takes over straight away. */
+            exit={{ scale: 0, opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } }}
             transition={SPRING}
             onClick={() => setIsExpanded(true)}
             className="search-dock-btn"
@@ -143,9 +161,10 @@ export default function ExpandingSearchDock({
           <motion.form
             key="field"
             initial={{ width: 44, opacity: 0 }}
-            animate={{ width: 268, opacity: 1 }}
+            animate={{ width: expandedWidth, opacity: 1 }}
             exit={{ width: 44, opacity: 0 }}
             transition={SPRING}
+            onAnimationComplete={() => setFieldSettled(true)}
             onSubmit={(event) => {
               event.preventDefault();
               if (results[active]) choose(results[active]);
@@ -180,7 +199,7 @@ export default function ExpandingSearchDock({
       </AnimatePresence>
 
       <AnimatePresence>
-        {isExpanded && (
+        {isExpanded && fieldSettled && (
           <motion.div
             className="search-dock-panel"
             initial={{ opacity: 0, y: -8, scale: 0.98 }}

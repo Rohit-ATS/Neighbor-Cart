@@ -401,33 +401,18 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             {/* The same search, beside the same name. Here a workspace result
                 opens its panel directly; a landing section sends them home. */}
             <ExpandingSearchDock
+              expandedWidth={420}
+              context="workspace"
+              placeholder="Search sections, places, help…"
               onScrollTo={(section) => onNavigateHome(section)}
               onOpenWorkspace={(panel) => { openWorkspacePanel(panel); setMobileMenuOpen(false); }}
             />
           </div>
 
-          <div className="topbar-center-hubs-strip">
-            <button
-              type="button"
-              className={`quick-hub-pill ai-hub-pill${workspaceView === 'chat' ? ' is-active' : ''}`}
-              onClick={() => setWorkspaceView('chat')}
-            >
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-              <span>Ask AI</span>
-            </button>
-            <button type="button" className="quick-hub-pill" onClick={() => setShowIntake(true)}>
-              <span>Food Plan</span>
-            </button>
-            <button type="button" className="quick-hub-pill" onClick={() => setShowVolunteer(true)}>
-              <span>Volunteers</span>
-            </button>
-            <button type="button" className="quick-hub-pill" onClick={() => setShowRescue(true)}>
-              <span>Food Rescue</span>
-            </button>
-            <button type="button" className="quick-hub-pill" onClick={() => setShowImpact(true)}>
-              <span>Impact</span>
-            </button>
-          </div>
+          {/* The centre hub pills are gone: every one of them — Ask AI, Food
+              Plan, Volunteers, Food Rescue, Impact — is already in the left
+              sidebar and in the search dock, and they were taking the width
+              the search bar needed. */}
 
           <nav className="places-nav">
             {/* Language Switcher */}

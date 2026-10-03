@@ -5701,7 +5701,10 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   top: calc(100% + 10px);
   left: 0;
   z-index: 60;
-  width: 360px;
+  /* Follows the field's own width, so the panel never looks wider than the
+     thing that opened it. */
+  width: 100%;
+  min-width: 340px;
   max-height: min(70vh, 520px);
   overflow-y: auto;
   padding: 12px;
