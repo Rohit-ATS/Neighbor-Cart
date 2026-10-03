@@ -6,7 +6,14 @@ async function deviceSession() {
   if (cached) return cached;
 
   if (!sessionPromise) {
-    sessionPromise = fetch('/api/v1/sessions', { method: 'POST' })
+    // JSON makes session bootstrap a non-simple browser request, so an
+    // unrelated site cannot spend this network's anonymous-session quota with
+    // a plain HTML form submission.
+    sessionPromise = fetch('/api/v1/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
         if (!response.ok || typeof body.session?.id !== 'string') {
@@ -99,7 +106,7 @@ export async function enrichPlaces(payload) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  }, false);
+  });
 }
 
 export async function askHarvestLink(payload) {

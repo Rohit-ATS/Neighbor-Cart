@@ -7,6 +7,8 @@ and is proxied by Vite during development.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import math
 import ipaddress
@@ -71,6 +73,8 @@ MAX_CONNECTIONS = 32
 REQUEST_TIMEOUT_SECONDS = 10
 SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
 IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
+GOOGLE_PHOTO_REFERENCE_RE = re.compile(r"^places/[A-Za-z0-9._~-]{1,256}/photos/[A-Za-z0-9._~-]{1,512}$")
+PHOTO_SIGNATURE_RE = re.compile(r"^[0-9a-f]{64}$")
 HOUSEHOLD_SIZES = {"1 person", "2-3 people", "4-5 people", "6+ people"}
 DEFAULT_SLOT_CAPACITY = 12
 AI_MAX_MESSAGE = 2000
@@ -81,8 +85,15 @@ MAX_SESSIONS_PER_NETWORK_PER_DAY = 4
 MAX_AI_REQUESTS_PER_NETWORK_PER_MINUTE = 5
 MAX_AI_CONCURRENT_REQUESTS = 2
 MAX_PLACE_ENRICH_REQUESTS_PER_NETWORK_PER_MINUTE = 20
+MAX_PLACE_ENRICH_REQUESTS_PER_SESSION_PER_MINUTE = 8
+MAX_ENRICH_CONCURRENT_REQUESTS = 2
 MAX_ENRICH_PLACES_PER_REQUEST = 12
 MAX_DISCOVER_REQUESTS_PER_NETWORK_PER_MINUTE = 10
+MAX_PHOTO_REQUESTS_PER_NETWORK_PER_MINUTE = 30
+MAX_PHOTO_CONCURRENT_REQUESTS = 4
+MAX_PHOTO_BYTES = 2 * 1024 * 1024
+PHOTO_CACHE_TTL_SECONDS = 60 * 60
+PHOTO_CAPABILITY_TTL_SECONDS = 24 * 60 * 60
 # Each discover call fans out to one Nearby Search per keyword, so this is the
 # per-call bill (~$0.032 each at Google's rate). Keep the list tight.
 GOOGLE_DISCOVER_KEYWORDS = (
@@ -97,6 +108,10 @@ GOOGLE_DISCOVER_MAX_RADIUS_M = 50_000
 GOOGLE_TIMEOUT_SECONDS = 6
 GOOGLE_CACHE_TTL_SECONDS = 60 * 60 * 6
 GOOGLE_DISTANCE_CACHE_TTL_SECONDS = 60 * 30
+PHOTO_SIGNING_SECRET = (
+    os.environ.get("NEIGHBOR_CART_PHOTO_SIGNING_SECRET", "").encode("utf-8")
+    or secrets.token_bytes(32)
+)
 TRUSTED_PROXY_ADDRESSES = frozenset(
     address.strip() for address in os.environ.get("NEIGHBOR_CART_TRUSTED_PROXY_ADDRESSES", "").split(",") if address.strip()
 )
@@ -167,6 +182,8 @@ class BoundedThreadingHTTPServer(ThreadingHTTPServer):
 
 rate_limiter = SlidingWindowLimiter()
 ai_request_slots = threading.BoundedSemaphore(MAX_AI_CONCURRENT_REQUESTS)
+enrich_request_slots = threading.BoundedSemaphore(MAX_ENRICH_CONCURRENT_REQUESTS)
+photo_request_slots = threading.BoundedSemaphore(MAX_PHOTO_CONCURRENT_REQUESTS)
 
 
 def utc_now() -> str:
@@ -877,6 +894,9 @@ class TtlCache:
 google_details_cache = TtlCache(GOOGLE_CACHE_TTL_SECONDS)
 google_distance_cache = TtlCache(GOOGLE_DISTANCE_CACHE_TTL_SECONDS)
 google_discover_cache = TtlCache(GOOGLE_DISCOVER_CACHE_TTL_SECONDS, maximum=256)
+# At most 16 entries of 2 MiB each: 32 MiB is the hard upper bound for this
+# in-process cache. Google photos are still served live rather than persisted.
+google_photo_cache = TtlCache(PHOTO_CACHE_TTL_SECONDS, maximum=16)
 
 
 def google_key() -> str:
@@ -884,6 +904,52 @@ def google_key() -> str:
 
 
 PLACES_V1 = "https://places.googleapis.com/v1"
+
+
+def signed_photo_url(reference: str, width: int = 640) -> str | None:
+    """Return a capability URL for a Google photo resource produced by this API.
+
+    Images are requested by an ``<img>`` element, which cannot attach the
+    anonymous-session header. The signed, width-bound capability prevents the
+    endpoint from becoming a general proxy for arbitrary Google photo names.
+    """
+    if not GOOGLE_PHOTO_REFERENCE_RE.fullmatch(reference):
+        return None
+    expires_at = int(time.time()) + PHOTO_CAPABILITY_TTL_SECONDS
+    signature = photo_signature(reference, width, expires_at)
+    return "/api/v1/places/photo?" + urlencode({
+        "ref": reference,
+        "w": width,
+        "expires": expires_at,
+        "signature": signature,
+    })
+
+
+def photo_signature(reference: str, width: int, expires_at: int) -> str:
+    message = f"{reference}\n{width}\n{expires_at}".encode("utf-8")
+    return hmac.new(PHOTO_SIGNING_SECRET, message, hashlib.sha256).hexdigest()
+
+
+def authorized_photo_request(query: dict[str, list[str]]) -> tuple[str, int]:
+    """Validate a short-lived, server-issued photo capability."""
+    values = {name: query.get(name, []) for name in ("ref", "w", "expires", "signature")}
+    if any(len(value) != 1 for value in values.values()):
+        raise ApiError(HTTPStatus.FORBIDDEN, "A valid photo capability is required")
+    reference, width_raw, expires_raw, signature = (
+        values["ref"][0], values["w"][0], values["expires"][0], values["signature"][0],
+    )
+    if not GOOGLE_PHOTO_REFERENCE_RE.fullmatch(reference) or not PHOTO_SIGNATURE_RE.fullmatch(signature):
+        raise ApiError(HTTPStatus.FORBIDDEN, "A valid photo capability is required")
+    try:
+        width = int(width_raw)
+        expires_at = int(expires_raw)
+    except ValueError as error:
+        raise ApiError(HTTPStatus.FORBIDDEN, "A valid photo capability is required") from error
+    if not 80 <= width <= 1600 or expires_at < int(time.time()):
+        raise ApiError(HTTPStatus.FORBIDDEN, "A valid photo capability is required")
+    if not hmac.compare_digest(signature, photo_signature(reference, width, expires_at)):
+        raise ApiError(HTTPStatus.FORBIDDEN, "A valid photo capability is required")
+    return reference, width
 
 # Google bills Places API (New) by the fields requested, so this mask stays
 # narrow — only what the directory actually renders.
@@ -933,29 +999,41 @@ def places_text_search(text_query: str, latitude: float, longitude: float, radiu
     }
     return places_post("places:searchText", body, SEARCH_FIELD_MASK).get("places") or []
 
-def clean_enrich_places(value: object) -> list[dict]:
+def catalog_enrich_places(value: object, database: Database) -> list[dict]:
+    """Resolve client-selected IDs to the server's canonical location records."""
     if not isinstance(value, list) or not value:
         raise ApiError(HTTPStatus.BAD_REQUEST, "places must be a non-empty list")
-    cleaned = []
+    cleaned: list[dict] = []
+    seen_ids: set[str] = set()
     for place in value[:MAX_ENRICH_PLACES_PER_REQUEST]:
         if not isinstance(place, dict) or not isinstance(place.get("id"), str):
             continue
+        location_id = place["id"].strip()
+        if not location_id or location_id in seen_ids:
+            continue
         try:
-            latitude = float(place["lat"])
-            longitude = float(place["lng"])
-        except (KeyError, TypeError, ValueError):
-            continue
+            stored = database.location(location_id)
+        except ApiError as error:
+            if error.status == HTTPStatus.NOT_FOUND:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "places must contain known catalog IDs") from None
+            raise
+        try:
+            latitude = float(stored["lat"])
+            longitude = float(stored["lng"])
+        except (KeyError, TypeError, ValueError) as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "A selected location is missing usable coordinates") from error
         if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
-            continue
+            raise ApiError(HTTPStatus.BAD_REQUEST, "A selected location is missing usable coordinates")
         cleaned.append({
-            "id": place["id"][:96],
-            "name": str(place.get("name", ""))[:120],
-            "address": str(place.get("address", ""))[:180],
+            "id": stored["id"],
+            "name": stored["name"],
+            "address": ", ".join(filter(None, (stored.get("address", ""), stored.get("cityStateZip", "")))),
             "lat": latitude,
             "lng": longitude,
         })
+        seen_ids.add(location_id)
     if not cleaned:
-        raise ApiError(HTTPStatus.BAD_REQUEST, "places must contain valid coordinates")
+        raise ApiError(HTTPStatus.BAD_REQUEST, "places must contain known catalog IDs")
     return cleaned
 
 
@@ -992,6 +1070,7 @@ def google_place_details(place: dict) -> dict:
             match = results[0]
             photos = match.get("photos") or []
             photo_name = (photos[0] or {}).get("name") if photos else None
+            photo_url = signed_photo_url(photo_name) if photo_name else None
             details = {
                 "placeId": match.get("id"),
                 "rating": match.get("rating"),
@@ -1001,10 +1080,7 @@ def google_place_details(place: dict) -> dict:
                     f"&query_place_id={match.get('id')}"
                 ),
                 "openNow": (match.get("currentOpeningHours") or {}).get("openNow"),
-                "photoUrl": (
-                    f"/api/v1/places/photo?ref={quote_plus(photo_name)}&w=640"
-                    if photo_name else None
-                ),
+                "photoUrl": photo_url,
                 "reviews": [],
             }
     except (HTTPError, URLError, socket.timeout, ValueError, KeyError, TypeError, json.JSONDecodeError):
@@ -1142,6 +1218,7 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
 
             photos = result.get("photos") or []
             photo_name = (photos[0] or {}).get("name") if photos else None
+            photo_url = signed_photo_url(photo_name) if photo_name else None
             address = str(result.get("formattedAddress", ""))[:200]
             open_now = (result.get("currentOpeningHours") or {}).get("openNow")
 
@@ -1181,9 +1258,7 @@ def google_discover(latitude: float, longitude: float, radius_m: int) -> list[di
                 # A reference, not a stored image: the client fetches it back
                 # through our proxy so the API key stays server-side.
                 "photoRef": photo_name,
-                "images": (
-                    [f"/api/v1/places/photo?ref={quote_plus(photo_name)}&w=640"] if photo_name else []
-                ),
+                "images": [photo_url] if photo_url else [],
                 "hoursSummary": "Hours from Google — call ahead" if open_now is None else (
                     "Open now (per Google)" if open_now else "Closed now (per Google)"
                 ),
@@ -1215,7 +1290,20 @@ def google_photo(reference: str, width: int) -> tuple[bytes, str]:
     """
     url = f"{PLACES_V1}/{reference}/media?" + urlencode({"maxWidthPx": width, "key": google_key()})
     with urlopen(url, timeout=GOOGLE_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed Google host
-        return response.read(), response.headers.get("Content-Type", "image/jpeg")
+        content_length = response.headers.get("Content-Length")
+        try:
+            declared_size = int(content_length) if content_length is not None else None
+        except ValueError as error:
+            raise ValueError("Google returned an invalid photo size") from error
+        if declared_size is not None and declared_size > MAX_PHOTO_BYTES:
+            raise ValueError("Google photo is too large")
+        content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if not content_type.startswith("image/"):
+            raise ValueError("Google returned a non-image response")
+        payload = response.read(MAX_PHOTO_BYTES + 1)
+        if len(payload) > MAX_PHOTO_BYTES:
+            raise ValueError("Google photo is too large")
+        return payload, content_type
 
 ROUTES_TRAVEL_MODE = {
     "driving": "DRIVE",
@@ -1289,14 +1377,14 @@ def google_distances(origin: dict, places: list[dict], mode: str) -> dict[str, d
     google_distance_cache.put(cache_key, distances)
     return distances
 
-def enrich_places(payload: dict) -> dict:
+def enrich_places(payload: dict, database: Database) -> dict:
     """Google ratings, reviews, and travel time for the places the navigator picked.
 
     Without a key the endpoint still answers, with an empty enrichment map and
     `provider: "none"`, so the UI falls back to straight-line distance rather
     than breaking.
     """
-    places = clean_enrich_places(payload.get("places"))
+    places = catalog_enrich_places(payload.get("places"), database)
     origin = clean_origin(payload.get("origin"))
     mode = payload.get("mode") if payload.get("mode") in {"driving", "walking", "transit", "bicycling"} else "driving"
 
@@ -1359,21 +1447,34 @@ def make_handler(database: Database):
                 if url.path == "/healthz" or url.path == "/api/v1/healthz":
                     return self.send_json(HTTPStatus.OK, {"status": "ok", "storage": "sqlite"})
                 if url.path == "/api/v1/places/photo":
-                    reference = (query.get("ref", [""])[0] or "").strip()
-                    if not reference or len(reference) > 512:
-                        raise ApiError(HTTPStatus.BAD_REQUEST, "ref is required")
+                    reference, width = authorized_photo_request(query)
                     if not google_key():
                         raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Photos need GOOGLE_MAPS_API_KEY")
-                    width = int(bounded_float(query.get("w", [None])[0], 640.0, 80.0, 1600.0, "w"))
-                    try:
-                        payload, content_type = google_photo(reference, width)
-                    except (HTTPError, URLError, socket.timeout, ValueError):
-                        raise ApiError(HTTPStatus.BAD_GATEWAY, "Photo unavailable") from None
+                    peer = client_identity(self)
+                    if not rate_limiter.allow(
+                        "photo", peer, MAX_PHOTO_REQUESTS_PER_NETWORK_PER_MINUTE, 60,
+                    ):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many photo requests. Please try again shortly.")
+                    cache_key = f"{reference}|{width}"
+                    cached = google_photo_cache.get(cache_key)
+                    if cached is not None:
+                        payload, content_type = cached
+                    elif not photo_request_slots.acquire(blocking=False):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Photos are busy. Please try again shortly.")
+                    else:
+                        try:
+                            payload, content_type = google_photo(reference, width)
+                            google_photo_cache.put(cache_key, (payload, content_type))
+                        except (HTTPError, URLError, socket.timeout, ValueError):
+                            raise ApiError(HTTPStatus.BAD_GATEWAY, "Photo unavailable") from None
+                        finally:
+                            photo_request_slots.release()
                     self.send_response(HTTPStatus.OK)
                     self.send_header("Content-Type", content_type)
                     self.send_header("Content-Length", str(len(payload)))
-                    # Within Google's caching allowance, and keeps the bill down.
-                    self.send_header("Cache-Control", "public, max-age=86400")
+                    # The URL is a signed 24-hour capability; keep browser
+                    # caching shorter so stale images naturally refresh.
+                    self.send_header("Cache-Control", f"public, max-age={PHOTO_CACHE_TTL_SECONDS}")
                     self.end_headers()
                     return self.wfile.write(payload)
 
@@ -1437,6 +1538,11 @@ def make_handler(database: Database):
                 path = urlsplit(self.path).path
                 peer = client_identity(self)
                 if path == "/api/v1/sessions":
+                    # A JSON body makes this a non-simple browser request. A
+                    # cross-site form cannot consume this network's scarce
+                    # anonymous-session quota, and rejected requests do not
+                    # reach the limiter below.
+                    read_json(self)
                     if not rate_limiter.allow("session", peer, MAX_SESSIONS_PER_NETWORK_PER_DAY, 24 * 60 * 60):
                         raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many anonymous sessions from this network")
                     return self.send_json(HTTPStatus.CREATED, {"session": database.issue_session()})
@@ -1452,9 +1558,20 @@ def make_handler(database: Database):
                     finally:
                         ai_request_slots.release()
                 if path == "/api/v1/places/enrich":
+                    active_session = session_id(self.headers, database)
+                    payload = read_json(self)
                     if not rate_limiter.allow("enrich", peer, MAX_PLACE_ENRICH_REQUESTS_PER_NETWORK_PER_MINUTE, 60):
                         raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many lookups. Please try again shortly.")
-                    return self.send_json(HTTPStatus.OK, enrich_places(read_json(self)))
+                    if not rate_limiter.allow(
+                        "enrich-session", active_session, MAX_PLACE_ENRICH_REQUESTS_PER_SESSION_PER_MINUTE, 60,
+                    ):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Too many lookups from this session. Please try again shortly.")
+                    if not enrich_request_slots.acquire(blocking=False):
+                        raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, "Place enrichment is busy. Please try again shortly.")
+                    try:
+                        return self.send_json(HTTPStatus.OK, enrich_places(payload, database))
+                    finally:
+                        enrich_request_slots.release()
                 if path != "/api/v1/reservations":
                     raise ApiError(HTTPStatus.NOT_FOUND, "Route not found")
                 key = self.headers.get("Idempotency-Key")

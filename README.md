@@ -40,7 +40,7 @@ anonymous, device-scoped pickup pass instead of an account or ID requirement.
   `{ locations, total, returned }`.
 - `GET /api/v1/locations/:id` — location details and inventory snapshot
 - `GET /api/v1/locations/:id/availability?date=YYYY-MM-DD` — remaining capacity for each pickup window
-- `POST /api/v1/sessions` — issue a private, anonymous device session (the web client does this automatically)
+- `POST /api/v1/sessions` — issue a private, anonymous device session (JSON `{}`; the web client does this automatically)
 - `POST /api/v1/reservations` — create an idempotent pickup pass
 - `GET /api/v1/reservations` — passes for the current anonymous device
 - `POST /api/v1/ai/chat` — the navigator's grounded answer, restricted to verified catalog IDs
@@ -57,6 +57,13 @@ process (6h for place details, 30m for distances) to keep billing down.
 Without the key, `/api/v1/places/enrich` still answers with `provider: "none"`
 and the UI falls back to straight-line distance and no reviews, so nothing
 breaks before the key is issued.
+
+Enrichment is limited to location IDs already served by Neighbor Cart, and the
+browser automatically attaches its anonymous device session. Google photo URLs
+are short-lived signed capabilities because image elements cannot send that
+session header. Set `NEIGHBOR_CART_PHOTO_SIGNING_SECRET` to the same random
+secret on every production instance; local development safely creates one for
+the current process when it is not set.
 
 Each reservable window has a default capacity of 12 passes per day. A future
 data source can override it with a positive integer `slotCapacity` on a place.

@@ -10,8 +10,6 @@ from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
 
-from urllib.error import URLError
-
 from api import app
 from api.app import create_server, rate_limiter
 
@@ -19,6 +17,9 @@ from api.app import create_server, rate_limiter
 class ApiTests(unittest.TestCase):
     def setUp(self):
         rate_limiter.clear()
+        app.google_details_cache.clear()
+        app.google_distance_cache.clear()
+        app.google_photo_cache.clear()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.server = create_server("127.0.0.1", 0, Path(self.temp_dir.name) / "test.db")
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
@@ -49,6 +50,16 @@ class ApiTests(unittest.TestCase):
         connection.close()
         return response.status, decoded
 
+    def raw_request(self, method, path, headers=None):
+        connection = HTTPConnection("127.0.0.1", self.port, timeout=3)
+        connection.request(method, path, headers=headers or {})
+        response = connection.getresponse()
+        status = response.status
+        body = response.read()
+        response_headers = dict(response.getheaders())
+        connection.close()
+        return status, response_headers, body
+
     def reservation_payload(self):
         status, body = self.request("GET", "/api/v1/locations?reservable=true")
         self.assertEqual(status, 200)
@@ -62,6 +73,13 @@ class ApiTests(unittest.TestCase):
             "needsCurbside": False,
             "guestName": "Alex",
         }
+
+    def enrichment_payload(self, origin=None):
+        place = self.server.database.locations(None, None, False, limit=1)[0]
+        payload = {"places": [{"id": place["id"]}]}
+        if origin is not None:
+            payload["origin"] = origin
+        return payload
 
     def new_session(self):
         return self.server.database.issue_session()["id"]
@@ -120,7 +138,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(first["reservation"]["id"], second["reservation"]["id"])
 
     def test_server_issues_sessions_and_rejects_client_forged_ones(self):
-        status, body = self.request("POST", "/api/v1/sessions")
+        status, body = self.request("POST", "/api/v1/sessions", {})
         self.assertEqual(status, 201)
         issued = body["session"]
         self.assertRegex(issued["id"], r"^[A-Za-z0-9_-]{32,128}$")
@@ -133,20 +151,29 @@ class ApiTests(unittest.TestCase):
 
     def test_session_issuance_is_rate_limited_per_network(self):
         for _ in range(4):
-            status, _ = self.request("POST", "/api/v1/sessions")
+            status, _ = self.request("POST", "/api/v1/sessions", {})
             self.assertEqual(status, 201)
-        status, body = self.request("POST", "/api/v1/sessions")
+        status, body = self.request("POST", "/api/v1/sessions", {})
         self.assertEqual(status, 429)
         self.assertIn("Too many", body["error"])
+
+    def test_session_issuance_rejects_a_form_like_post_without_spending_quota(self):
+        status, body = self.request("POST", "/api/v1/sessions")
+        self.assertEqual(status, 415)
+        self.assertIn("Content-Type", body["error"])
+
+        for _ in range(4):
+            status, _ = self.request("POST", "/api/v1/sessions", {})
+            self.assertEqual(status, 201)
 
     def test_configured_trusted_proxy_uses_a_valid_forwarded_client_address(self):
         with patch("api.app.TRUSTED_PROXY_ADDRESSES", frozenset({"127.0.0.1"})):
             for _ in range(4):
-                status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.10"})
+                status, _ = self.request("POST", "/api/v1/sessions", {}, {"X-Forwarded-For": "198.51.100.10"})
                 self.assertEqual(status, 201)
-            status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.10"})
+            status, _ = self.request("POST", "/api/v1/sessions", {}, {"X-Forwarded-For": "198.51.100.10"})
             self.assertEqual(status, 429)
-            status, _ = self.request("POST", "/api/v1/sessions", headers={"X-Forwarded-For": "198.51.100.11"})
+            status, _ = self.request("POST", "/api/v1/sessions", {}, {"X-Forwarded-For": "198.51.100.11"})
             self.assertEqual(status, 201)
 
     def test_rejects_a_reservation_without_a_device_session(self):
@@ -266,61 +293,96 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(chat.call_count, 5)
 
     def test_place_enrichment_degrades_without_a_google_key(self):
-        payload = {"places": [{"id": "place-1", "name": "Place", "lat": 41.6, "lng": -93.6}]}
+        payload = self.enrichment_payload()
         with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": ""}, clear=False):
-            status, body = self.request("POST", "/api/v1/places/enrich", payload)
+            status, body = self.request("POST", "/api/v1/places/enrich", payload, {"X-Neighbor-Session": self.session})
         self.assertEqual(status, 200)
         self.assertEqual(body, {"provider": "none", "enrichment": {}})
 
-    def test_place_enrichment_rejects_places_without_usable_coordinates(self):
+    def test_place_enrichment_requires_a_session_and_known_catalog_ids(self):
+        payload = self.enrichment_payload()
+        status, body = self.request("POST", "/api/v1/places/enrich", payload)
+        self.assertEqual(status, 401)
+        self.assertIn("session", body["error"])
+
         with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
-            status, body = self.request("POST", "/api/v1/places/enrich", {"places": [{"id": "a", "lat": 999, "lng": 0}]})
+            with patch("api.app.places_text_search") as search:
+                status, body = self.request(
+                    "POST", "/api/v1/places/enrich",
+                    {"places": [{"id": "forged-place", "name": "Attacker query", "lat": 41.6, "lng": -93.6}]},
+                    {"X-Neighbor-Session": self.session},
+                )
         self.assertEqual(status, 400)
-        self.assertIn("coordinates", body["error"])
+        self.assertIn("known catalog", body["error"])
+        search.assert_not_called()
+
+    def test_place_enrichment_uses_server_catalog_coordinates(self):
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.places_text_search", return_value=[] ) as search:
+                payload = self.enrichment_payload()
+                payload["places"][0].update({"name": "Attacker query", "lat": 0, "lng": 0})
+                status, body = self.request("POST", "/api/v1/places/enrich", payload, {"X-Neighbor-Session": self.session})
+        self.assertEqual(status, 200)
+        self.assertEqual(body["provider"], "google")
+        args = search.call_args.args
+        stored = self.server.database.location(payload["places"][0]["id"])
+        self.assertIn(stored["name"], args[0])
+        self.assertEqual((args[1], args[2]), (float(stored["lat"]), float(stored["lng"])))
 
     def test_place_enrichment_merges_ratings_with_travel_time(self):
-        app.google_details_cache.clear()
-        app.google_distance_cache.clear()
-        payload = {
-            "places": [{"id": "place-1", "name": "Place", "address": "1 Main St", "lat": 41.6, "lng": -93.6}],
-            "origin": {"lat": 41.59, "lng": -93.62},
-        }
-
-        def fake_google(path, params):
-            if path.startswith("place/findplacefromtext"):
-                return {"status": "OK", "candidates": [{"place_id": "g-1"}]}
-            if path.startswith("place/details"):
-                return {"status": "OK", "result": {
-                    "rating": 4.6,
-                    "user_ratings_total": 212,
-                    "reviews": [{"author_name": "Sam", "rating": 5, "text": "Kind staff.", "relative_time_description": "a week ago"}],
-                }}
-            return {"status": "OK", "rows": [{"elements": [
-                {"status": "OK", "distance": {"text": "1.4 mi", "value": 2253}, "duration": {"text": "6 mins", "value": 360}},
-            ]}]}
+        payload = self.enrichment_payload({"lat": 41.59, "lng": -93.62})
+        details = [{
+            "id": "g-1", "rating": 4.6, "userRatingCount": 212,
+            "photos": [{"name": "places/g-1/photos/photo-token"}],
+        }]
+        travel = {payload["places"][0]["id"]: {
+            "distanceText": "1.4 mi", "distanceMeters": 2253,
+            "durationText": "6 min", "durationSeconds": 360, "travelMode": "driving",
+        }}
 
         with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
-            with patch("api.app.google_get", side_effect=fake_google):
-                status, body = self.request("POST", "/api/v1/places/enrich", payload)
+            with patch("api.app.places_text_search", return_value=details), patch(
+                "api.app.google_distances", return_value=travel,
+            ):
+                status, body = self.request("POST", "/api/v1/places/enrich", payload, {"X-Neighbor-Session": self.session})
 
         self.assertEqual(status, 200)
         self.assertEqual(body["provider"], "google")
-        place = body["enrichment"]["place-1"]
+        place = body["enrichment"][payload["places"][0]["id"]]
         self.assertEqual(place["rating"], 4.6)
         self.assertEqual(place["ratingCount"], 212)
         self.assertEqual(place["distanceText"], "1.4 mi")
-        self.assertEqual(place["durationText"], "6 mins")
-        self.assertEqual(place["reviews"][0]["author"], "Sam")
+        self.assertEqual(place["durationText"], "6 min")
+        self.assertIn("signature=", place["photoUrl"])
 
     def test_place_enrichment_survives_a_google_outage(self):
-        app.google_details_cache.clear()
-        app.google_distance_cache.clear()
-        payload = {"places": [{"id": "place-1", "name": "Place", "lat": 41.6, "lng": -93.6}]}
+        payload = self.enrichment_payload()
         with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
-            with patch("api.app.google_get", side_effect=URLError("google is down")):
-                status, body = self.request("POST", "/api/v1/places/enrich", payload)
+            with patch("api.app.places_text_search", side_effect=app.URLError("google is down")):
+                status, body = self.request("POST", "/api/v1/places/enrich", payload, {"X-Neighbor-Session": self.session})
         self.assertEqual(status, 200)
-        self.assertEqual(body["enrichment"], {"place-1": {}})
+        self.assertEqual(body["enrichment"], {payload["places"][0]["id"]: {}})
+
+    def test_photo_proxy_requires_a_signed_capability_and_caches_valid_images(self):
+        reference = "places/google-place/photos/photo-token"
+        url = app.signed_photo_url(reference)
+        self.assertIsNotNone(url)
+
+        with patch.dict("os.environ", {"GOOGLE_MAPS_API_KEY": "test-key"}, clear=False):
+            with patch("api.app.google_photo", return_value=(b"jpeg-bytes", "image/jpeg")) as photo:
+                status, _, _ = self.raw_request("GET", "/api/v1/places/photo?ref=" + reference + "&w=640")
+                self.assertEqual(status, 403)
+                photo.assert_not_called()
+
+                status, headers, body = self.raw_request("GET", url)
+                self.assertEqual(status, 200)
+                self.assertEqual(headers["Content-Type"], "image/jpeg")
+                self.assertEqual(body, b"jpeg-bytes")
+                status, _, body = self.raw_request("GET", url)
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body, b"jpeg-bytes")
+        self.assertEqual(photo.call_count, 1)
 
     def test_ai_concurrency_is_bounded_before_calling_bedrock(self):
         payload = {"message": "Where can I find food?", "catalog": [{"id": "place-1", "name": "Place"}]}
