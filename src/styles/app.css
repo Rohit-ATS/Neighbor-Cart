@@ -5784,3 +5784,86 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 @media (prefers-reduced-motion: reduce) {
   .search-dock-btn { transition: none; }
 }
+
+/* ==========================================================================
+   "WHAT DO YOU NEED?" QUICK FILTERS
+   The chips themselves are the directory's existing .category-pill — these
+   rules only size them down for a secondary row and lay the row out. Nothing
+   here restyles the pill, so the two stay in step.
+   ========================================================================== */
+
+.need-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.need-row-label {
+  flex: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+
+.need-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* A shade smaller than the primary category pills, because this row sits
+   above them in the hierarchy but below the search field in weight. */
+.need-chip {
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.need-chip:hover:not(.is-active) { border-color: var(--green); color: var(--green); }
+.need-chip:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.need-clear {
+  flex: none;
+  margin-left: auto;
+  border: 0;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.need-clear:hover { color: var(--green-deep); }
+
+/* Phone: the label takes its own line and the chips scroll sideways rather
+   than stacking into four rows of buttons above the results. */
+@media (max-width: 640px) {
+  .need-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    align-items: center;
+  }
+  .need-row-label { grid-column: 1; }
+  .need-clear { grid-column: 2; margin-left: 0; }
+  .need-chips {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* The row bleeds to the card edge so a half-visible chip signals more. */
+    margin-inline: -18px;
+    padding-inline: 18px;
+    padding-bottom: 2px;
+  }
+  .need-chips::-webkit-scrollbar { display: none; }
+  .need-chip { flex: none; }
+}

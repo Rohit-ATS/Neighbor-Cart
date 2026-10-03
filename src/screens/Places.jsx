@@ -36,6 +36,57 @@ const DRAWER_ROW = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 0.9, 0.3, 1] } },
 };
 
+/* The "What do you need?" row.
+
+   Every chip reads a field the place model already has — nothing here is
+   invented, and nothing new is stored. `facet` is what makes multi-select
+   behave: chips in the same facet are OR'd (a place can only be one kind, so
+   Groceries + Hot meal has to mean "either"), and the facets are AND'd
+   together (hot meal AND open today AND delivers). Picking two chips can
+   therefore never produce the dead end that a flat AND would.
+
+   `Food today` also accepts Google's own open-now line, because a discovered
+   place carries that string but no weeklyHours, and excluding a pantry that is
+   open right now purely because we hold its hours in a different shape would
+   be the wrong failure. The other stock-dependent chips cannot be judged for
+   those places and so do not match them — see the note under the row. */
+const NEED_FILTERS = [
+  {
+    id: 'today', label: 'Food today', facet: 'when',
+    test: (place) => getIsOpenNow(place).isOpen || /open now/i.test(place.hoursSummary || ''),
+  },
+  {
+    id: 'groceries', label: 'Groceries', facet: 'kind',
+    test: (place) => place.type === 'food-bank' || place.type === 'pantry',
+  },
+  { id: 'hot-meal', label: 'Hot meal', facet: 'kind', test: (place) => place.type === 'hot-meal' },
+  { id: 'mobile', label: 'Mobile pantry', facet: 'kind', test: (place) => place.type === 'mobile' },
+  { id: 'produce', label: 'Fresh produce', facet: 'stock', test: (place) => place.hasFreshProduce === true },
+  {
+    id: 'baby', label: 'Baby food / formula', facet: 'stock',
+    test: (place) => (place.dietary || []).includes('Baby Formula / Infant Food')
+      || (place.inventory || []).some((item) => /baby|infant|formula/i.test(`${item.category} ${item.item}`)),
+  },
+  {
+    id: 'delivery', label: 'Delivery', facet: 'access',
+    test: (place) => (place.eligibilityTags || []).includes('Home Delivery Available')
+      || (place.services || []).some((service) => /deliver/i.test(service)),
+  },
+];
+
+const NEED_BY_ID = Object.fromEntries(NEED_FILTERS.map((need) => [need.id, need]));
+
+/* Selected chips, grouped into their facets, then OR within / AND across. */
+const matchesNeeds = (place, selected) => {
+  if (selected.length === 0) return true;
+  const facets = {};
+  selected.forEach((id) => {
+    const need = NEED_BY_ID[id];
+    if (need) (facets[need.facet] ||= []).push(need);
+  });
+  return Object.values(facets).every((group) => group.some((need) => need.test(place)));
+};
+
 export default function Places({ onNavigateHome, initialPanel = null, onPanelOpened }) {
   const reduceMotion = useReducedMotion();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -44,6 +95,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   // The item someone named is matched against inventory, separately from the
   // place text above: one substring cannot be both a city and a food.
   const [itemQuery, setItemQuery] = useState('');
+  // The quick-need chips, by id. Empty means the default behaviour, unchanged.
+  const [needs, setNeeds] = useState([]);
   // The sentence as typed, and what the parser made of it.
   const [aiQuery, setAiQuery] = useState('');
   const [understood, setUnderstood] = useState([]);
@@ -199,6 +252,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     setItemQuery('');
     setUnderstood([]);
     setAiQuery('');
+    setNeeds([]);
   };
 
   /* One sentence in, the whole filter set out. The chips it produces are the
@@ -240,7 +294,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
   const hasAnyFilter = selectedCategory !== 'all' || openNowOnly || reservationsOnly
     || produceOnly || selectedDiet !== 'all' || selectedLanguage !== 'all'
-    || selectedEligibility !== 'all' || searchQuery || itemQuery;
+    || selectedEligibility !== 'all' || searchQuery || itemQuery || needs.length > 0;
 
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
@@ -249,6 +303,10 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       if (aiMatchIds && !aiMatchIds.includes(place.id)) {
         return false;
       }
+
+      // The quick-need chips, in the same pass as every other filter so the
+      // map and the list cannot disagree.
+      if (!matchesNeeds(place, needs)) return false;
       // Category filter
       if (selectedCategory !== 'all' && place.type !== selectedCategory) {
         return false;
@@ -313,7 +371,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
       return true;
     });
-  }, [places, searchQuery, itemQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
+  }, [places, needs, searchQuery, itemQuery, selectedCategory, openNowOnly, reservationsOnly, produceOnly, selectedDiet, selectedLanguage, selectedEligibility, aiMatchIds]);
 
   const verifiedCount = useMemo(
     () => filteredPlaces.filter((place) => place.verifiedBadge).length,
@@ -729,6 +787,35 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               controls still exist, folded away below for anyone who would
               rather browse the options than describe what they need. */}
           <div className="places-filter-card">
+            {/* The quickest way in: one tap, before anyone has to describe
+                anything. Reuses the directory's own .category-pill. */}
+            <div className="need-row">
+              <span className="need-row-label" id="need-row-label">What do you need?</span>
+              <div className="need-chips" role="group" aria-labelledby="need-row-label">
+                {NEED_FILTERS.map((need) => {
+                  const on = needs.includes(need.id);
+                  return (
+                    <button
+                      key={need.id}
+                      type="button"
+                      className={`category-pill need-chip${on ? ' is-active' : ''}`}
+                      aria-pressed={on}
+                      onClick={() => setNeeds((prev) => (on
+                        ? prev.filter((id) => id !== need.id)
+                        : [...prev, need.id]))}
+                    >
+                      {need.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {needs.length > 0 && (
+                <button type="button" className="need-clear" onClick={() => setNeeds([])}>
+                  Clear
+                </button>
+              )}
+            </div>
+
             <form
               className="ai-search-row"
               onSubmit={(e) => { e.preventDefault(); runAiSearch(); }}
@@ -953,21 +1040,15 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               <div className="no-results-box">
                 <span className="no-results-emoji">🌾</span>
                 <h3>No locations match your filter</h3>
-                <p>Try broadening your search term or switching to "All Places".</p>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setOpenNowOnly(false);
-                    setReservationsOnly(false);
-                    setProduceOnly(false);
-                    setSelectedDiet('all');
-                    setSelectedLanguage('all');
-                    setSelectedEligibility('all');
-                    setSearchQuery('');
-                  }}
-                >
+                <p>
+                  {needs.length > 0
+                    ? `Nothing nearby matches ${needs.map((id) => NEED_BY_ID[id]?.label).filter(Boolean).join(' + ')}. Clearing it will show everything again.`
+                    : 'Try broadening your search term, or clear the filters to start again.'}
+                </p>
+                {/* resetFilters clears every filter on the page. The old inline
+                    version missed the item, chip and parsed-search state, so it
+                    could leave someone stuck on an empty list. */}
+                <button type="button" className="btn-secondary" onClick={resetFilters}>
                   Show all food locations
                 </button>
               </div>
