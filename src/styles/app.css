@@ -5554,3 +5554,77 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .ai-match-banner:hover { background: rgba(146, 7, 17, .14); }
 
 .ai-chat-composer .askbar-tray-head { padding-top: 10px; }
+
+/* ==========================================================================
+   PAGE CURTAIN
+   The transition between the landing page and the workspace. It sits above
+   everything, including the modals (1000) and the navigator launcher (900),
+   because for the half-second it is closed it IS the page.
+   ========================================================================== */
+
+.page-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;   /* nothing underneath is clickable mid-travel anyway */
+}
+
+/* One panel with an amber leading edge. A second amber panel trailing behind
+   it was a solid orange band across a third of the screen — an accent has to
+   stay an accent, so it is a 5px line on the edge that leads the travel. */
+.page-curtain-panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(165deg, var(--green) 0%, #5f070d 58%, #3d060a 100%);
+  border-top: 5px solid var(--amber);
+  border-radius: 38px 38px 0 0;
+  box-shadow: 0 -18px 50px rgba(45, 4, 7, .32);
+}
+
+.page-curtain-brand {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.page-curtain-mark {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  background: rgba(255, 247, 232, .08);
+  border: 1px solid rgba(252, 158, 37, .34);
+  color: var(--amber);
+}
+
+.page-curtain-word {
+  font-family: Tanker, Impact, sans-serif;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: #fff7e8;
+}
+
+.page-curtain-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: rgba(255, 247, 232, .74);
+}
+
+@media (max-width: 620px) {
+  .page-curtain-panel { border-radius: 26px 26px 0 0; }
+  .page-curtain-word { font-size: 24px; }
+}
+
+/* The curtain is pure motion, so it has nothing to offer here — App skips it
+   entirely and navigates straight through. */
+@media (prefers-reduced-motion: reduce) {
+  .page-curtain { display: none; }
+}
