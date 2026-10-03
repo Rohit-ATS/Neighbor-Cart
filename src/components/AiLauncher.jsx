@@ -26,9 +26,11 @@ export default function AiLauncher({
   appearance = 'cart',   // 'guide' on the landing page, 'cart' in the workspace
   onSelectPlace,
   onShowMatches,
+  onOpenTextBoard,
   hidden = false,
 }) {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [teased, setTeased] = useState(false);
   const section = getSectionKnowledge(sectionId);
   const isGuide = appearance === 'guide';
@@ -43,16 +45,20 @@ export default function AiLauncher({
   }, []);
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (event) => { if (event.key === 'Escape') setOpen(false); };
+    if (!menuOpen && !assistantOpen) return undefined;
+    const onKey = (event) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      setAssistantOpen(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [menuOpen, assistantOpen]);
 
   return (
     <>
       <AnimatePresence>
-        {!hidden && !open && (
+        {!hidden && !assistantOpen && (
           <motion.div
             className={`ai-launcher ai-launcher--${appearance}${teased ? ' is-teased' : ''}`}
             initial={{ opacity: 0, scale: 0.6, y: 20 }}
@@ -63,7 +69,9 @@ export default function AiLauncher({
             <button
               type="button"
               className="ai-launcher-btn"
-              onClick={() => setOpen(true)}
+              onClick={() => isGuide ? setAssistantOpen(true) : setMenuOpen((isOpen) => !isOpen)}
+              aria-expanded={isGuide ? undefined : menuOpen}
+              aria-haspopup={isGuide ? undefined : 'menu'}
               aria-label={isGuide
                 ? `Ask a question about ${section.label}`
                 : `Ask the food navigator about ${section.label}`}
@@ -126,14 +134,47 @@ export default function AiLauncher({
 
               <span className="ai-launcher-pulse" aria-hidden="true" />
             </button>
+
+            <AnimatePresence>
+              {!isGuide && menuOpen && (
+                <motion.div
+                  className="ai-launcher-menu"
+                  role="menu"
+                  initial={{ opacity: 0, y: 10, scale: .96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: .96 }}
+                  transition={SPRING}
+                >
+                  <p className="ai-launcher-menu-title">How would you like help?</p>
+                  <button
+                    type="button"
+                    className="ai-launcher-choice"
+                    role="menuitem"
+                    onClick={() => { setMenuOpen(false); onOpenTextBoard?.(); }}
+                  >
+                    <span className="ai-launcher-choice-icon">⌨️</span>
+                    <span><b>Open text board</b><small>Chat with the food navigator</small></span>
+                  </button>
+                  <button
+                    type="button"
+                    className="ai-launcher-choice"
+                    role="menuitem"
+                    onClick={() => { setMenuOpen(false); setAssistantOpen(true); }}
+                  >
+                    <span className="ai-launcher-choice-icon">🤖</span>
+                    <span><b>Ask this page’s assistant</b><small>Explains the section you’re viewing</small></span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {open && (
+      {assistantOpen && (
         <HarvestLinkAI
           sectionId={sectionId}
-          onClose={() => setOpen(false)}
+          onClose={() => setAssistantOpen(false)}
           onSelectPlace={(place) => { onSelectPlace?.(place); }}
           onShowMatches={(matches) => { onShowMatches?.(matches); setOpen(false); }}
         />
