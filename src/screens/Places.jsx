@@ -35,7 +35,7 @@ const DRAWER_ROW = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 0.9, 0.3, 1] } },
 };
 
-export default function Places({ onNavigateHome }) {
+export default function Places({ onNavigateHome, initialPanel = null, onPanelOpened }) {
   const reduceMotion = useReducedMotion();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -91,6 +91,23 @@ export default function Places({ onNavigateHome }) {
     : activePlace ? 'place-detail'
     : 'directory';
   const aiSection = useSectionContext(openPanel);
+
+  /* Arriving from a search result that named a panel: open it, then tell the
+     app so a later visit here does not reopen it unasked. */
+  useEffect(() => {
+    if (!initialPanel) return;
+    ({
+      directory: () => setWorkspaceView('directory'),
+      intake: () => setShowIntake(true),
+      community: () => setShowCommunity(true),
+      volunteer: () => setShowVolunteer(true),
+      rescue: () => setShowRescue(true),
+      nonprofit: () => setShowNonprofit(true),
+      impact: () => setShowImpact(true),
+      admin: () => setShowAdmin(true),
+    })[initialPanel]?.();
+    onPanelOpened?.();
+  }, [initialPanel, onPanelOpened]);
 
   useEffect(() => { refreshReservations(); }, []);
 

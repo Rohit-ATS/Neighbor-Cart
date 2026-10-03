@@ -145,7 +145,9 @@
   100% { box-shadow: 0 0 0 0 rgba(252, 158, 37, 0); }
 }
 
-.fb-nav-links { display: flex; align-items: center; gap: 30px; font-size: 16px; font-weight: 500; }
+/* The links hold one line and tighten their spacing when the search dock
+   expands beside them, rather than wrapping each label onto two rows. */
+.fb-nav-links { display: flex; align-items: center; gap: clamp(16px, 2.2vw, 30px); font-size: 16px; font-weight: 500; white-space: nowrap; }
 .fb-nav-links button { position: relative; padding: 6px 0; color: var(--fb-brown); transition: color .2s var(--fb-ease); }
 .fb-nav-links button::after {
   content: "";

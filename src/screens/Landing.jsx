@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion, useScroll, useSpring } from 'framer-motion';
 import AiLauncher from '../components/AiLauncher.jsx';
+import ExpandingSearchDock from '../components/ExpandingSearchDock.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
 import '../styles/freshbox.css';
 
@@ -295,6 +296,12 @@ export default function Landing({ onNavigatePlaces }) {
             <a className="fb-logo" href="#top" onClick={(e) => { e.preventDefault(); go('top'); }}>
               <span className="fb-logo-dot" aria-hidden="true" />NeighborCart
             </a>
+
+            {/* Search sits with the name, where people look for it. */}
+            <ExpandingSearchDock
+              onScrollTo={(id) => go(id)}
+              onOpenWorkspace={(panel) => { setMenuOpen(false); onNavigatePlaces(panel); }}
+            />
 
             <div className="fb-nav-links">
               {SECTIONS.map(({ id, label }) => (

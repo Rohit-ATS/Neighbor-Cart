@@ -23,6 +23,7 @@ const CURTAIN_LABEL = {
 export default function App() {
   const [view, setView] = useState(viewFromUrl);
   const [curtain, setCurtain] = useState(null);   // the view being travelled to
+  const [landingPanel, setLandingPanel] = useState(null);   // a workspace panel to open on arrival
   const timers = useRef([]);
   const reduceMotion = useReducedMotion();
 
@@ -41,8 +42,10 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [show]);
 
-  const navigateTo = useCallback((next) => {
-    if (next === view || curtain) return;
+  const navigateTo = useCallback((next, panel = null) => {
+    if (curtain) return;
+    setLandingPanel(panel);
+    if (next === view) { if (panel) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
 
     const url = next === 'places' ? '/places' : '/';
     if (window.location.pathname !== url) window.history.pushState(null, '', url);
@@ -64,9 +67,13 @@ export default function App() {
   return (
     <div className="app-root">
       {view === 'places' ? (
-        <Places onNavigateHome={() => navigateTo('landing')} />
+        <Places
+          onNavigateHome={() => navigateTo('landing')}
+          initialPanel={landingPanel}
+          onPanelOpened={() => setLandingPanel(null)}
+        />
       ) : (
-        <Landing onNavigatePlaces={() => navigateTo('places')} />
+        <Landing onNavigatePlaces={(panel) => navigateTo('places', panel)} />
       )}
 
       <PageTransition active={Boolean(curtain)} label={curtain ? CURTAIN_LABEL[curtain] : null} />

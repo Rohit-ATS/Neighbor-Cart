@@ -5628,3 +5628,156 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 @media (prefers-reduced-motion: reduce) {
   .page-curtain { display: none; }
 }
+
+/* ==========================================================================
+   SEARCH DOCK
+   The expanding search beside the wordmark. Adapted from a shadcn/Tailwind
+   component: same motion design, written against this project's own tokens
+   because there is no Tailwind here to borrow `bg-card` and `text-muted` from.
+   ========================================================================== */
+
+.search-dock { position: relative; flex: none; }
+
+.search-dock-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
+}
+.search-dock-btn:hover { border-color: var(--green); color: var(--green); }
+
+.search-dock-form { display: block; }
+
+.search-dock-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding-left: 15px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 0 0 0 4px rgba(146, 7, 17, .08);
+  overflow: hidden;
+}
+.search-dock-lead { flex: none; color: var(--ink-45); }
+.search-dock-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+.search-dock-field input:focus { outline: none; }
+.search-dock-field input::placeholder { color: var(--ink-45); }
+
+.search-dock-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 7px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-45);
+  cursor: pointer;
+}
+.search-dock-close:hover { background: var(--panel-2); color: var(--ink); }
+
+/* The panel opens showing everything, because someone searching a food-aid
+   site often does not know what this site calls the thing they need. */
+.search-dock-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 60;
+  width: 360px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(27, 28, 20, .05), 0 26px 54px rgba(27, 28, 20, .16);
+  transform-origin: top left;
+}
+
+.search-dock-hint {
+  margin: 2px 4px 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-45);
+}
+.search-dock-empty { margin: 6px 4px 8px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+.search-dock-group + .search-dock-group { margin-top: 10px; }
+.search-dock-group-label {
+  display: block;
+  padding: 6px 8px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.search-dock-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background .14s ease;
+}
+.search-dock-item.is-active { background: var(--mint-soft); }
+
+.search-dock-item-copy { display: grid; gap: 2px; min-width: 0; }
+.search-dock-item-copy b {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.search-dock-item-copy small {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.search-dock-item-go {
+  flex: none;
+  margin-left: auto;
+  font-style: normal;
+  font-size: 14px;
+  color: var(--ink-45);
+}
+.search-dock-item.is-active .search-dock-item-go { color: var(--green); }
+
+@media (max-width: 860px) {
+  /* The nav collapses to a burger here; the dock would crowd it. */
+  .search-dock { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-dock-btn { transition: none; }
+}
