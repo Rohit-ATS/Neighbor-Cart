@@ -313,7 +313,7 @@
   border-radius: 999px;
   background: var(--d-surface);
   color: var(--d-brown);
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -1426,7 +1426,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 10px 18px 0;
+  padding: 14px 20px 0;
   /* No band behind the pill — it floats on the page background. */
   background: transparent;
   box-shadow: none;
@@ -1434,11 +1434,14 @@
 }
 
 .places-topbar-inner {
-  max-width: 1400px;
-  height: 52px;
+  /* Shorter than the window it floats in: at full width the pill read as a
+     band, and the two things it holds — the name and the way out — sat so far
+     apart they looked unrelated. */
+  max-width: 1040px;
+  height: 68px;
   margin: 0 auto;
-  padding: 0 8px 0 18px;
-  gap: 14px;
+  padding: 0 12px 0 24px;
+  gap: 20px;
   border-radius: 999px;
   background: rgba(255, 247, 232, .88);
   backdrop-filter: blur(18px) saturate(1.4);
@@ -1463,14 +1466,14 @@
   text-transform: uppercase;
   line-height: 1;
   cursor: pointer;
-  font-size: 21px;
+  font-size: 25px;
 }
 .places-topbar .places-brand-btn b { font-weight: 400; color: var(--d-crimson); }
 
 /* The two-piece cart mark becomes the landing page's single amber dot. */
 .places-topbar .places-brand-mark {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   flex: none;
   border-radius: 50%;
   background: var(--d-amber);
@@ -1487,15 +1490,15 @@
 .places-topbar .topbar-live-tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   background: rgba(146, 7, 17, .08);
   border: 1px solid rgba(146, 7, 17, .18);
   color: var(--d-crimson);
   font-family: Inter, system-ui, sans-serif;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: .055em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1548,15 +1551,15 @@
 .places-topbar .places-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .places-topbar .lang-toggle-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 12px;
+  height: 40px;
+  padding: 0 14px;
   border: 1px solid rgba(72, 40, 32, .16);
   border-radius: 999px;
   background: transparent;
@@ -1573,13 +1576,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 13px;
+  height: 40px;
+  padding: 0 15px;
   border: 1px solid rgba(180, 84, 10, .3);
   border-radius: 999px;
   background: rgba(252, 158, 37, .16);
   color: var(--d-warn);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -1590,14 +1593,14 @@
 .places-topbar .nav-text-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 38px;
-  padding: 0 18px;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
   border: 0;
   border-radius: 999px;
   background: var(--d-crimson-deep);
   color: var(--d-cream);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -1612,7 +1615,7 @@
 
 /* mobile drawer trigger */
 .places-topbar .lexis-rail-toggle-btn {
-  width: 36px; height: 36px;
+  width: 42px; height: 42px;
   flex: none;
   display: grid;
   place-items: center;
@@ -1634,11 +1637,11 @@
 }
 
 @media (max-width: 680px) {
-  .places-topbar { padding: 8px 10px 0; }
-  .places-topbar-inner { height: 48px; padding: 0 6px 0 12px; gap: 8px; }
-  .places-topbar .places-brand-btn { font-size: 18px; }
+  .places-topbar { padding: 10px 12px 0; }
+  .places-topbar-inner { height: 60px; padding: 0 8px 0 14px; gap: 10px; }
+  .places-topbar .places-brand-btn { font-size: 20px; }
   .places-topbar .lang-toggle-btn span { display: none; }
-  .places-topbar .nav-text-btn { height: 34px; padding: 0 14px; font-size: 12.5px; }
+  .places-topbar .nav-text-btn { height: 40px; padding: 0 16px; font-size: 13.5px; }
 }
 
 /* ==========================================================================
@@ -2407,23 +2410,3 @@
   }
 }
 
-/* The search dock rides inside the pill, so it shrinks with it. Scoped to the
-   topbar — the landing page's own copy of the dock keeps its full size. */
-.places-topbar .search-dock-btn {
-  width: 36px;
-  height: 36px;
-}
-
-.places-topbar .search-dock-field {
-  height: 36px;
-  padding-left: 13px;
-  box-shadow: 0 0 0 3px rgba(146, 7, 17, .08);
-}
-
-.places-topbar .search-dock-field input { font-size: 13px; }
-
-.places-topbar .search-dock-close {
-  width: 26px;
-  height: 26px;
-  margin-right: 5px;
-}
