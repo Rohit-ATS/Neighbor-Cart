@@ -5542,7 +5542,12 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .np-tabs-nav button.active,
 .np-tabs-nav button[aria-selected="true"] { background: var(--orange); border-color: var(--orange); color: #fff; }
 
-.np-tab-content { display: grid; gap: 26px; }
+/* `align-content: start` is doing real work here. The portal used to be a
+   modal sized to its content; as a full-height page the grid has slack, and
+   without this its rows stretch to fill it — which is what inflated the add-item
+   form into a 200px band and rounded its submit button into a large circle. The
+   rows take their natural height and the leftover space stays at the bottom. */
+.np-tab-content { display: grid; align-content: start; gap: 26px; }
 
 .np-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .np-stat-card {

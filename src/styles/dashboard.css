@@ -925,6 +925,9 @@
 }
 .modal-backdrop .np-inv-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .modal-backdrop .np-inv-cat {
+  /* The row is a flex column, so without this the badge stretches the full
+     width of the card and reads as a banner rather than a tag. */
+  align-self: start;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -2529,4 +2532,124 @@
 /* The card's action row stacks once it holds the badge and the two links. */
 .vsc-actions:has(.vol-calendar) {
   display: block;
+}
+
+/* ==========================================================================
+   THE PORTAL'S INVENTORY TAB
+   Two jobs, named and separated: putting something new on the shelf, and
+   keeping what is already there honest. Previously one column of unlabelled
+   controls, where the widest field was a free-text note and the submit button
+   was the loudest thing on the page.
+   ========================================================================== */
+
+.modal-backdrop .np-inv-section { display: grid; gap: 14px; }
+
+.modal-backdrop .np-inv-head { margin: 0; }
+.modal-backdrop .np-inv-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 15.5px;
+}
+
+.modal-backdrop .np-inv-count {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--d-cream-2);
+  border: 1px solid var(--d-line-soft);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--d-brown);
+}
+
+.modal-backdrop .np-inv-head .np-desc { margin: 5px 0 0; max-width: 62ch; }
+
+/* ---- the form ---- */
+
+/* Named columns rather than a flex row of placeholders: a field whose only
+   label is its own placeholder has no label once it is filled in. */
+.modal-backdrop .np-inv-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 2fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--d-surface);
+  border: 1px solid var(--d-line-soft);
+  border-radius: 14px;
+}
+
+.modal-backdrop .np-field { display: grid; gap: 5px; min-width: 0; }
+
+.modal-backdrop .np-field > span {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--d-brown);
+}
+.modal-backdrop .np-field > span em {
+  margin-left: 5px;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+.modal-backdrop .np-field input,
+.modal-backdrop .np-field select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--d-line);
+  border-radius: 10px;
+  background: var(--d-cream);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--d-brown);
+  box-sizing: border-box;
+}
+.modal-backdrop .np-field input:focus,
+.modal-backdrop .np-field select:focus {
+  outline: none;
+  border-color: var(--d-crimson);
+  background: var(--d-surface);
+  box-shadow: 0 0 0 3px rgba(146, 7, 17, .1);
+}
+
+/* Sized to its words. It was a circle because the grid stretched it; it is a
+   button because that is all it needs to be. */
+.modal-backdrop .np-inv-add {
+  height: 40px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--d-crimson);
+  color: var(--d-cream);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s var(--d-ease);
+}
+.modal-backdrop .np-inv-add:hover { background: var(--d-crimson-deep, #7a0510); }
+
+@media (max-width: 900px) {
+  .modal-backdrop .np-inv-form { grid-template-columns: minmax(0, 1fr); }
+  .modal-backdrop .np-inv-add { width: 100%; }
+}
+
+.modal-backdrop .np-inv-empty {
+  margin: 0;
+  padding: 26px 20px;
+  border: 1px dashed var(--d-line);
+  border-radius: 14px;
+  background: var(--d-surface);
+  color: var(--d-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
 }

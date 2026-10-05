@@ -284,74 +284,65 @@ export default function NonprofitDashboard({ onClose, onSelectPlace, variant = '
         {/* Tab 1: Live Food Inventory */}
         {activeTab === 'inventory' && (
           <div className="np-tab-content">
-            <div className="np-inv-head">
-              <div>
-                <h3 style={{ margin: 0, fontSize: '16px' }}>Manage Published Inventory &amp; Stock</h3>
-                <p className="np-desc" style={{ margin: '4px 0 0' }}>
-                  Update item stock in real time so neighbors and volunteers see what supplies are available.
+            {/* Two jobs, named and separated: putting something new on the
+                shelf, and keeping what is already there honest. They were one
+                undifferentiated column of controls before. */}
+            <section className="np-inv-section">
+              <header className="np-inv-head">
+                <h3>Add an item</h3>
+                <p className="np-desc">
+                  Anything you publish here is what neighbours and volunteers see as available.
                 </p>
-              </div>
-            </div>
+              </header>
 
-            {/* Quick Add Form */}
-            <form onSubmit={handleAddInventory} style={{
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              margin: '16px 0 20px',
-              padding: '16px',
-              background: 'var(--d-surface, #fff)',
-              border: '1px solid var(--d-line-soft, #ece3cd)',
-              borderRadius: '12px'
-            }}>
-              <input
-                type="text"
-                placeholder="Item name (e.g. Fresh Apples, Brown Rice)"
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                style={{
-                  flex: '2 1 200px',
-                  padding: '9px 14px',
-                  border: '1px solid #d4c8b2',
-                  borderRadius: '8px',
-                  fontSize: '13px'
-                }}
-              />
-              <select
-                value={newItemCategory}
-                onChange={(e) => setNewItemCategory(e.target.value)}
-                style={{
-                  flex: '1 1 140px',
-                  padding: '9px 12px',
-                  border: '1px solid #d4c8b2',
-                  borderRadius: '8px',
-                  fontSize: '13px'
-                }}
-              >
-                <option value="Fresh Produce">Fresh Produce</option>
-                <option value="Protein & Meat">Protein &amp; Meat</option>
-                <option value="Dairy & Eggs">Dairy &amp; Eggs</option>
-                <option value="Pantry Staples">Pantry Staples</option>
-                <option value="Baby & Infant">Baby &amp; Infant</option>
-                <option value="Prepared Meals">Prepared Meals</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Note / limit (e.g. 2 bags per family)"
-                value={newItemNote}
-                onChange={(e) => setNewItemNote(e.target.value)}
-                style={{
-                  flex: '2 1 180px',
-                  padding: '9px 14px',
-                  border: '1px solid #d4c8b2',
-                  borderRadius: '8px',
-                  fontSize: '13px'
-                }}
-              />
-              <button type="submit" className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
-                + Add Item
-              </button>
-            </form>
+              <form onSubmit={handleAddInventory} className="np-inv-form">
+                <label className="np-field np-field--wide">
+                  <span>Item</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Fresh apples, brown rice"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                  />
+                </label>
+
+                <label className="np-field">
+                  <span>Category</span>
+                  <select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)}>
+                    <option value="Fresh Produce">Fresh Produce</option>
+                    <option value="Protein & Meat">Protein &amp; Meat</option>
+                    <option value="Dairy & Eggs">Dairy &amp; Eggs</option>
+                    <option value="Pantry Staples">Pantry Staples</option>
+                    <option value="Baby & Infant">Baby &amp; Infant</option>
+                    <option value="Prepared Meals">Prepared Meals</option>
+                  </select>
+                </label>
+
+                <label className="np-field np-field--wide">
+                  <span>Limit or note <em>optional</em></span>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2 bags per family"
+                    value={newItemNote}
+                    onChange={(e) => setNewItemNote(e.target.value)}
+                  />
+                </label>
+
+                <button type="submit" className="np-inv-add">Add item</button>
+              </form>
+            </section>
+
+            <section className="np-inv-section">
+              <header className="np-inv-head">
+                <h3>
+                  Published stock
+                  <span className="np-inv-count">{orgInventory.length} item{orgInventory.length === 1 ? '' : 's'}</span>
+                </h3>
+                <p className="np-desc">
+                  Keep these current — a neighbour who travels to a shelf that emptied this morning has
+                  spent a trip they may not be able to repeat.
+                </p>
+              </header>
 
             <div className="np-inventory-table">
               {orgInventory.map((inv, idx) => (
@@ -378,11 +369,13 @@ export default function NonprofitDashboard({ onClose, onSelectPlace, variant = '
               ))}
 
               {orgInventory.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '36px', color: 'var(--d-muted)' }}>
-                  <p>No inventory items listed for this location yet.</p>
-                </div>
+                <p className="np-inv-empty">
+                  Nothing published for this location yet. Add the first item above and it appears on the
+                  directory straight away.
+                </p>
               )}
             </div>
+            </section>
           </div>
         )}
 
