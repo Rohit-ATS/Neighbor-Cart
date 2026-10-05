@@ -1,3 +1,4 @@
+import base64
 import json
 import socket
 import sqlite3
@@ -9,6 +10,7 @@ import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
+from http import HTTPStatus
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
@@ -513,6 +515,72 @@ class ApiTests(unittest.TestCase):
 
         self.assertIn("50309", system_with_consent)
         self.assertNotIn("123 Private Street", system_with_consent)
+
+    def test_screenshot_must_be_a_png_within_the_size_limit(self):
+        """Bytes that go to a model are sniffed, not trusted by declaration."""
+        png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"0" * 64).decode()
+
+        self.assertIsNone(app.clean_ai_screenshot(None))
+        self.assertTrue(app.clean_ai_screenshot(png).startswith(b"\x89PNG"))
+        # A data URL is the shape a browser canvas hands over.
+        self.assertTrue(app.clean_ai_screenshot(f"data:image/png;base64,{png}").startswith(b"\x89PNG"))
+
+        # A JPEG, or anything else wearing a PNG's name, is refused.
+        with self.assertRaises(app.ApiError) as jpeg:
+            app.clean_ai_screenshot(base64.b64encode(b"\xff\xd8\xff\xe0" + b"0" * 64).decode())
+        self.assertEqual(jpeg.exception.status, HTTPStatus.BAD_REQUEST)
+
+        with self.assertRaises(app.ApiError):
+            app.clean_ai_screenshot("not base64 at all!!")
+
+        with self.assertRaises(app.ApiError):
+            app.clean_ai_screenshot({"png": True})
+
+        # Oversized is rejected on the encoded length, before it is decoded.
+        with self.assertRaises(app.ApiError) as big:
+            app.clean_ai_screenshot("A" * (app.AI_MAX_IMAGE_BYTES * 2))
+        self.assertEqual(big.exception.status, HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+
+    def test_screenshot_reaches_the_model_only_when_one_was_sent(self):
+        class FakeBotoCoreError(Exception):
+            pass
+
+        class FakeClientError(Exception):
+            pass
+
+        response = {"output": {"message": {"content": [{"text": '{"reply":"That is the map","placeIds":[]}'}]}}}
+        converse = unittest.mock.Mock(return_value=response)
+        boto3_module = types.ModuleType("boto3")
+        boto3_module.client = unittest.mock.Mock(return_value=types.SimpleNamespace(converse=converse))
+        botocore_module = types.ModuleType("botocore")
+        exceptions_module = types.ModuleType("botocore.exceptions")
+        exceptions_module.BotoCoreError = FakeBotoCoreError
+        exceptions_module.ClientError = FakeClientError
+
+        raw = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+        payload = {
+            "message": "What is this part of the page?",
+            "catalog": [{"id": "place-1", "name": "Place"}],
+        }
+        with patch.dict(sys.modules, {"boto3": boto3_module, "botocore": botocore_module, "botocore.exceptions": exceptions_module}):
+            app.bedrock_chat(payload)
+            without = converse.call_args.kwargs
+            self.assertNotIn("screenshot", without["system"][0]["text"].lower())
+            self.assertEqual(
+                [part for part in without["messages"][-1]["content"] if "image" in part], [],
+            )
+
+            payload["screenshot"] = base64.b64encode(raw).decode()
+            app.bedrock_chat(payload)
+            with_image = converse.call_args.kwargs
+
+        sent = [part for part in with_image["messages"][-1]["content"] if "image" in part]
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(sent[0]["image"]["format"], "png")
+        self.assertEqual(sent[0]["image"]["source"]["bytes"], raw)
+        # The model is told what the picture is, and what it still may not do.
+        self.assertIn("screenshot", with_image["system"][0]["text"].lower())
+        self.assertIn("VERIFIED_CATALOG", with_image["system"][0]["text"])
 
     def test_place_enrichment_survives_a_google_outage(self):
         payload = self.enrichment_payload()
