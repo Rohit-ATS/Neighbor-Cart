@@ -123,8 +123,8 @@
   background: var(--panel);
 }
 
-.ai-consent-panel legend {
-  padding: 0 4px;
+.ai-consent-title {
+  margin: 0 0 6px;
   color: var(--ink);
   font-size: 11px;
   font-weight: 700;
@@ -140,6 +140,11 @@
 }
 
 .ai-consent-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
   align-items: start;
@@ -152,19 +157,6 @@
 }
 .ai-consent-row:hover { background: var(--panel-2); }
 
-/* The checkbox stays in the DOM and keeps doing the work — it is what a screen
-   reader and the keyboard act on. Only its appearance is replaced. */
-.ai-consent-row input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 
 .acr-switch {
   position: relative;
@@ -189,7 +181,7 @@
 .ai-consent-row.is-on .acr-switch { background: var(--green); }
 .ai-consent-row.is-on .acr-switch i { transform: translateX(12px); }
 
-.ai-consent-row input:focus-visible + .acr-switch {
+.ai-consent-row:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 2px;
 }

@@ -773,15 +773,17 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
                 <em>Change</em>
               </motion.button>
             ) : (
-              <motion.fieldset
+              <motion.div
                 key="open"
                 className="ai-consent-panel"
+                role="group"
+                aria-label="Privacy choices"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.18 }}
               >
-                <legend>Privacy choices</legend>
+                <p className="ai-consent-title">Privacy choices</p>
                 <p className="ai-consent-base">
                   Asking a question sends it, and the recent chat, to Amazon Bedrock. Your street address never leaves this device.
                 </p>
@@ -790,12 +792,20 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
                   const on = choice.id === 'bedrock' ? bedrockProfileConsent : googleRoutesConsent;
                   const set = choice.id === 'bedrock' ? setBedrockProfileConsent : setGoogleRoutesConsent;
                   return (
-                    <label key={choice.id} className={`ai-consent-row${on ? ' is-on' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={(event) => set(event.target.checked)}
-                      />
+                    /* A button with `role="switch"` rather than a checkbox
+                       hidden under a label: a label forwards a click to the
+                       control it wraps, which means a click landing on the
+                       drawn switch can toggle twice and settle back where it
+                       started. The rest of this product states its roles on
+                       buttons for the same reason. */
+                    <button
+                      key={choice.id}
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      className={`ai-consent-row${on ? ' is-on' : ''}`}
+                      onClick={() => set(!on)}
+                    >
                       <span className="acr-switch" aria-hidden="true"><i /></span>
                       <span className="acr-copy">
                         <b>{choice.title}</b>
@@ -803,10 +813,10 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
                             informed answer and not just the quiet default. */}
                         <small>{on ? choice.onHint : choice.offHint}</small>
                       </span>
-                    </label>
+                    </button>
                   );
                 })}
-              </motion.fieldset>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
