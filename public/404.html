@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Opening Neighbor Cart…</title>
+  </head>
+  <body>
+    <script>
+      /* GitHub Pages cannot rewrite SPA routes itself. Remember the requested
+         app route, then reload the app shell; main.jsx restores it below. */
+      sessionStorage.setItem('neighbor-cart:pending-path', location.pathname + location.search + location.hash);
+      location.replace('/Neighbor-Cart/');
+    </script>
+  </body>
+</html>

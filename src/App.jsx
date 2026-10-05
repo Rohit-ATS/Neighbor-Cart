@@ -3,6 +3,7 @@ import { useReducedMotion } from 'framer-motion';
 import Landing from './screens/Landing.jsx';
 import Places from './screens/Places.jsx';
 import PageTransition from './components/PageTransition.jsx';
+import { appPath } from './lib/routes.js';
 
 /* The curtain closes in 460ms; the swap happens at COVER_MS, once it is fully
    closed, and it lifts shortly after. The gap between the two is what gives the
@@ -49,7 +50,7 @@ export default function App() {
     setTarget(to);
     if (next === view) return;
 
-    const url = next === 'places' ? '/places' : '/';
+    const url = next === 'places' ? appPath('places') : appPath();
     if (window.location.pathname !== url) window.history.pushState(null, '', url);
 
     /* Someone who has asked for less motion still gets the navigation, just

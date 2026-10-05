@@ -18,6 +18,7 @@ import AiLauncher from '../components/AiLauncher.jsx';
 import ExpandingSearchDock from '../components/ExpandingSearchDock.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
 import { parseSearch, SEARCH_EXAMPLES } from '../lib/searchParser.js';
+import { appPath } from '../lib/routes.js';
 
 /* Two catalogues describe the same pantry differently, so matching is by
    normalised name plus a ~150m coordinate bucket rather than exact equality. */
@@ -96,10 +97,10 @@ const TOPBAR_HOLD_MS = 1400;
    one answers to. They are sub-paths of /places, so App's own landing/places
    split still reads them as the workspace. */
 const WORKSPACE_PATHS = {
-  directory: '/places',
-  chat: '/places/navigator',
-  plan: '/places/plan',
-  community: '/places/community',
+  directory: appPath('places'),
+  chat: appPath('places/navigator'),
+  plan: appPath('places/plan'),
+  community: appPath('places/community'),
 };
 
 const workspaceFromPath = () => {
@@ -764,22 +765,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             <div className="lexis-nav-group">
               <span className="lexis-rail-label">Governance & Data</span>
               
-              <button 
-                type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowImpact(true); setMobileMenuOpen(false); }}
-                title="Impact Dashboard"
-              >
-                <span className="ln-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                </span>
-                <span className="ln-label">Impact Dashboard</span>
-              </button>
-
               <button 
                 type="button" 
                 className="lexis-nav-btn" 
