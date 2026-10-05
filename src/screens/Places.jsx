@@ -157,7 +157,6 @@ const WORKSPACE_PATHS = {
   directory: appHash('places'),
   chat: appHash('places/navigator'),
   plan: appHash('places/plan'),
-  profile: appHash('places/personal-information'),
   community: appHash('places/community'),
   volunteer: appHash('places/volunteer'),
   rescue: appHash('places/rescue'),
@@ -282,7 +281,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     : workspaceView === 'nonprofit' ? 'nonprofit'
     : workspaceView === 'volunteer' ? 'volunteer'
     : workspaceView === 'community' ? 'community'
-    : workspaceView === 'profile' ? 'intake'
     : workspaceView === 'plan' ? 'intake'
     : WORKSPACE_PATHS[workspaceView] ? workspaceView
     : 'directory';
@@ -294,7 +292,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     ({
       directory: () => showWorkspace('directory'),
       intake: () => showWorkspace('plan'),
-      profile: () => showWorkspace('profile'),
       community: () => showWorkspace('community'),
       volunteer: () => showWorkspace('volunteer'),
       rescue: () => showWorkspace('rescue'),
@@ -783,20 +780,15 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           {/* Header Row in Sidebar */}
           <div className="lexis-side-header">
             <div className="lexis-brand-text">
+              <span className="lexis-brand-eyebrow">Neighbor Cart</span>
               <span className="lexis-brand-name">Navigation</span>
-              <span className="lexis-brand-sub">Hubs & Relief Tools</span>
+              <span className="lexis-brand-sub">Relief workspace</span>
             </div>
 
             <button 
               type="button" 
               className="lexis-collapse-toggle-btn"
-              onClick={() => {
-                if (window.innerWidth <= 840) {
-                  setMobileMenuOpen(false);
-                } else {
-                  setSidebarCollapsed(!sidebarCollapsed);
-                }
-              }}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -965,20 +957,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
                 <span className="ln-label">Admin Verification</span>
               </button>
 
-              <button
-                type="button"
-                className={`lexis-nav-btn${workspaceView === 'profile' ? ' is-active' : ''}`}
-                onClick={() => { showWorkspace('profile'); setMobileMenuOpen(false); }}
-                title="Personal Information"
-              >
-                <span className="ln-icon">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
-                  </svg>
-                </span>
-                <span className="ln-label">Personal Information</span>
-              </button>
             </div>
           </nav>
 
@@ -1008,13 +986,12 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         {/* Workspace Main View Area */}
         <div className="places-workspace-main">
 
-      {workspaceView === 'plan' || workspaceView === 'profile' ? (
+      {workspaceView === 'plan' ? (
         /* The personalized plan, as its own page of the workspace. */
-        <section className="workspace-page" aria-label={workspaceView === 'profile' ? 'Personal information' : 'Personalized food plan'}>
+        <section className="workspace-page" aria-label="Personalized food plan">
           <ResidentIntakeModal
             variant="page"
             lang={language}
-            profileMode={workspaceView === 'profile'}
             onSelectPlace={(place) => setActivePlace(place)}
           />
         </section>
@@ -1065,6 +1042,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               showWorkspace('directory');
             }}
             onOpenRescue={() => showWorkspace('rescue')}
+            onOpenPlan={() => showWorkspace('plan')}
           />
         </section>
       ) : (
@@ -1662,6 +1640,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             showWorkspace('directory');
           }}
           onOpenRescue={() => showWorkspace('rescue')}
+          onOpenPlan={() => showWorkspace('plan')}
         />
       </div> {/* /.places-workspace-frame */}
     </div>

@@ -1039,3 +1039,180 @@
   .ai-launcher-btn:hover .ai-launcher-copy,
   .ai-launcher.is-teased .ai-launcher-copy { max-width: 0; padding-right: 0; opacity: 0; }
 }
+
+/* ==========================================================================
+   THE PLAN LINK
+   What the navigator already knows before it is asked anything — and, when it
+   knows nothing, the shortest way to tell it. It sits at the top of the
+   composer because that is where someone looks before typing a question.
+   ========================================================================== */
+
+.ai-plan-link {
+  margin: 0 0 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+/* ---- with a plan ---- */
+
+.ai-plan-link:not(.is-empty) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apl-toggle {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.apl-toggle:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 8px; }
+
+.apl-switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background .2s ease;
+}
+.apl-switch i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(45, 4, 7, .3);
+  transition: transform .22s cubic-bezier(.22, .9, .3, 1);
+}
+.ai-plan-link.is-active .apl-switch { background: var(--green); }
+.ai-plan-link.is-active .apl-switch i { transform: translateX(12px); }
+
+.apl-copy { display: grid; gap: 1px; min-width: 0; }
+.apl-copy b {
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--ink);
+}
+/* The summary is one line and truncates: it is a receipt to glance at, and the
+   plan page is one click away for the whole of it. */
+.apl-copy small {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apl-edit {
+  flex: none;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease;
+}
+.apl-edit:hover { border-color: var(--green); color: var(--green); }
+
+/* ---- without a plan ---- */
+
+.ai-plan-link.is-empty { display: grid; gap: 8px; }
+
+.apl-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.apl-hint {
+  margin: -4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.apl-row { display: flex; gap: 7px; }
+
+.apl-location {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.apl-location:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--panel);
+}
+
+.apl-save {
+  flex: none;
+  padding: 0 15px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff7e8;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.apl-save:hover { background: var(--green-deep); }
+
+.apl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.apl-chip {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+.apl-chip:hover { border-color: var(--green); }
+.apl-chip.is-on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff7e8;
+}
+
+.apl-full {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--green);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.apl-full:hover { text-decoration: underline; }

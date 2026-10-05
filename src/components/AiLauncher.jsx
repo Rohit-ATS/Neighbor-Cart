@@ -54,6 +54,7 @@ export default function AiLauncher({
   onSelectPlace,
   onShowMatches,
   onOpenRescue,
+  onOpenPlan,
   onOpenTextBoard,
   hidden = false,
 }) {
@@ -301,6 +302,7 @@ export default function AiLauncher({
           onSelectPlace={(place) => { onSelectPlace?.(place); }}
           onShowMatches={(matches) => { onShowMatches?.(matches); setOpen(false); }}
           onOpenRescue={onOpenRescue}
+          onOpenPlan={onOpenPlan}
         />
       )}
     </>

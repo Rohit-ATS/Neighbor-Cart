@@ -8,7 +8,8 @@ import AiMiniMap from './AiMiniMap.jsx';
 import LocationButton from './LocationButton.jsx';
 import { getSectionKnowledge } from '../lib/pageContext.js';
 import { classifyMessage, mergeNeeds } from '../lib/needs.js';
-import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts } from '../lib/residentProfile.js';
+import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts, saveResidentProfile } from '../lib/residentProfile.js';
+import AiPlanLink from './AiPlanLink.jsx';
 import { buildRescuePlan, isFoodRescueIntent, rescueMessage } from '../lib/foodRescue.js';
 
 /* The conversation itself.
@@ -116,7 +117,7 @@ const CONSENT_CHOICES = [
 const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 const clockTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-export default function AiChat({ variant = 'section', sectionId = null, onClose, onSelectPlace, onShowMatches, onOpenRescue }) {
+export default function AiChat({ variant = 'section', sectionId = null, onClose, onSelectPlace, onShowMatches, onOpenRescue, onOpenPlan }) {
   // What the person was looking at when they opened the navigator. It shapes
   // the opener, the starters, and the context the model is given.
   const section = sectionId ? getSectionKnowledge(sectionId) : null;
@@ -141,6 +142,11 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     }
   });
   const [residentProfile, setResidentProfile] = useState(() => getResidentProfile());
+  /* Whether the plan is being applied. On by default — someone who filled in
+     the intake meant it to be used — but switchable, because a plan made for
+     one errand should not silently shape every later question. */
+  const [usePlan, setUsePlan] = useState(true);
+  const activeProfile = usePlan ? residentProfile : null;
   const [bedrockProfileConsent, setBedrockProfileConsent] = useState(false);
   const [googleRoutesConsent, setGoogleRoutesConsent] = useState(false);
   /* Reopened by hand after folding. It is not reset when a consent is
@@ -205,7 +211,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     /* Read the message before answering it: only recognized facts are kept,
        and an unreadable line is handled here rather than filed and forwarded. */
     const reading = classifyMessage(question);
-    const profileFacts = residentProfileFacts(residentProfile);
+    const profileFacts = residentProfileFacts(activeProfile);
     const memoryWithProfile = mergeNeeds(rememberedNeeds, profileFacts);
     const nextNeeds = reading.facts.length > 0 ? mergeNeeds(memoryWithProfile, reading.facts) : memoryWithProfile;
     // Keep saved intake facts out of provider-bound memory. The resident's
@@ -265,7 +271,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         context: section?.summary || '',
         // Street address is never sent. The remaining saved details are only
         // included after the resident explicitly opts into Bedrock tailoring.
-        residentProfile: bedrockProfileConsent ? residentProfile : null,
+        residentProfile: bedrockProfileConsent ? activeProfile : null,
         bedrockProfileConsent,
       });
       const citations = (answer.placeIds || [])
@@ -294,7 +300,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     } catch {
       // The verified local matcher keeps the navigator useful if Bedrock is
       // temporarily unavailable or the server has not yet received an IAM role.
-      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading, residentProfile)]);
+      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading, activeProfile)]);
     } finally {
       setIsThinking(false);
     }
@@ -326,7 +332,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     }]);
   };
 
-  const groundedAnswer = (query, needs = rememberedNeeds, reading = classifyMessage(query), profile = residentProfile) => {
+  const groundedAnswer = (query, needs = rememberedNeeds, reading = classifyMessage(query), profile = activeProfile) => {
     const lower = [...needs.map((need) => need.label), query].join(' ').toLowerCase();  // everything we know so far
     const nowTime = clockTime();
 
@@ -747,6 +753,23 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       </div>
 
       <div className="ai-chat-composer">
+        {/* What the navigator knows before it is asked anything: the plan, or
+            the shortest way to give it one. */}
+        <AiPlanLink
+          profile={residentProfile}
+          active={usePlan}
+          onToggle={setUsePlan}
+          onOpenPlan={onOpenPlan}
+          onSaveQuick={(partial) => {
+            /* Merged over whatever is already saved rather than replacing it,
+               so answering here never quietly drops intake answers. */
+            const saved = saveResidentProfile({ ...(residentProfile || {}), ...partial,
+              dietary: [...new Set([...(residentProfile?.dietary || []), ...(partial.dietary || [])])] });
+            setResidentProfile(saved);
+            setUsePlan(true);
+          }}
+        />
+
         {/* Two choices, each stated as what it buys and what it costs. Once
             both are made there is nothing left to decide, so the panel folds
             down to a single line — but it stays on screen, because consent you
