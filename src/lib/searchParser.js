@@ -56,12 +56,13 @@ const RULES = [
 ];
 
 /* Cities the directory actually covers. Matching them explicitly keeps a place
-   name out of the leftover keyword search, where "New York" would otherwise be
+   name out of the leftover keyword search, where city names would otherwise be
    hunted for in inventory listings. */
 const CITIES = [
-  'Des Moines', 'New York', 'Brooklyn', 'Bronx', 'Manhattan', 'Los Angeles',
-  'Chicago', 'Pilsen', 'Houston', 'Seattle', 'Miami', 'Boston', 'Atlanta',
-  'Denver', 'Philadelphia', 'Phoenix', 'Detroit', 'Oakland', 'San Francisco',
+  'San Francisco', 'Fremont', 'San Jose', 'Oakland', 'Berkeley', 'Sunnyvale',
+  'Palo Alto', 'East Palo Alto', 'Campbell', 'Vallejo', 'Fairfield', 'San Mateo',
+  'Cupertino', 'Hayward', 'Milpitas', 'Newark', 'Union City', 'Richmond',
+  'Alameda', 'San Leandro', 'Livermore',
 ];
 
 /* Words that carry no filter and should not survive into the keyword search. */
@@ -151,8 +152,8 @@ function emptyFilters() {
 /* Shown under the field until someone types, as a demonstration of what the
    field will accept rather than a list of what it supports. */
 export const SEARCH_EXAMPLES = [
-  'Hot meals where no ID is needed',
-  'Baby formula and diapers in Des Moines',
-  'Fresh produce in Chicago, walk-ins welcome',
-  'Halal pantry near 60632 that takes reservations',
+  'Hot meals in San Francisco with no ID needed',
+  'Halal food pantry in Fremont open today',
+  'Fresh produce in San Jose, walk-ins welcome',
+  'Food banks in Oakland that take pickup reservations',
 ];

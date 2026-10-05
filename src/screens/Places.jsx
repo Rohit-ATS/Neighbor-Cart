@@ -862,14 +862,14 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           <div className="places-title-row">
             <div className="places-title-copy">
               <div className="badge-row">
-                <span className="places-badge">National Food Access & Relief Network</span>
+                <span className="places-badge">San Francisco &amp; Greater Bay Area Food Relief Network</span>
                 {/* Only staff-verified records may claim verification. OSM
                     places are community-mapped, so the count is neutral and
                     the verified subset is called out separately. */}
                 <span className="places-live-count">
                   {filteredPlaces.length} Location{filteredPlaces.length === 1 ? '' : 's'}
                   {userPosition && ' near you'}
-                  {placesTotal > places.length && ` · ${placesTotal.toLocaleString()} nationwide`}
+                  {placesTotal > places.length && ` · ${placesTotal.toLocaleString()} in Bay Area`}
                   {verifiedCount > 0 && ` · ${verifiedCount} verified`}
                 </span>
                 {aiMatchIds && (
@@ -878,9 +878,9 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
                   </button>
                 )}
               </div>
-              <h1 className="places-heading">Food Assistance Directory & Real-Time Map</h1>
+              <h1 className="places-heading">Food Assistance Directory &amp; Real-Time Map</h1>
               <p className="places-sub">
-                Explore verified food banks, neighborhood pantries, hot meal sites, and mobile rescue distributions across all 50 states. 
+                Explore verified food banks, neighborhood pantries, hot meal sites, and mobile rescue distributions across San Francisco, Fremont, San Jose, Oakland, and surrounding Bay Area communities. 
                 100% free, confidential, and zero paperwork required.
               </p>
             </div>

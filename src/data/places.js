@@ -40,914 +40,2129 @@ export const ELIGIBILITY_OPTIONS = [
 ];
 
 export const PLACES = [
-  // --- MIDWEST / IOWA ---
   {
-    id: 'food-bank-iowa',
-    name: 'Food Bank of Iowa',
-    type: 'food-bank',
-    typeLabel: 'Regional Food Bank & Distribution Hub',
-    tagline: 'Leading hunger relief across 55 Iowa counties with fresh produce and emergency boxes.',
-    neighborhood: 'Northeast Des Moines',
-    address: '2220 E 17th St',
-    city: 'Des Moines',
-    state: 'IA',
-    zip: '50316',
-    cityStateZip: 'Des Moines, IA 50316',
-    lat: 41.6094,
-    lng: -93.5878,
-    phone: '(515) 564-0330',
-    email: 'contact@foodbankiowa.org',
-    website: 'https://foodbankiowa.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=2220+E+17th+St,+Des+Moines,+IA+50316',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'No ID, income verification, or social security number required. Open to anyone who needs food.',
-    languages: ['English', 'Spanish (Español)', 'Arabic (العربية)', 'Somali (Soomaali)'],
-    dietary: ['Vegetarian', 'Halal', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food'],
-    hasFreshProduce: true,
-    transitInfo: 'DART Route 17 & Route 1 stop within 2 blocks. Free on-site parking.',
-    accessibility: 'Wheelchair ramp, automatic entrance doors, accessible restrooms.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome', 'Drive-Thru Available'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=80',
+    "id": "sf-marin-food-bank",
+    "name": "San Francisco-Marin Food Bank",
+    "type": "food-bank",
+    "typeLabel": "Regional Food Bank & Warehouse Hub",
+    "tagline": "Distributing over 1 million pounds of fresh produce, protein, and staples weekly across SF.",
+    "neighborhood": "Potrero Hill",
+    "address": "900 Pennsylvania Ave",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94107",
+    "cityStateZip": "San Francisco, CA 94107",
+    "lat": 37.754564,
+    "lng": -122.393536,
+    "phone": "(415) 282-1900",
+    "email": "info@sfmfoodbank.org",
+    "website": "https://www.sfmfoodbank.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=900+Pennsylvania+Ave,+San+Francisco,+CA+94107",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "No ID, income paperwork, or proof of citizenship required. Open to all individuals and families.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Cantonese",
+      "Mandarin (中文)",
+      "Vietnamese (Tiếng Việt)"
     ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 4:30 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Tuesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Wednesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Thursday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Friday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Saturday', hours: 'Closed (Emergency hotline open)', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Kosher",
+      "Gluten-Free",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
     ],
-    services: [
-      'Direct emergency box pick-up',
-      'Curbside trunk loading',
-      'Wheelchair accessible entrance',
-      'Bilingual staff (English / Spanish)',
-      'Free parking on site'
+    "hasFreshProduce": true,
+    "transitInfo": "Muni T-Third St light rail (22nd St Station) and Muni 48 Quintara bus stop within 2 blocks.",
+    "accessibility": "ADA accessible ramps, automatic wide doors, roll-in carts available.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Drive-Thru Available"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Honeycrisp Apples & Navel Oranges (5 lb bags)', stock: 'high', note: 'Restocked this morning' },
-      { category: 'Fresh Produce', item: 'Carrots, Russet Potatoes & Yellow Onions', stock: 'high', note: 'Abundant supply' },
-      { category: 'Dairy & Eggs', item: 'Grade-A 1% Milk (Gallons) & Fresh Eggs', stock: 'medium', note: 'Refrigerated cold cases' },
-      { category: 'Pantry Staples', item: 'Long Grain White Rice (5 lb) & Pinto Beans', stock: 'high', note: 'Shelf-stable' },
-      { category: 'Pantry Staples', item: 'Canned Tuna, Chunk Chicken & Peanut Butter', stock: 'high', note: 'High protein staples' },
-      { category: 'Baby & Infant', item: 'Enfamil Infant Formula & Size 4 Diapers', stock: 'low', note: 'Limited supply' },
-      { category: 'Special Dietary', item: 'Gluten-Free Rolled Oats & Rice Flour', stock: 'medium', note: 'Allergen certified' }
+    "images": [
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Infant formula (any brand)', 'Canned tuna & chicken', 'Diapers size 5 & 6'],
-    acceptsReservations: true,
-    reservationWindows: ['9:00 AM – 10:30 AM', '11:00 AM – 12:30 PM', '1:30 PM – 3:00 PM', '3:00 PM – 4:15 PM']
+    "hoursSummary": "Mon – Fri: 8:00 AM – 4:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:00 AM – 4:30 PM",
+        "open": 8,
+        "close": 16.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:00 AM – 4:30 PM",
+        "open": 8,
+        "close": 16.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:00 AM – 4:30 PM",
+        "open": 8,
+        "close": 16.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:00 AM – 4:30 PM",
+        "open": 8,
+        "close": 16.5
+      },
+      {
+        "day": "Friday",
+        "hours": "8:00 AM – 4:30 PM",
+        "open": 8,
+        "close": 16.5
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed (Pantry partner distributions open)",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Direct emergency box pick-up",
+      "Curbside trunk loading",
+      "Wheelchair accessible entrance",
+      "Multilingual staff (English, Spanish, Cantonese)",
+      "Free parking on site"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "California Organic Gala Apples & Navel Oranges",
+        "stock": "high",
+        "note": "Locally sourced Salinas valley"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Organic Carrots, Yukon Potatoes & Yellow Onions",
+        "stock": "high",
+        "note": "Abundant supply"
+      },
+      {
+        "category": "Dairy & Eggs",
+        "item": "Clover Sonoma Whole & 1% Milk (Gallons) & Grade AA Eggs",
+        "stock": "medium",
+        "note": "Refrigerated cold cases"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Calrose Medium Grain White & Brown Rice (5 lb) & Black Beans",
+        "stock": "high",
+        "note": "Shelf-stable"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Wild Albacore Canned Tuna & Peanut Butter",
+        "stock": "high",
+        "note": "High protein staples"
+      },
+      {
+        "category": "Baby & Infant",
+        "item": "Similac & Enfamil Infant Formula & Diapers Sizes 3–6",
+        "stock": "medium",
+        "note": "Restocked weekly"
+      },
+      {
+        "category": "Special Dietary",
+        "item": "Gluten-Free Oats, Quinoa & Low-Sodium Canned Vegetables",
+        "stock": "high",
+        "note": "Dietary certified"
+      }
+    ],
+    "urgentNeeds": [
+      "Infant formula (powdered)",
+      "Canned tuna & salmon",
+      "Diapers size 4 & 5"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:00 AM – 10:30 AM",
+      "11:00 AM – 12:30 PM",
+      "1:30 PM – 3:00 PM",
+      "3:30 PM – 5:00 PM"
+    ]
   },
   {
-    id: 'dmarc-pantry',
-    name: 'DMARC Central Food Pantry',
-    type: 'pantry',
-    typeLabel: 'Choice Community Food Pantry',
-    tagline: 'Des Moines Area Religious Council network providing healthy choice-based grocery access.',
-    neighborhood: 'South Side Des Moines',
-    address: '100 Army Post Rd',
-    city: 'Des Moines',
-    state: 'IA',
-    zip: '50315',
-    cityStateZip: 'Des Moines, IA 50315',
-    lat: 41.5262,
-    lng: -93.6190,
-    phone: '(515) 277-6969',
-    email: 'info@dmarcunited.org',
-    website: 'https://dmarcunited.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=100+Army+Post+Rd,+Des+Moines,+IA+50315',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Choice pantry model. You pick what your family eats. Bring your own bags if possible.',
-    languages: ['English', 'Spanish (Español)', 'Arabic (العربية)'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'DART Route 7 direct stop. Dedicated free parking lot.',
-    accessibility: 'Ground level, wide aisles, braille signs, service animal friendly.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Client-Choice Market', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80',
+    "id": "st-anthonys-sf",
+    "name": "St. Anthony Dining Room & Food Pantry",
+    "type": "hot-meal",
+    "typeLabel": "Daily Free Dining Room & Choice Pantry",
+    "tagline": "Serving hot, nutritious sit-down meals 365 days a year with dignity and respect in Tenderloin.",
+    "neighborhood": "Tenderloin",
+    "address": "121 Golden Gate Ave",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94102",
+    "cityStateZip": "San Francisco, CA 94102",
+    "lat": 37.782348,
+    "lng": -122.41421,
+    "phone": "(415) 241-2600",
+    "email": "diningroom@stanthonysf.org",
+    "website": "https://www.stanthonysf.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=121+Golden+Gate+Ave,+San+Francisco,+CA+94102",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "100% walk-in, completely free. No questions asked, no ID or paperwork needed.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Vietnamese (Tiếng Việt)",
+      "Cantonese"
     ],
-    hoursSummary: 'Mon – Thu: 9:00 AM – 4:00 PM · Fri: 9:00 AM – 1:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
-      { day: 'Tuesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
-      { day: 'Wednesday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
-      { day: 'Thursday', hours: '9:00 AM – 4:00 PM', open: 9, close: 16 },
-      { day: 'Friday', hours: '9:00 AM – 1:00 PM', open: 9, close: 13 },
-      { day: 'Saturday', hours: 'Closed', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Diabetic-Friendly",
+      "No-Cook / Pull-Tab Cans"
     ],
-    services: [
-      'Self-select choice grocery market',
-      'Mobile food truck stops',
-      'Public transit accessible',
-      'Culturally familiar foods & produce',
-      'SNAP application assistance'
+    "hasFreshProduce": true,
+    "transitInfo": "Civic Center BART/Muni Station 3 blocks away. Muni lines 5, 19, 21, and 31 nearby.",
+    "accessibility": "Street level entrance, wheelchair lift, spacious accessible dining hall.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Client-Choice Market"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Fresh Spinach, Romaine & Sweet Peppers', stock: 'high', note: 'Local farm delivery' },
-      { category: 'Dairy & Eggs', item: 'Whole Milk & Plant-Based Oat Milk', stock: 'high', note: 'Lactose-free options available' },
-      { category: 'Special Dietary', item: 'Halal Certified Canned Chickpeas & Lentils', stock: 'high', note: 'Dedicated Halal section' },
-      { category: 'Special Dietary', item: 'Diabetic-Friendly High Fiber Cereals', stock: 'medium', note: 'Low sugar' }
+    "images": [
+      "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Peanut butter', 'Canned fruit in 100% juice', 'Cooking oil'],
-    acceptsReservations: true,
-    reservationWindows: ['9:30 AM – 10:30 AM', '11:00 AM – 12:00 PM', '1:00 PM – 2:00 PM', '2:30 PM – 3:30 PM']
-  },
-
-  // --- NEW YORK, NY ---
-  {
-    id: 'city-harvest-nyc',
-    name: 'City Harvest Mobile Market & Community Pantry',
-    type: 'mobile',
-    typeLabel: 'Mobile Distribution & Fresh Food Rescue Hub',
-    tagline: 'New York City’s first and largest food rescue organization distributing free fresh produce.',
-    neighborhood: 'South Bronx / Harlem',
-    address: '150 St. Ann’s Ave',
-    city: 'New York',
-    state: 'NY',
-    zip: '10454',
-    cityStateZip: 'Bronx, NY 10454',
-    lat: 40.8065,
-    lng: -73.9182,
-    phone: '(646) 412-0600',
-    email: 'info@cityharvest.org',
-    website: 'https://cityharvest.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=150+St.+Ann%27s+Ave,+Bronx,+NY+10454',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: true,
-    callAheadNote: 'Mobile distributions can conclude early if truck capacity is reached. Arrive 30 mins prior.',
-    requirements: 'Free fresh produce distribution open to all New Yorkers. No ID, papers, or pre-registration required.',
-    languages: ['English', 'Spanish (Español)', 'Mandarin (中文)', 'Haitian Creole'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free'],
-    hasFreshProduce: true,
-    transitInfo: 'Subway: 6 train to Brook Ave or Cypress Ave. Bus: Bx17 or Bx33.',
-    accessibility: 'Outdoor paved plaza, wheelchair and stroller roll-through lines.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome', 'Client-Choice Market'],
-    images: [
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80'
+    "hoursSummary": "Mon – Sun: 10:00 AM – 1:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Friday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Saturday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Sunday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      }
     ],
-    hoursSummary: 'Tue & Thu: 9:30 AM – 12:30 PM · Bi-weekly Sat',
-    weeklyHours: [
-      { day: 'Monday', hours: 'Closed (Pre-packing deliveries)', open: 0, close: 0 },
-      { day: 'Tuesday', hours: '9:30 AM – 12:30 PM', open: 9.5, close: 12.5 },
-      { day: 'Wednesday', hours: 'Closed', open: 0, close: 0 },
-      { day: 'Thursday', hours: '9:30 AM – 12:30 PM', open: 9.5, close: 12.5 },
-      { day: 'Friday', hours: 'Closed', open: 0, close: 0 },
-      { day: 'Saturday', hours: '9:30 AM – 1:00 PM (1st & 3rd Sat)', open: 9.5, close: 13 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "services": [
+      "Freshly prepared hot sit-down meals",
+      "To-go meal boxes for seniors & unhoused",
+      "Choice grocery pantry for families",
+      "Clothing closet referral on-site",
+      "Hygiene kits & warm beverages"
     ],
-    services: [
-      'Free farmer’s market style produce selection',
-      'Nutrition education and recipe cards in 4 languages',
-      'Assistance connecting to nearby permanent pantries',
-      'Reusable bags distributed free'
+    "inventory": [
+      {
+        "category": "Hot Meals",
+        "item": "Chef-prepared entrée (chicken cacciatore / baked tofu), brown rice, garden salad",
+        "stock": "high",
+        "note": "Fresh daily batch"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Fresh seasonal fruit cups, bananas & citrus",
+        "stock": "high",
+        "note": "Always available"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Canned soups, chili, pull-tab tuna & crackers",
+        "stock": "medium",
+        "note": "Grab-and-go pantry shelf"
+      }
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Fresh Collard Greens, Sweet Yams & Plantains', stock: 'high', note: 'Over 8,000 lbs on site' },
-      { category: 'Fresh Produce', item: 'Apples, Fresh Plums & Citrus Boxes', stock: 'high', note: 'Freshly harvested' },
-      { category: 'Pantry Staples', item: 'Brown Rice, Red Kidney Beans & Canned Crushed Tomatoes', stock: 'high', note: 'High nutritional quality' }
+    "urgentNeeds": [
+      "Bottled water",
+      "Socks & hygiene kits",
+      "Pull-tab canned protein"
     ],
-    urgentNeeds: ['Volunteer baggers for Thursday morning shift'],
-    acceptsReservations: false,
-    reservationWindows: []
-  },
-  {
-    id: 'bowery-mission-nyc',
-    name: 'The Bowery Mission Free Community Meals',
-    type: 'hot-meal',
-    typeLabel: 'Free Hot Meal Program & Emergency Care',
-    tagline: 'Serving hot, chef-prepared meals 3 times a day every day to anyone who enters our red doors.',
-    neighborhood: 'Lower East Side / Manhattan',
-    address: '227 Bowery',
-    city: 'New York',
-    state: 'NY',
-    zip: '10002',
-    cityStateZip: 'New York, NY 10002',
-    lat: 40.7208,
-    lng: -73.9934,
-    phone: '(212) 674-3456',
-    email: 'meals@bowery.org',
-    website: 'https://bowery.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=227+Bowery,+New+York,+NY+10002',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Open to everyone with zero questions or ID. Walk right into the dining chapel during meal hours.',
-    languages: ['English', 'Spanish (Español)', 'Mandarin (中文)'],
-    dietary: ['Vegetarian', 'Diabetic-Friendly', 'No-Cook / Pull-Tab Cans'],
-    hasFreshProduce: true,
-    transitInfo: 'Subway: B/D/F/M to Broadway-Lafayette, J/Z to Bowery, 6 to Spring St.',
-    accessibility: 'Ground entrance, ADA compliant dining hall.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80'
-    ],
-    hoursSummary: 'Every Day (3x Daily): Breakfast 8am · Lunch 1pm · Dinner 6pm',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Tuesday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Wednesday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Thursday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Friday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Saturday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-      { day: 'Sunday', hours: '8:00 AM – 9:00 AM, 1:00 PM – 2:00 PM, 6:00 PM – 7:00 PM', open: 8, close: 19 },
-    ],
-    services: [
-      'Chef-crafted warm balanced meals',
-      'Hot coffee, tea, and fresh fruit with every meal',
-      'Clean hygiene stations and emergency clothing vouchers',
-      'Chapel rest and daytime refuge'
-    ],
-    inventory: [
-      { category: 'Hot Meals', item: 'Warm Roast Beef & Gravy with Roasted Root Veggies', stock: 'high', note: 'Prepared fresh' },
-      { category: 'Hot Meals', item: 'Vegetarian Lentil Shepherd’s Pie', stock: 'high', note: 'Plant-based choice' },
-      { category: 'Beverages', item: 'Hot Brewed Coffee & Fortified Milk', stock: 'high', note: 'Always ready' }
-    ],
-    urgentNeeds: ['Men’s clean socks', 'Travel-size hygiene kits', 'Disposable coffee cups'],
-    acceptsReservations: false,
-    reservationWindows: []
-  },
-
-  // --- LOS ANGELES, CA ---
-  {
-    id: 'la-regional-food-bank',
-    name: 'Los Angeles Regional Food Bank',
-    type: 'food-bank',
-    typeLabel: 'Regional Food Bank & Community Partner Hub',
-    tagline: 'Mobilizing resources to fight hunger in Los Angeles County since 1973.',
-    neighborhood: 'South Los Angeles',
-    address: '1734 E 41st St',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90058',
-    cityStateZip: 'Los Angeles, CA 90058',
-    lat: 34.0097,
-    lng: -118.2415,
-    phone: '(323) 234-3030',
-    email: 'help@lafoodbank.org',
-    website: 'https://lafoodbank.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1734+E+41st+St,+Los+Angeles,+CA+90058',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free community grocery pickup for families and seniors. Zero paperwork or immigration questions.',
-    languages: ['English', 'Spanish (Español)', 'Cantonese', 'Vietnamese (Tiếng Việt)'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Diabetic-Friendly', 'Baby Formula / Infant Food'],
-    hasFreshProduce: true,
-    transitInfo: 'Metro A Line (Blue) to Vernon Station (0.4 mi). Metro Bus 51/52.',
-    accessibility: 'Full ADA warehouse access, dedicated disabled parking stalls.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Drive-Thru Available', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80'
-    ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 4:00 PM · Sat: 8:00 AM – 12:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Tuesday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Wednesday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Thursday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Friday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Saturday', hours: '8:00 AM – 12:00 PM', open: 8, close: 12 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
-    ],
-    services: [
-      'Drive-thru family box loading',
-      'Walk-up distribution tent',
-      'CalFresh / SNAP application support',
-      'Senior nutrition commodity program'
-    ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'California Avocadoes, Oranges & Fresh Romaine', stock: 'high', note: 'Locally grown surplus' },
-      { category: 'Dairy & Eggs', item: 'Fresh 1% Milk Gallons & Monterey Jack Cheese', stock: 'medium', note: 'Cold storage' },
-      { category: 'Pantry Staples', item: 'Masa Harina, Pinto Beans & Enriched White Rice', stock: 'high', note: 'Staple ingredients' },
-      { category: 'Baby Supplies', item: 'Similac Advance Formula & Diapers (Size 3-5)', stock: 'medium', note: 'Ask intake volunteer' }
-    ],
-    urgentNeeds: ['Peanut butter', 'Canned salmon & tuna', 'Unsweetened cereal'],
-    acceptsReservations: true,
-    reservationWindows: ['8:30 AM – 10:00 AM', '10:30 AM – 12:00 PM', '1:00 PM – 2:30 PM', '2:45 PM – 3:45 PM']
+    "acceptsReservations": false,
+    "reservationWindows": []
   },
   {
-    id: 'hollywood-food-coalition',
-    name: 'Hollywood Food Coalition Community Dinner',
-    type: 'hot-meal',
-    typeLabel: 'Nightly Free Hot Dinner Program',
-    tagline: 'Serving a warm, nutritious, seated or take-away dinner every night of the year since 1987.',
-    neighborhood: 'Hollywood / Central LA',
-    address: '5939 Hollywood Blvd',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90028',
-    cityStateZip: 'Los Angeles, CA 90028',
-    lat: 34.1017,
-    lng: -118.3188,
-    phone: '(323) 462-2032',
-    email: 'info@hofoco.org',
-    website: 'https://hofoco.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=5939+Hollywood+Blvd,+Los+Angeles,+CA+90028',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Nightly dinner served 365 days a year without fail. Anyone can line up and receive a meal.',
-    languages: ['English', 'Spanish (Español)', 'Armenian'],
-    dietary: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free'],
-    hasFreshProduce: true,
-    transitInfo: 'Metro B Line (Red) to Hollywood / Vine Station (0.3 mi). Metro Bus 217, 180.',
-    accessibility: 'Street level ramp, seated eating area available.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80'
+    "id": "glide-sf",
+    "name": "GLIDE Daily Free Meals Program",
+    "type": "hot-meal",
+    "typeLabel": "3x Daily Free Meal Distribution & Walk-in Hub",
+    "tagline": "Serving three hot meals daily 365 days a year without conditions to anyone in need.",
+    "neighborhood": "Tenderloin",
+    "address": "330 Ellis St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94102",
+    "cityStateZip": "San Francisco, CA 94102",
+    "lat": 37.78521,
+    "lng": -122.41162,
+    "phone": "(415) 674-6000",
+    "email": "meals@glide.org",
+    "website": "https://www.glide.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=330+Ellis+St,+San+Francisco,+CA+94102",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Breakfast, lunch, and dinner open to all. No identification or registration required.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Cantonese"
     ],
-    hoursSummary: 'Every Night (7 Days / Wk): 6:30 PM – 8:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Tuesday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Wednesday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Thursday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Friday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Saturday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
-      { day: 'Sunday', hours: '6:30 PM – 8:00 PM', open: 18.5, close: 20 },
+    "dietary": [
+      "Vegetarian",
+      "Diabetic-Friendly",
+      "No-Cook / Pull-Tab Cans"
     ],
-    services: [
-      'Full 3-course chef cooked dinner',
-      'Fresh fruit and snack bags to go',
-      'Hygiene kits and socks on Tuesdays',
-      'Mobile clinic referral station'
+    "hasFreshProduce": true,
+    "transitInfo": "Powell St BART/Muni Station 2 blocks east. Muni lines 27, 31, and 38 stop nearby.",
+    "accessibility": "ADA ramp at entrance, elevator access, service animals welcome.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome"
     ],
-    inventory: [
-      { category: 'Hot Meals', item: 'Mediterranean Chicken, Saffron Rice & Greek Salad', stock: 'high', note: 'Nightly special' },
-      { category: 'Hot Meals', item: 'Vegan Coconut Curry with Chickpeas & Spinach', stock: 'high', note: 'Vegan option' },
-      { category: 'Grab-and-Go', item: 'Fresh Bread Rolls, Apples & Bottled Water', stock: 'high', note: 'In take-away bag' }
+    "images": [
+      "https://images.unsplash.com/photo-1593113646773-028c64a8f1b8?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Volunteers for food prep (4:00 PM)', 'Clean reusable totes'],
-    acceptsReservations: false,
-    reservationWindows: []
-  },
-
-  // --- CHICAGO, IL ---
-  {
-    id: 'greater-chicago-food-depository',
-    name: 'Greater Chicago Food Depository',
-    type: 'food-bank',
-    typeLabel: 'Regional Food Bank & Hunger Relief Network',
-    tagline: 'Uniting Cook County to end hunger with community pantries, mobile stops, and job training.',
-    neighborhood: 'Southwest Chicago / Archer Heights',
-    address: '4100 W Ann Lurie Pl',
-    city: 'Chicago',
-    state: 'IL',
-    zip: '60632',
-    cityStateZip: 'Chicago, IL 60632',
-    lat: 41.8173,
-    lng: -87.7265,
-    phone: '(773) 247-3663',
-    email: 'info@gcfd.org',
-    website: 'https://chicagosfoodbank.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=4100+W+Ann+Lurie+Pl,+Chicago,+IL+60632',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free groceries and fresh produce for any resident in Cook County. Zero identification barriers.',
-    languages: ['English', 'Spanish (Español)', 'Polish (Polski)', 'Arabic (العربية)'],
-    dietary: ['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'CTA Orange Line to Pulaski Station (0.5 mi). Bus 53A (South Pulaski).',
-    accessibility: 'Full ADA accessible facility and distribution drive.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Drive-Thru Available', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1584727638096-042c45049ebe?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80'
+    "hoursSummary": "Mon – Sun: 8:00 AM – 9:00 AM (Breakfast) · 12:00 PM – 1:30 PM (Lunch) · 4:00 PM – 5:30 PM (Dinner)",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Friday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Saturday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      },
+      {
+        "day": "Sunday",
+        "hours": "8:00 AM – 5:30 PM",
+        "open": 8,
+        "close": 17.5
+      }
     ],
-    hoursSummary: 'Mon – Fri: 8:30 AM – 4:30 PM · Sat: 9:00 AM – 1:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:30 AM – 4:30 PM', open: 8.5, close: 16.5 },
-      { day: 'Tuesday', hours: '8:30 AM – 4:30 PM', open: 8.5, close: 16.5 },
-      { day: 'Wednesday', hours: '8:30 AM – 4:30 PM', open: 8.5, close: 16.5 },
-      { day: 'Thursday', hours: '8:30 AM – 4:30 PM', open: 8.5, close: 16.5 },
-      { day: 'Friday', hours: '8:30 AM – 4:30 PM', open: 8.5, close: 16.5 },
-      { day: 'Saturday', hours: '9:00 AM – 1:00 PM', open: 9, close: 13 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "services": [
+      "Daily breakfast, lunch, and dinner services",
+      "Family dining area with high chairs",
+      "Harm reduction & community health navigators on site",
+      "Warm coffee and morning tea"
     ],
-    services: [
-      'Warehouse direct emergency distribution',
-      'Illinois LINK / SNAP benefits sign-up',
-      'Healthy student backpack food bundles',
-      'Homebound delivery program referrals'
+    "inventory": [
+      {
+        "category": "Hot Meals",
+        "item": "Warm scramble breakfast / roasted turkey lunch / lentil curry dinner",
+        "stock": "high",
+        "note": "Prepared hot on premises"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Crisp local greens, whole apples, fresh oranges",
+        "stock": "high",
+        "note": "California produce"
+      }
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Michigan Apples, Carrots, Potatoes & Green Cabbage', stock: 'high', note: 'Fresh truckloads daily' },
-      { category: 'Dairy & Eggs', item: 'Grade-A 2% Milk & Farm Fresh Eggs', stock: 'high', note: 'Chilled distribution' },
-      { category: 'Pantry Staples', item: 'Canned Chicken, Black Beans, Brown Rice, Oats', stock: 'high', note: 'Heavy stock' },
-      { category: 'Baby Supplies', item: 'Gerber Infant Cereal & Size 3-6 Diapers', stock: 'medium', note: 'In family care section' }
+    "urgentNeeds": [
+      "Disposable cutlery & meal containers",
+      "Thermal socks",
+      "Protein snack bars"
     ],
-    urgentNeeds: ['Volunteers for Saturday morning packing shift'],
-    acceptsReservations: true,
-    reservationWindows: ['9:00 AM – 10:30 AM', '11:00 AM – 12:30 PM', '1:30 PM – 3:00 PM', '3:15 PM – 4:15 PM']
+    "acceptsReservations": false,
+    "reservationWindows": []
   },
   {
-    id: 'pilsen-community-pantry-chicago',
-    name: 'Pilsen Community Food Pantry & Fridge',
-    type: 'pantry',
-    typeLabel: 'Neighborhood Choice Pantry & Free Store',
-    tagline: 'Grassroots mutual aid, trauma-informed food distribution, and cultural nourishment in Pilsen.',
-    neighborhood: 'Pilsen / Near West Side',
-    address: '1850 S Throop St',
-    city: 'Chicago',
-    state: 'IL',
-    zip: '60608',
-    cityStateZip: 'Chicago, IL 60608',
-    lat: 41.8569,
-    lng: -87.6586,
-    phone: '(312) 846-6218',
-    email: 'hello@pilsenfoodpantry.com',
-    website: 'https://pilsenfoodpantry.com',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1850+S+Throop+St,+Chicago,+IL+60608',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Client choice pantry with open arms. No proof of income, citizenship status, or residency required.',
-    languages: ['English', 'Spanish (Español)'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'CTA Pink Line to 18th St Station. CTA Bus 18, 60.',
-    accessibility: 'Street-level entrance, low shelves, volunteer shoppers available.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Client-Choice Market', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1607349913338-fca6f7429606?auto=format&fit=crop&w=900&q=80'
+    "id": "mission-food-hub",
+    "name": "Mission Food Hub",
+    "type": "pantry",
+    "typeLabel": "Community Choice Pantry & Produce Hub",
+    "tagline": "Grassroots culturally focused food relief delivering fresh produce and groceries in the Mission.",
+    "neighborhood": "Mission District",
+    "address": "701 Alabama St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94110",
+    "cityStateZip": "San Francisco, CA 94110",
+    "lat": 37.75971,
+    "lng": -122.41193,
+    "phone": "(415) 206-0577",
+    "email": "contact@missionfoodhub.org",
+    "website": "https://www.missionfoodhub.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=701+Alabama+St,+San+Francisco,+CA+94110",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Open to everyone. No documentation required. Bring reusable bags or a rolling cart.",
+    "languages": [
+      "Spanish (Español)",
+      "English",
+      "Mayan Indigenous dialects"
     ],
-    hoursSummary: 'Mon – Fri: 10:00 AM – 3:30 PM · 24/7 Outdoor Fridge',
-    weeklyHours: [
-      { day: 'Monday', hours: '10:00 AM – 3:30 PM (Fridge 24/7)', open: 10, close: 15.5 },
-      { day: 'Tuesday', hours: '10:00 AM – 3:30 PM (Fridge 24/7)', open: 10, close: 15.5 },
-      { day: 'Wednesday', hours: '10:00 AM – 3:30 PM (Fridge 24/7)', open: 10, close: 15.5 },
-      { day: 'Thursday', hours: '10:00 AM – 3:30 PM (Fridge 24/7)', open: 10, close: 15.5 },
-      { day: 'Friday', hours: '10:00 AM – 3:30 PM (Fridge 24/7)', open: 10, close: 15.5 },
-      { day: 'Saturday', hours: 'Pantry Closed (Fridge Open 24/7)', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Pantry Closed (Fridge Open 24/7)', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Gluten-Free",
+      "Diabetic-Friendly"
     ],
-    services: [
-      'Supermarket style client choice shopping',
-      'Outdoor 24/7 mutual aid fridge and dry larder',
-      'Free clothes closet and book exchange',
-      'Herbal tea and warm hospitality'
+    "hasFreshProduce": true,
+    "transitInfo": "16th St Mission and 24th St Mission BART stations within 8 blocks. Muni 27, 33, 48 bus lines.",
+    "accessibility": "Ground level open air distribution, wide accessible bays.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Home Delivery Available"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Cilantro, Jalapeños, Tomatoes, Limes & Corn', stock: 'high', note: 'Fresh Latin staples' },
-      { category: 'Pantry Staples', item: 'Maseca, Pinto Beans, Canned Hominy, Rice', stock: 'high', note: 'Restocked today' },
-      { category: 'Bakery', item: 'Fresh Bolillos & Pan Dulce from Local Panaderias', stock: 'high', note: 'Delivered daily' },
-      { category: 'Hygiene & Baby', item: 'Diapers, Baby Shampoo, Bar Soap', stock: 'medium', note: 'Ask at counter' }
+    "images": [
+      "https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Cooking oil (corn or vegetable)', 'Diapers size 4 & 5', 'Dry black beans'],
-    acceptsReservations: true,
-    reservationWindows: ['10:30 AM – 11:45 AM', '1:00 PM – 2:15 PM', '2:30 PM – 3:15 PM']
+    "hoursSummary": "Mon, Wed, Fri: 10:00 AM – 2:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "10:00 AM – 2:00 PM",
+        "open": 10,
+        "close": 14
+      },
+      {
+        "day": "Tuesday",
+        "hours": "Closed (Delivery packing only)",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Wednesday",
+        "hours": "10:00 AM – 2:00 PM",
+        "open": 10,
+        "close": 14
+      },
+      {
+        "day": "Thursday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Friday",
+        "hours": "10:00 AM – 2:00 PM",
+        "open": 10,
+        "close": 14
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Culturally preferred staples (masa, pinto beans, fresh peppers)",
+      "Large fresh produce grocery bags",
+      "Home delivery for seniors & homebound Mission families",
+      "Bilingual community intake navigators"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Avocados, Roma Tomatoes, Cilantro, Limes & Jalapeños",
+        "stock": "high",
+        "note": "Fresh shipment"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Bananas, Papayas, Mangoes & Plantains",
+        "stock": "high",
+        "note": "Tropical fruits"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Maseca Corn Flour, Dried Pinto & Black Beans, Rice",
+        "stock": "high",
+        "note": "Family staple packages"
+      },
+      {
+        "category": "Dairy & Eggs",
+        "item": "Grade AA Fresh Eggs & Corn Tortillas",
+        "stock": "medium",
+        "note": "Fresh batch daily"
+      }
+    ],
+    "urgentNeeds": [
+      "Corn flour (Maseca)",
+      "Cooking oil",
+      "Dried beans"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:30 AM – 11:00 AM",
+      "11:30 AM – 1:00 PM",
+      "1:00 PM – 2:00 PM"
+    ]
   },
-
-  // --- HOUSTON, TX ---
   {
-    id: 'houston-food-bank',
-    name: 'Houston Food Bank',
-    type: 'food-bank',
-    typeLabel: 'America’s Largest Food Bank Hub',
-    tagline: 'Leading hunger relief across 18 southeast Texas counties distributing 150M+ pounds annually.',
-    neighborhood: 'East Houston / Port Houston',
-    address: '535 Portwall St',
-    city: 'Houston',
-    state: 'TX',
-    zip: '77029',
-    cityStateZip: 'Houston, TX 77029',
-    lat: 29.7752,
-    lng: -95.2764,
-    phone: '(832) 369-9390',
-    email: 'info@houstonfoodbank.org',
-    website: 'https://houstonfoodbank.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=535+Portwall+St,+Houston,+TX+77029',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free drive-thru and walk-up food distributions. Open to anyone in need without documents.',
-    languages: ['English', 'Spanish (Español)', 'Vietnamese (Tiếng Việt)', 'Arabic (العربية)'],
-    dietary: ['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food'],
-    hasFreshProduce: true,
-    transitInfo: 'METRO Bus 11 stop right outside entrance. Massive drive-thru lane.',
-    accessibility: 'Drive-thru loading directly into trunk, wheelchair ramps for walk-in pantry.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Drive-Thru Available', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80'
+    "id": "sf-community-fridge",
+    "name": "SF Community Fridge - Fillmore & Western Addition",
+    "type": "community-fridge",
+    "typeLabel": "24/7 Mutual Aid Community Fridge & Pantry",
+    "tagline": "Take what you need, leave what you can. 24/7 free refrigerated and dry groceries.",
+    "neighborhood": "Western Addition",
+    "address": "948 Fillmore St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94117",
+    "cityStateZip": "San Francisco, CA 94117",
+    "lat": 37.7766,
+    "lng": -122.4308,
+    "phone": "(415) 555-0199",
+    "email": "sfcommunityfridge@gmail.com",
+    "website": "https://instagram.com/sfcommunityfridge",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=948+Fillmore+St,+San+Francisco,+CA+94117",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Self-serve 24 hours a day, 7 days a week. Completely anonymous and free.",
+    "languages": [
+      "English",
+      "Spanish (Español)"
     ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 5:00 PM · Sat: 8:00 AM – 1:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 5:00 PM', open: 8, close: 17 },
-      { day: 'Tuesday', hours: '8:00 AM – 5:00 PM', open: 8, close: 17 },
-      { day: 'Wednesday', hours: '8:00 AM – 5:00 PM', open: 8, close: 17 },
-      { day: 'Thursday', hours: '8:00 AM – 5:00 PM', open: 8, close: 17 },
-      { day: 'Friday', hours: '8:00 AM – 5:00 PM', open: 8, close: 17 },
-      { day: 'Saturday', hours: '8:00 AM – 1:00 PM', open: 8, close: 13 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "No-Cook / Pull-Tab Cans"
     ],
-    services: [
-      'Express drive-thru trunk loading',
-      'Walk-in Client Choice emergency pantry',
-      'Emergency hurricane & disaster box reserves',
-      'Children’s weekend backpack food kits'
+    "hasFreshProduce": true,
+    "transitInfo": "Muni 22 Fillmore and 31 Balboa stop right at corner.",
+    "accessibility": "Sidewalk level access, open 24/7.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Texas Watermelons, Oranges, Sweet Potatoes, Greens', stock: 'high', note: 'Over 20,000 lbs in stock' },
-      { category: 'Dairy & Protein', item: 'Frozen Chicken Breasts, Ground Beef, 1% Milk', stock: 'high', note: 'Cold meat lockers' },
-      { category: 'Pantry Staples', item: 'Enriched Long-Grain Rice (10 lb), Canned Beans, Tuna', stock: 'high', note: 'Abundant supply' },
-      { category: 'Baby Supplies', item: 'Formula Powder & Diapers (All sizes)', stock: 'medium', note: 'Available upon request' }
+    "images": [
+      "https://images.unsplash.com/photo-1584473457406-6240486418e9?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Volunteers for assembly lines', 'Shelf-stable proteins'],
-    acceptsReservations: true,
-    reservationWindows: ['8:30 AM – 10:00 AM', '10:30 AM – 12:00 PM', '1:00 PM – 2:30 PM', '3:00 PM – 4:30 PM']
+    "hoursSummary": "Open 24 Hours / 7 Days a Week",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Tuesday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Wednesday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Thursday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Friday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Saturday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      },
+      {
+        "day": "Sunday",
+        "hours": "Open 24 Hours",
+        "open": 0,
+        "close": 24
+      }
+    ],
+    "services": [
+      "24/7 refrigerated storage for milk, prepared sandwiches, yogurt",
+      "Dry pantry cupboard with canned foods and baked bread",
+      "Pet food and essential hygiene shelf",
+      "Completely anonymous self-service"
+    ],
+    "inventory": [
+      {
+        "category": "Dairy & Prepared",
+        "item": "Oat milk, Greek yogurt cups, wrapped deli sandwiches",
+        "stock": "medium",
+        "note": "Checked daily"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Apples, tangerines, salad kits & sourdough bread",
+        "stock": "medium",
+        "note": "Mutual aid restocked"
+      }
+    ],
+    "urgentNeeds": [
+      "Pre-made labeled meals",
+      "Bottled beverages",
+      "Shelf-stable nut milks"
+    ],
+    "acceptsReservations": false,
+    "reservationWindows": []
   },
-
-  // --- ATLANTA, GA ---
   {
-    id: 'atlanta-community-food-bank',
-    name: 'Atlanta Community Food Bank',
-    type: 'food-bank',
-    typeLabel: 'Regional Hunger Hub & Community Pantry',
-    tagline: 'Working across 29 metro Atlanta and north Georgia counties distributing healthy nourishment.',
-    neighborhood: 'East Point / Metro Atlanta',
-    address: '3400 N Desert Dr',
-    city: 'Atlanta',
-    state: 'GA',
-    zip: '30344',
-    cityStateZip: 'Atlanta, GA 30344',
-    lat: 33.6687,
-    lng: -84.4719,
-    phone: '(404) 892-9822',
-    email: 'community@acfb.org',
-    website: 'https://acfb.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=3400+N+Desert+Dr,+Atlanta,+GA+30344',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free food distributions open to anyone in Georgia experiencing food insecurity.',
-    languages: ['English', 'Spanish (Español)'],
-    dietary: ['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'MARTA Route 84 from East Point Station. Free on-site parking lot.',
-    accessibility: 'Drive-thru contactless loading and wheelchair accessible lobby.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Drive-Thru Available', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1584727638096-042c45049ebe?auto=format&fit=crop&w=900&q=80'
+    "id": "project-open-hand",
+    "name": "Project Open Hand - SF Food & Nutrition Center",
+    "type": "pantry",
+    "typeLabel": "Medically Tailored Grocery & Hot Meal Center",
+    "tagline": "Providing nourishing, medically tailored groceries and warm meals to clients in San Francisco.",
+    "neighborhood": "Civic Center",
+    "address": "730 Polk St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94109",
+    "cityStateZip": "San Francisco, CA 94109",
+    "lat": 37.783944,
+    "lng": -122.419211,
+    "phone": "(415) 447-2300",
+    "email": "nutrition@openhand.org",
+    "website": "https://www.openhand.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=730+Polk+St,+San+Francisco,+CA+94109",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Community grocery market and hot meal center. Walk-ins welcome for emergency nutritional bags.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Cantonese",
+      "Russian"
     ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 4:30 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Tuesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Wednesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Thursday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Friday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Saturday', hours: 'Special Mobile Events (Check schedule)', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Diabetic-Friendly",
+      "Gluten-Free",
+      "Vegetarian",
+      "Low-Sodium"
     ],
-    services: [
-      'Emergency grocery box distributions',
-      'Fresh Produce mobile market truck',
-      'SNAP & Medicaid benefits enrollment',
-      'Senior food box commodity programs'
+    "hasFreshProduce": true,
+    "transitInfo": "Muni lines 19 Polk, 31 Balboa, and 49 Van Ness Bus Rapid Transit (BRT) within 1 block.",
+    "accessibility": "Fully ADA compliant ground floor center, automated entrance.",
+    "eligibilityTags": [
+      "No ID Required",
+      "Walk-ins Welcome",
+      "Home Delivery Available"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Georgia Peaches, Collard Greens, Sweet Corn & Squash', stock: 'high', note: 'Freshly delivered' },
-      { category: 'Dairy & Eggs', item: 'Whole Milk & Extra Large Eggs', stock: 'medium', note: 'Keep chilled' },
-      { category: 'Pantry Staples', item: 'Enriched Grits, Cornbread Mix, Black Eyed Peas', stock: 'high', note: 'Southern staples' },
-      { category: 'Protein', item: 'Canned Chicken, Tuna & Roasted Peanut Butter', stock: 'high', note: 'High protein' }
+    "images": [
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Canned vegetables (low sodium)', 'Brown rice', 'Dry beans'],
-    acceptsReservations: true,
-    reservationWindows: ['9:00 AM – 10:30 AM', '11:00 AM – 12:30 PM', '1:30 PM – 3:00 PM', '3:00 PM – 4:00 PM']
+    "hoursSummary": "Mon – Fri: 9:00 AM – 4:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Tuesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Wednesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Thursday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Friday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Medically tailored grocery bundles",
+      "Registered dietitian consultations",
+      "Home-delivered frozen meal packs for mobility impaired",
+      "Fresh vegetable and fruit selection"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Broccoli crowns, bell peppers, leafy greens, berries",
+        "stock": "high",
+        "note": "Organic fresh farm direct"
+      },
+      {
+        "category": "Special Dietary",
+        "item": "Heart-healthy diabetic grocery bundles & unsweetened almond milk",
+        "stock": "high",
+        "note": "Dietary certified"
+      }
+    ],
+    "urgentNeeds": [
+      "Olive oil & canola oil",
+      "Low sodium canned chicken broth"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:30 AM – 11:00 AM",
+      "1:30 PM – 3:00 PM"
+    ]
   },
-
-  // --- SEATTLE, WA ---
   {
-    id: 'university-district-pantry-seattle',
-    name: 'University District Food Bank & Rooftop Roots',
-    type: 'pantry',
-    typeLabel: 'Supermarket-Style Community Food Hub',
-    tagline: 'Walk-through grocery market and urban rooftop farm offering fresh, dignified food for all Seattleites.',
-    neighborhood: 'University District / Seattle',
-    address: '5017 Roosevelt Way NE',
-    city: 'Seattle',
-    state: 'WA',
-    zip: '98105',
-    cityStateZip: 'Seattle, WA 98105',
-    lat: 47.6657,
-    lng: -122.3174,
-    phone: '(206) 523-7060',
-    email: 'info@udistrictfoodbank.org',
-    website: 'https://udistrictfoodbank.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=5017+Roosevelt+Way+NE,+Seattle,+WA+98105',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Customer-choice model. Anyone living or passing through Seattle is welcome. No identification required.',
-    languages: ['English', 'Spanish (Español)', 'Mandarin (中文)', 'Vietnamese (Tiếng Việt)'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Dairy-Free'],
-    hasFreshProduce: true,
-    transitInfo: 'Sound Transit 1 Line to U District Station (3 blocks). King County Metro Routes 45, 67, 73.',
-    accessibility: 'Street-level automatic double doors, ADA accessible elevator, wide shopping aisles.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Client-Choice Market', 'Walk-ins Welcome', 'Home Delivery Available'],
-    images: [
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80'
+    "id": "tcv-food-bank-fremont",
+    "name": "Tri-City Volunteers (TCV) Food Bank & Mobile Pantry",
+    "type": "food-bank",
+    "typeLabel": "Primary Tri-City Food Bank & Mobile Fleet",
+    "tagline": "Serving Fremont, Newark, and Union City with groceries, fresh dairy, and mobile pantry stops.",
+    "neighborhood": "Centerville",
+    "address": "37350 Joseph St",
+    "city": "Fremont",
+    "state": "CA",
+    "zip": "94536",
+    "cityStateZip": "Fremont, CA 94536",
+    "lat": 37.55589,
+    "lng": -122.007661,
+    "phone": "(510) 793-4583",
+    "email": "info@tcvfoodbank.org",
+    "website": "https://www.tcvfoodbank.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=37350+Joseph+St,+Fremont,+CA+94536",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Open to all residents of Fremont, Newark, Union City, and beyond. No income verification.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Mandarin (中文)",
+      "Hindi",
+      "Punjabi",
+      "Dari/Pashto"
     ],
-    hoursSummary: 'Mon: 9am–3pm · Tue & Thu: 2–7pm · Fri: 11am–4pm',
-    weeklyHours: [
-      { day: 'Monday', hours: '9:00 AM – 3:00 PM', open: 9, close: 15 },
-      { day: 'Tuesday', hours: '2:00 PM – 7:00 PM (Evening hours)', open: 14, close: 19 },
-      { day: 'Wednesday', hours: 'Closed (Restocking & Delivery Routes)', open: 0, close: 0 },
-      { day: 'Thursday', hours: '2:00 PM – 7:00 PM (Evening hours)', open: 14, close: 19 },
-      { day: 'Friday', hours: '11:00 AM – 4:00 PM', open: 11, close: 16 },
-      { day: 'Saturday', hours: 'Closed', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Halal",
+      "Kosher",
+      "Gluten-Free",
+      "Baby Formula / Infant Food"
     ],
-    services: [
-      'Customer-choice shopping with carts',
-      'Rooftop hydroponic organic greens',
-      'Home delivery for elderly & disabled neighbors',
-      'Pet food and veterinary care clinic (Fridays)',
-      'Community cafe and free Wi-Fi hotspot'
+    "hasFreshProduce": true,
+    "transitInfo": "Fremont Centerville Train Depot / ACE station 2 blocks away. AC Transit routes 210 & 251.",
+    "accessibility": "Wheelchair accessible ramps, roll carts, drive-through loading lane.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Drive-Thru Available",
+      "Client-Choice Market"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Rooftop Kale, Rainbow Chard, Organic Berries, Pears', stock: 'high', note: 'Hyper-local farm supply' },
-      { category: 'Dairy & Eggs', item: 'Organic Milk, Tofu, Soy Milk, Free-Range Eggs', stock: 'high', note: 'Vegan substitutes abundant' },
-      { category: 'Special Dietary', item: 'Gluten-Free Bread, Brown Rice Pasta, Quinoa', stock: 'high', note: 'Extensive allergen selection' },
-      { category: 'Pet Care', item: 'Cat Food (Dry & Wet) & Dog Kibble', stock: 'medium', note: 'Pet pantry corner' }
+    "images": [
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Menstrual care products', 'Full-size shampoo & conditioner', 'Pull-up diapers sizes 4T-5T'],
-    acceptsReservations: true,
-    reservationWindows: ['9:30 AM – 10:45 AM', '11:30 AM – 12:45 PM', '2:30 PM – 3:45 PM', '5:00 PM – 6:30 PM']
+    "hoursSummary": "Mon – Thu: 9:00 AM – 3:30 PM · Fri: 9:00 AM – 1:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "9:00 AM – 3:30 PM",
+        "open": 9,
+        "close": 15.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "9:00 AM – 3:30 PM",
+        "open": 9,
+        "close": 15.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "9:00 AM – 3:30 PM",
+        "open": 9,
+        "close": 15.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "9:00 AM – 3:30 PM",
+        "open": 9,
+        "close": 15.5
+      },
+      {
+        "day": "Friday",
+        "hours": "9:00 AM – 1:00 PM",
+        "open": 9,
+        "close": 13
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed (Mobile Pantry in Union City)",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Walk-in marketplace grocery selection",
+      "Drive-thru express food pickup",
+      "Mobile pantry truck stops at local schools",
+      "Bilingual intake coordinators (Hindi, Punjabi, Spanish, Pashto)",
+      "Free clothing and household exchange"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "California Strawberries, Broccoli, Bell Peppers & Potatoes",
+        "stock": "high",
+        "note": "Fresh harvest crate delivery"
+      },
+      {
+        "category": "Dairy & Eggs",
+        "item": "Organic Milk (1/2 gal & gal), Greek Yogurt, Cheddar Cheese",
+        "stock": "high",
+        "note": "Cold storage"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Basmati Rice (10 lb), Atta Flour, Red Lentils & Chickpeas",
+        "stock": "high",
+        "note": "Culturally responsive inventory"
+      },
+      {
+        "category": "Special Dietary",
+        "item": "Zabiha Halal Certified Canned Meats & Vegetarian Lentil Soups",
+        "stock": "high",
+        "note": "Halal certified"
+      },
+      {
+        "category": "Baby & Infant",
+        "item": "Infant Formula, Baby Cereals & Diapers (Sizes 1–6)",
+        "stock": "medium",
+        "note": "Diaper bank partnership"
+      }
+    ],
+    "urgentNeeds": [
+      "Basmati rice",
+      "Cooking oil (vegetable & olive)",
+      "Diapers size 5 & 6"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:30 AM – 11:00 AM",
+      "11:00 AM – 12:30 PM",
+      "1:00 PM – 2:30 PM",
+      "2:30 PM – 3:30 PM"
+    ]
   },
-
-  // --- DENVER, CO ---
   {
-    id: 'metro-caring-denver',
-    name: 'Metro Caring Fresh Food Market',
-    type: 'pantry',
-    typeLabel: 'Nutritious Food Market & Anti-Hunger Hub',
-    tagline: 'Providing wholesome, dignified food choice while addressing the root causes of poverty in Denver.',
-    neighborhood: 'City Park West / Denver',
-    address: '1100 E 18th Ave',
-    city: 'Denver',
-    state: 'CO',
-    zip: '80218',
-    cityStateZip: 'Denver, CO 80218',
-    lat: 39.7451,
-    lng: -122.9734, // Denver central
-    phone: '(303) 860-7200',
-    email: 'info@metrocaring.org',
-    website: 'https://metrocaring.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1100+E+18th+Ave,+Denver,+CO+80218',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free market choice. Everyone is treated with dignity. No ID or paperwork required to receive food.',
-    languages: ['English', 'Spanish (Español)', 'Arabic (العربية)'],
-    dietary: ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'RTD Bus 20, 15, 12 within 1-2 blocks. Free guest parking lot.',
-    accessibility: 'Ramp entrance, motorized mobility shopping carts available.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Client-Choice Market', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1506484381205-f7945653044d?auto=format&fit=crop&w=900&q=80'
+    "id": "fremont-family-resource-center",
+    "name": "Fremont Family Resource Center Food Distribution",
+    "type": "pantry",
+    "typeLabel": "City of Fremont Community Food Pantry",
+    "tagline": "Multi-service family support center providing weekly grocery boxes and emergency nutritional relief.",
+    "neighborhood": "Central Fremont",
+    "address": "39155 Liberty St",
+    "city": "Fremont",
+    "state": "CA",
+    "zip": "94538",
+    "cityStateZip": "Fremont, CA 94538",
+    "lat": 37.5539,
+    "lng": -121.9832,
+    "phone": "(510) 574-2000",
+    "email": "frc@fremont.gov",
+    "website": "https://www.fremont.gov/frc",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=39155+Liberty+St,+Fremont,+CA+94538",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Free emergency grocery assistance. Walk-ins welcome during distribution hours.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Mandarin (中文)",
+      "Cantonese",
+      "Vietnamese (Tiếng Việt)",
+      "Farsi"
     ],
-    hoursSummary: 'Mon – Fri: 9:30 AM – 3:00 PM · Tue evening: 5:00 PM – 7:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '9:30 AM – 3:00 PM', open: 9.5, close: 15 },
-      { day: 'Tuesday', hours: '9:30 AM – 3:00 PM & 5:00 PM – 7:00 PM', open: 9.5, close: 19 },
-      { day: 'Wednesday', hours: '9:30 AM – 3:00 PM', open: 9.5, close: 15 },
-      { day: 'Thursday', hours: '9:30 AM – 3:00 PM', open: 9.5, close: 15 },
-      { day: 'Friday', hours: '9:30 AM – 3:00 PM', open: 9.5, close: 15 },
-      { day: 'Saturday', hours: 'Closed (Weekend food rescue shifts)', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Halal",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
     ],
-    services: [
-      'Free grocery store style choice experience',
-      'Nutrition education and culinary cooking demos',
-      'Seeds and gardening starts for home gardens',
-      'Diabetes prevention education'
+    "hasFreshProduce": true,
+    "transitInfo": "Fremont BART Station 5 minute walk. AC Transit 212 & 216.",
+    "accessibility": "Fully ADA accessible municipal facility with elevator and free parking lot.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Colorado Apples, Peaches, Squash, Onions & Carrots', stock: 'high', note: 'Farm direct' },
-      { category: 'Dairy & Eggs', item: 'Whole Milk, Plain Greek Yogurt, Cheddar Cheese', stock: 'high', note: 'Cold cases' },
-      { category: 'Pantry Staples', item: 'Rolled Oats, Black Beans, Whole Wheat Flour, Olive Oil', stock: 'high', note: 'Healthy heart items' }
+    "images": [
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Heart-healthy cooking oils', 'Low-sugar whole grain cereals'],
-    acceptsReservations: true,
-    reservationWindows: ['10:00 AM – 11:15 AM', '11:30 AM – 12:45 PM', '1:30 PM – 2:45 PM', '5:15 PM – 6:30 PM']
+    "hoursSummary": "Mon – Fri: 8:30 AM – 4:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Friday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Emergency pantry grocery bags",
+      "CalFresh and benefit application assistance",
+      "Infant supply and formula distribution",
+      "Childcare support referrals"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Oranges, apples, carrots, spinach & squash",
+        "stock": "high",
+        "note": "Fresh produce bags"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Whole grain pasta, marinara sauce, canned pinto beans & tuna",
+        "stock": "high",
+        "note": "Family nutrition boxes"
+      },
+      {
+        "category": "Baby & Infant",
+        "item": "Similac Total Comfort & Diapers Size 2, 3, 4",
+        "stock": "medium",
+        "note": "Emergency baby care"
+      }
+    ],
+    "urgentNeeds": [
+      "Baby wipes",
+      "Canned fruit in 100% juice",
+      "Whole grain cereal"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "10:00 AM – 11:30 AM",
+      "1:00 PM – 2:30 PM",
+      "3:00 PM – 4:00 PM"
+    ]
   },
-
-  // --- MIAMI, FL ---
   {
-    id: 'feeding-south-florida',
-    name: 'Feeding South Florida Community Food Pantry',
-    type: 'food-bank',
-    typeLabel: 'Regional Hunger Relief & Mobile Pantry',
-    tagline: 'Serving Palm Beach, Broward, Miami-Dade, and Monroe counties with food rescue and community access.',
-    neighborhood: 'Pembroke Park / South Florida',
-    address: '2501 SW 32nd Ter',
-    city: 'Pembroke Park',
-    state: 'FL',
-    zip: '33023',
-    cityStateZip: 'Pembroke Park, FL 33023',
-    lat: 25.9934,
-    lng: -80.1741,
-    phone: '(954) 518-1818',
-    email: 'info@feedingsouthflorida.org',
-    website: 'https://feedingsouthflorida.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=2501+SW+32nd+Ter,+Pembroke+Park,+FL+33023',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free drive-thru and walk-in pantry service. No income or ID documents required.',
-    languages: ['English', 'Spanish (Español)', 'Haitian Creole'],
-    dietary: ['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'Broward County Transit Route 5. Direct highway drive-thru access.',
-    accessibility: 'Drive-up trunk loading, full ADA compliant entrance.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Drive-Thru Available', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80'
+    "id": "salaam-food-pantry-fremont",
+    "name": "Salaam Food Pantry & Halal Relief Hub",
+    "type": "pantry",
+    "typeLabel": "Community Halal & Cultural Food Pantry",
+    "tagline": "Providing certified 100% Halal meats, fresh produce, and family staples to the Tri-City community.",
+    "neighborhood": "Warm Springs",
+    "address": "43232 Warm Springs Blvd",
+    "city": "Fremont",
+    "state": "CA",
+    "zip": "94539",
+    "cityStateZip": "Fremont, CA 94539",
+    "lat": 37.532725,
+    "lng": -121.961037,
+    "phone": "(510) 656-7860",
+    "email": "info@salaampantry.org",
+    "website": "https://www.salaampantry.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=43232+Warm+Springs+Blvd,+Fremont,+CA+94539",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Open to everyone regardless of faith, ethnicity, or background. Halal certified foods.",
+    "languages": [
+      "English",
+      "Arabic (العربية)",
+      "Urdu",
+      "Hindi",
+      "Dari/Pashto"
     ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 4:30 PM · Sat: 8:00 AM – 12:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Tuesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Wednesday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Thursday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Friday', hours: '8:00 AM – 4:30 PM', open: 8, close: 16.5 },
-      { day: 'Saturday', hours: '8:00 AM – 12:00 PM', open: 8, close: 12 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Halal",
+      "Vegetarian",
+      "Vegan",
+      "Gluten-Free"
     ],
-    services: [
-      'Drive-thru produce box loading',
-      'Culinary training meal boxes',
-      'Emergency hurricane pantry relief kits',
-      'Senior food delivery referrals'
+    "hasFreshProduce": true,
+    "transitInfo": "Warm Springs / South Fremont BART station 10-minute walk. AC Transit line 217.",
+    "accessibility": "Ground level warehouse, wide double doors, ample parking.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Drive-Thru Available"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Florida Oranges, Mangoes, Plantains & Yucca', stock: 'high', note: 'Fresh South Florida harvest' },
-      { category: 'Dairy & Eggs', item: '1% Milk Gallons, Eggs & White Cheese', stock: 'high', note: 'Chilled cases' },
-      { category: 'Pantry Staples', item: 'Long Grain White Rice, Black Beans, Canned Tuna', stock: 'high', note: 'Family packs' }
+    "images": [
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Shelf-stable milk boxes', 'Canned proteins (tuna, chicken)'],
-    acceptsReservations: true,
-    reservationWindows: ['8:30 AM – 10:00 AM', '10:30 AM – 12:00 PM', '1:00 PM – 2:30 PM', '2:45 PM – 3:45 PM']
+    "hoursSummary": "Tue, Thu, Sat: 10:00 AM – 3:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Tuesday",
+        "hours": "10:00 AM – 3:30 PM",
+        "open": 10,
+        "close": 15.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Thursday",
+        "hours": "10:00 AM – 3:30 PM",
+        "open": 10,
+        "close": 15.5
+      },
+      {
+        "day": "Friday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Saturday",
+        "hours": "10:00 AM – 3:30 PM",
+        "open": 10,
+        "close": 15.5
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "100% Halal poultry and beef distribution",
+      "Culturally preferred staples (basmati rice, lentils, ghee, dates)",
+      "Drive-thru contactless trunk loading",
+      "Refugee family food intake navigators"
+    ],
+    "inventory": [
+      {
+        "category": "Halal Meats",
+        "item": "Zabiha Halal Chicken & Ground Beef packs (frozen)",
+        "stock": "high",
+        "note": "Certified Halal"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Medjool Dates, Pomegranates, Cucumbers & Coriander",
+        "stock": "high",
+        "note": "Fresh shipment"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Premium Royal Basmati Rice (10 lb) & Chana Dal",
+        "stock": "high",
+        "note": "Staple bags"
+      }
+    ],
+    "urgentNeeds": [
+      "Basmati rice bags",
+      "Halal baby formula",
+      "Pure sunflower oil"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "10:00 AM – 11:30 AM",
+      "12:00 PM – 1:30 PM",
+      "2:00 PM – 3:30 PM"
+    ]
   },
-
-  // --- BOSTON, MA ---
   {
-    id: 'greater-boston-food-bank',
-    name: 'The Greater Boston Food Bank Community Partner Market',
-    type: 'food-bank',
-    typeLabel: 'Regional Hunger Hub & Distribution Center',
-    tagline: 'Eastern Massachusetts’ hunger-relief network providing three healthy meals a day to neighbors in need.',
-    neighborhood: 'South End / Boston',
-    address: '70 S Bay Ave',
-    city: 'Boston',
-    state: 'MA',
-    zip: '02118',
-    cityStateZip: 'Boston, MA 02118',
-    lat: 42.3338,
-    lng: -71.0664,
-    phone: '(617) 427-5200',
-    email: 'info@gbfb.org',
-    website: 'https://gbfb.org',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=70+S+Bay+Ave,+Boston,+MA+02118',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: 'Free access for all Eastern Massachusetts families. No documents or verification needed.',
-    languages: ['English', 'Spanish (Español)', 'Mandarin (中文)', 'Cantonese', 'Haitian Creole'],
-    dietary: ['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly'],
-    hasFreshProduce: true,
-    transitInfo: 'MBTA Red Line to Andrew or Broadway Station. MBTA Bus 10, 8.',
-    accessibility: 'Fully ADA accessible facility and distribution bays.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80'
+    "id": "second-harvest-curtner",
+    "name": "Second Harvest of Silicon Valley - Curtner Center",
+    "type": "food-bank",
+    "typeLabel": "Silicon Valley Regional Distribution Center",
+    "tagline": "Powering hunger relief across Santa Clara and San Mateo counties with fresh farm produce.",
+    "neighborhood": "Central San Jose",
+    "address": "750 Curtner Ave",
+    "city": "San Jose",
+    "state": "CA",
+    "zip": "95125",
+    "cityStateZip": "San Jose, CA 95125",
+    "lat": 37.291682,
+    "lng": -121.877206,
+    "phone": "(800) 984-3663",
+    "email": "getfood@shfb.org",
+    "website": "https://www.shfb.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=750+Curtner+Ave,+San+Jose,+CA+95125",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Free grocery distributions. No ID, citizenship proof, or income documentation required.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Vietnamese (Tiếng Việt)",
+      "Mandarin (中文)",
+      "Tagalog"
     ],
-    hoursSummary: 'Mon – Fri: 8:00 AM – 4:00 PM',
-    weeklyHours: [
-      { day: 'Monday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Tuesday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Wednesday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Thursday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Friday', hours: '8:00 AM – 4:00 PM', open: 8, close: 16 },
-      { day: 'Saturday', hours: 'Closed (Partner mobile trucks active)', open: 0, close: 0 },
-      { day: 'Sunday', hours: 'Closed', open: 0, close: 0 },
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Kosher",
+      "Gluten-Free",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
     ],
-    services: [
-      'Emergency box distribution',
-      'SNAP enrollment support center',
-      'Nutrition counseling and healthy recipe packs',
-      'Mobile market deliveries'
+    "hasFreshProduce": true,
+    "transitInfo": "VTA Light Rail (Curtner Station) 3 blocks away. VTA bus lines 26 & 64A.",
+    "accessibility": "Full ADA compliance, dedicated wheelchair loading bays, accessible restrooms.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Drive-Thru Available",
+      "Home Delivery Available"
     ],
-    inventory: [
-      { category: 'Fresh Produce', item: 'Massachusetts Apples, Squash, Cranberries, Carrots', stock: 'high', note: 'New England harvest' },
-      { category: 'Dairy & Eggs', item: 'Skim & Whole Milk, Farm Eggs & Cheddar', stock: 'high', note: 'Cold storage' },
-      { category: 'Pantry Staples', item: 'Brown Rice, Whole Grain Pasta, Canned Tuna, Beans', stock: 'high', note: 'High supply' }
+    "images": [
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Volunteers for morning sort lines'],
-    acceptsReservations: true,
-    reservationWindows: ['9:00 AM – 10:30 AM', '11:00 AM – 12:30 PM', '1:30 PM – 3:00 PM']
+    "hoursSummary": "Mon – Fri: 8:00 AM – 5:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:00 AM – 5:00 PM",
+        "open": 8,
+        "close": 17
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:00 AM – 5:00 PM",
+        "open": 8,
+        "close": 17
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:00 AM – 5:00 PM",
+        "open": 8,
+        "close": 17
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:00 AM – 5:00 PM",
+        "open": 8,
+        "close": 17
+      },
+      {
+        "day": "Friday",
+        "hours": "8:00 AM – 5:00 PM",
+        "open": 8,
+        "close": 17
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed (Weekend pantries across South Bay open)",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Drive-thru grocery box pick-up",
+      "Walk-up express pickup lane",
+      "Home delivery for elderly and medically vulnerable",
+      "Fresh farm produce distribution (over 50% of all food moved)",
+      "Dedicated multilingual food helpline (800-984-3663)"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "California Strawberries, Avocados, Carrots & Roman Lettuce",
+        "stock": "high",
+        "note": "Fresh daily delivery"
+      },
+      {
+        "category": "Fresh Produce",
+        "item": "Yellow Onions, Russet Potatoes & Fuji Apples (5 lb bags)",
+        "stock": "high",
+        "note": "Abundant quantity"
+      },
+      {
+        "category": "Dairy & Protein",
+        "item": "Low-fat 1% Milk, Large Grade AA Eggs & Cheddar Cheese",
+        "stock": "high",
+        "note": "Refrigerated"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Jasmine Rice, Black Beans, Whole Grain Spaghetti & Canned Salmon",
+        "stock": "high",
+        "note": "Nutritious staples"
+      },
+      {
+        "category": "Baby & Infant",
+        "item": "Enfamil Infant Formula & Diapers Sizes 3, 4, 5",
+        "stock": "medium",
+        "note": "Baby pantry restock"
+      }
+    ],
+    "urgentNeeds": [
+      "Infant formula",
+      "Canned chicken & tuna",
+      "Peanut butter & almond butter"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "8:30 AM – 10:00 AM",
+      "10:30 AM – 12:00 PM",
+      "1:00 PM – 2:30 PM",
+      "3:00 PM – 4:30 PM"
+    ]
   },
-
-  // --- DOWNTOWN 24/7 COMMUNITY FRIDGE (DES MOINES) ---
   {
-    id: 'dsm-community-fridge',
-    name: 'Des Moines Downtown Community Fridge & Mutual Aid',
-    type: 'community-fridge',
-    typeLabel: '24/7 Community Fridge & Free Pantry',
-    tagline: '“Take what you need, leave what you can.” Free food accessible 24 hours a day, 7 days a week.',
-    neighborhood: 'Downtown Western Gateway',
-    address: '1300 Locust St',
-    city: 'Des Moines',
-    state: 'IA',
-    zip: '50309',
-    cityStateZip: 'Des Moines, IA 50309',
-    lat: 41.5868,
-    lng: -93.6335,
-    phone: '(515) 346-8800',
-    email: 'dsmcommunityfridge@gmail.com',
-    website: 'https://instagram.com/dsmcommunityfridge',
-    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=1300+Locust+St,+Des+Moines,+IA+50309',
-    verifiedDate: 'Today · Oct 1, 2026',
-    verifiedBadge: true,
-    callAheadWarning: false,
-    requirements: '100% free, anonymous, open 24/7. No barrier, no paperwork, no questions. Take whatever you need.',
-    languages: ['English', 'Spanish (Español)'],
-    dietary: ['Vegetarian', 'Vegan', 'No-Cook / Pull-Tab Cans'],
-    hasFreshProduce: true,
-    transitInfo: 'DART downtown transit hub 3 blocks away. Free short-term street parking.',
-    accessibility: 'Sidewalk level, outdoor paved access, 24/7 outdoor lighting.',
-    eligibilityTags: ['No ID Required', 'No Proof of Income', 'Walk-ins Welcome'],
-    images: [
-      'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1579113800032-c38bd7635818?auto=format&fit=crop&w=900&q=80',
+    "id": "sacred-heart-san-jose",
+    "name": "Sacred Heart Community Service Food Pantry",
+    "type": "pantry",
+    "typeLabel": "Customer Choice Grocery Market",
+    "tagline": "Self-choice market offering organic produce, dairy, bakery items, and culturally diverse staples.",
+    "neighborhood": "Alma / Washington",
+    "address": "1381 S 1st St",
+    "city": "San Jose",
+    "state": "CA",
+    "zip": "95110",
+    "cityStateZip": "San Jose, CA 95110",
+    "lat": 37.3175,
+    "lng": -121.8763,
+    "phone": "(408) 278-2160",
+    "email": "pantry@sacredheartcs.org",
+    "website": "https://www.sacredheartcs.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=1381+S+1st+St,+San+Jose,+CA+95110",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Choice pantry model. You choose your groceries. No ID or paperwork required to receive food.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Vietnamese (Tiếng Việt)"
     ],
-    hoursSummary: 'Open 24 Hours / 7 Days a Week (Always Accessible)',
-    weeklyHours: [
-      { day: 'Monday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Tuesday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Wednesday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Thursday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Friday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Saturday', hours: '24 Hours Open', open: 0, close: 24 },
-      { day: 'Sunday', hours: '24 Hours Open', open: 0, close: 24 },
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Gluten-Free",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
     ],
-    services: [
-      'Completely anonymous 24/7 access',
-      'Insulated refrigerated food compartment',
-      'Dry pantry cupboard for shelf-stable food',
-      'No registration or signup required'
+    "hasFreshProduce": true,
+    "transitInfo": "VTA Bus Route 66 and 68 stop in front. VTA Light Rail (Tamien Station) within walking distance.",
+    "accessibility": "Flat ground entrance, shopping carts adapted for wheelchairs, bilingual navigators.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Client-Choice Market",
+      "Walk-ins Welcome"
     ],
-    inventory: [
-      { category: 'Refrigerated Items', item: 'Fresh Bagels, Whole Wheat Bread & Butter', stock: 'medium', note: 'Stocked 3 hours ago' },
-      { category: 'Refrigerated Items', item: 'Cheddar Cheese Sticks, Yogurt & Fresh Apples', stock: 'high', note: 'Great grab-and-go' },
-      { category: 'Dry Goods', item: 'Peanut Butter, Jelly & Saltine Crackers', stock: 'high', note: 'In dry pantry box' },
-      { category: 'Dry Goods', item: 'Canned Soups with Pull-Tab Lids (No opener needed)', stock: 'high', note: 'Ready to eat' }
+    "images": [
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80"
     ],
-    urgentNeeds: ['Fresh fruit', 'Bottled water', 'Individual pre-made sandwiches'],
-    acceptsReservations: false,
-    reservationWindows: []
+    "hoursSummary": "Mon – Thu: 9:00 AM – 4:00 PM · Fri: 9:00 AM – 12:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Tuesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Wednesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Thursday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Friday",
+        "hours": "9:00 AM – 12:00 PM",
+        "open": 9,
+        "close": 12
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Grocery store-style shopping experience",
+      "Fresh bakery bread & pastries",
+      "Diaper and formula distribution",
+      "Housing & utility assistance counseling"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Heirloom Tomatoes, Bell Peppers, Zucchini & Oranges",
+        "stock": "high",
+        "note": "Local farm gleaning"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Masa Harina, Pinto Beans, Long Grain Rice & Oatmeal",
+        "stock": "high",
+        "note": "Customer choice shelves"
+      },
+      {
+        "category": "Dairy & Bakery",
+        "item": "Sourdough bread, whole milk, organic eggs",
+        "stock": "medium",
+        "note": "Daily deliveries"
+      }
+    ],
+    "urgentNeeds": [
+      "Baby diapers size 4, 5, 6",
+      "Ground coffee",
+      "Dried black beans"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:00 AM – 10:30 AM",
+      "11:00 AM – 12:30 PM",
+      "1:30 PM – 3:00 PM"
+    ]
+  },
+  {
+    "id": "second-harvest-cypress",
+    "name": "Second Harvest of Silicon Valley - Cypress Center",
+    "type": "food-bank",
+    "typeLabel": "North San Jose Distribution Hub",
+    "tagline": "North San Jose logistics and drive-thru grocery distribution hub.",
+    "neighborhood": "North San Jose",
+    "address": "4001 N 1st St",
+    "city": "San Jose",
+    "state": "CA",
+    "zip": "95134",
+    "cityStateZip": "San Jose, CA 95134",
+    "lat": 37.413254,
+    "lng": -121.952655,
+    "phone": "(800) 984-3663",
+    "email": "cypress@shfb.org",
+    "website": "https://www.shfb.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=4001+N+1st+St,+San+Jose,+CA+95134",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Drive-thru and walk-in grocery pickup for any family in need.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Vietnamese (Tiếng Việt)",
+      "Mandarin (中文)"
+    ],
+    "dietary": [
+      "Vegetarian",
+      "Halal",
+      "Gluten-Free",
+      "Diabetic-Friendly"
+    ],
+    "hasFreshProduce": true,
+    "transitInfo": "VTA Green Line light rail (Champion Station) within 400 feet.",
+    "accessibility": "Drive-through trunk loading, wheelchair ramps, accessible registration desks.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Drive-Thru Available",
+      "Walk-ins Welcome"
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80"
+    ],
+    "hoursSummary": "Mon – Fri: 8:30 AM – 4:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:30 AM – 4:00 PM",
+        "open": 8.5,
+        "close": 16
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:30 AM – 4:00 PM",
+        "open": 8.5,
+        "close": 16
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:30 AM – 4:00 PM",
+        "open": 8.5,
+        "close": 16
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:30 AM – 4:00 PM",
+        "open": 8.5,
+        "close": 16
+      },
+      {
+        "day": "Friday",
+        "hours": "8:30 AM – 4:00 PM",
+        "open": 8.5,
+        "close": 16
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Contactless trunk-loading grocery distribution",
+      "Walk-up check-in and food box distribution",
+      "Fresh fruit and vegetable bulk packs"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "California Navel Oranges, Gala Apples & Cabbage",
+        "stock": "high",
+        "note": "Farm rescue produce"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Brown Rice, Canned Tuna & Pinto Beans",
+        "stock": "high",
+        "note": "High protein boxes"
+      }
+    ],
+    "urgentNeeds": [
+      "Canned meats",
+      "Dry lentils & beans"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:00 AM – 10:30 AM",
+      "11:00 AM – 12:30 PM",
+      "1:30 PM – 3:00 PM"
+    ]
+  },
+  {
+    "id": "sunnyvale-community-services",
+    "name": "Sunnyvale Community Services Food Pantry",
+    "type": "pantry",
+    "typeLabel": "Choice Food Market & Mobile Distribution",
+    "tagline": "Providing free fresh produce, milk, eggs, and groceries to Sunnyvale and South Bay residents.",
+    "neighborhood": "Sunnyvale",
+    "address": "1160 Kern Ave",
+    "city": "Sunnyvale",
+    "state": "CA",
+    "zip": "94085",
+    "cityStateZip": "Sunnyvale, CA 94085",
+    "lat": 37.3789,
+    "lng": -122.0212,
+    "phone": "(408) 738-4321",
+    "email": "info@svcommunityservices.org",
+    "website": "https://www.svcommunityservices.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=1160+Kern+Ave,+Sunnyvale,+CA+94085",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Choice pantry open to all South Bay residents. No documentation required.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Mandarin (中文)",
+      "Hindi"
+    ],
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Gluten-Free",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
+    ],
+    "hasFreshProduce": true,
+    "transitInfo": "Sunnyvale Caltrain Station 1 mile away. VTA bus line 22 on El Camino Real.",
+    "accessibility": "ADA automatic doors, wheelchair-accessible aisles and check-in desks.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Client-Choice Market",
+      "Walk-ins Welcome"
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80"
+    ],
+    "hoursSummary": "Mon – Fri: 9:00 AM – 4:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Tuesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Wednesday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Thursday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Friday",
+        "hours": "9:00 AM – 4:00 PM",
+        "open": 9,
+        "close": 16
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Supermarket choice model with shopping carts",
+      "Refrigerated dairy and fresh eggs section",
+      "Kids healthy snack packs",
+      "Emergency financial and rental assistance on site"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Avocados, organic spinach, bell peppers, bananas",
+        "stock": "high",
+        "note": "Restocked daily"
+      },
+      {
+        "category": "Dairy & Eggs",
+        "item": "1% Milk gallons, butter, cheddar cheese & eggs",
+        "stock": "high",
+        "note": "Cold cases"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Canned beans, Jasmine rice, cereal & spaghetti sauce",
+        "stock": "high",
+        "note": "Staple aisles"
+      }
+    ],
+    "urgentNeeds": [
+      "Baby diapers size 4 & 5",
+      "Cooking oil",
+      "Low sodium canned soups"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:00 AM – 10:30 AM",
+      "11:00 AM – 12:30 PM",
+      "1:30 PM – 3:00 PM"
+    ]
+  },
+  {
+    "id": "alameda-county-food-bank",
+    "name": "Alameda County Community Food Bank",
+    "type": "food-bank",
+    "typeLabel": "East Bay Central Food Bank & Hub",
+    "tagline": "Distributing over 50 million pounds of food annually to Oakland and East Bay communities.",
+    "neighborhood": "Airport Business Park",
+    "address": "7900 Edgewater Dr",
+    "city": "Oakland",
+    "state": "CA",
+    "zip": "94621",
+    "cityStateZip": "Oakland, CA 94621",
+    "lat": 37.7348,
+    "lng": -122.2039,
+    "phone": "(510) 635-3663",
+    "email": "info@accfb.org",
+    "website": "https://www.accfb.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=7900+Edgewater+Dr,+Oakland,+CA+94621",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Emergency food hotline and on-site distribution. No documentation or ID required.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Cantonese",
+      "Mandarin (中文)",
+      "Vietnamese (Tiếng Việt)",
+      "Arabic (العربية)"
+    ],
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Kosher",
+      "Gluten-Free",
+      "Diabetic-Friendly",
+      "Baby Formula / Infant Food"
+    ],
+    "hasFreshProduce": true,
+    "transitInfo": "Oakland Coliseum BART station connection via AC Transit line 73.",
+    "accessibility": "Full ADA compliance, ground level access, wide driveways for drive-thru trunk loading.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Drive-Thru Available",
+      "Home Delivery Available"
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=900&q=80"
+    ],
+    "hoursSummary": "Mon – Fri: 8:30 AM – 4:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Tuesday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Wednesday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Thursday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Friday",
+        "hours": "8:30 AM – 4:30 PM",
+        "open": 8.5,
+        "close": 16.5
+      },
+      {
+        "day": "Saturday",
+        "hours": "Closed (Network partner sites open)",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Direct emergency box pick-up and drive-thru trunk loading",
+      "Emergency Food Helpline referral service: (510) 635-3784",
+      "Culturally diverse food boxes tailored for Asian, Latino, and African American culinary traditions",
+      "Home delivery referrals for homebound neighbors"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "California Apples, Oranges, Broccoli & Squash",
+        "stock": "high",
+        "note": "Locally grown produce"
+      },
+      {
+        "category": "Dairy & Eggs",
+        "item": "Fresh 1% Milk, Eggs & Organic Tofu",
+        "stock": "high",
+        "note": "Cold storage warehouse"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Brown & White Rice, Black Beans, Whole Wheat Pasta & Peanut Butter",
+        "stock": "high",
+        "note": "Nutritious staples"
+      },
+      {
+        "category": "Special Dietary",
+        "item": "Halal Canned Poultry, Gluten-Free Flours & Oats",
+        "stock": "high",
+        "note": "Certified dietary items"
+      },
+      {
+        "category": "Baby & Infant",
+        "item": "Infant formula & baby cereal jars",
+        "stock": "medium",
+        "note": "Family resource area"
+      }
+    ],
+    "urgentNeeds": [
+      "Infant formula",
+      "Canned meats and fish",
+      "Whole grain cereals"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "9:00 AM – 10:30 AM",
+      "11:00 AM – 12:30 PM",
+      "1:30 PM – 3:00 PM",
+      "3:30 PM – 4:30 PM"
+    ]
+  },
+  {
+    "id": "oakland-city-church-pantry",
+    "name": "Oakland City Church Community Pantry",
+    "type": "pantry",
+    "typeLabel": "Neighborhood Choice Food Pantry",
+    "tagline": "Fresh farm fruits, vegetables, shelf-stable proteins, and pantry staples in Fruitvale.",
+    "neighborhood": "Fruitvale",
+    "address": "2738 E 12th St",
+    "city": "Oakland",
+    "state": "CA",
+    "zip": "94601",
+    "cityStateZip": "Oakland, CA 94601",
+    "lat": 37.7845,
+    "lng": -122.2351,
+    "phone": "(510) 842-7774",
+    "email": "pantry@oaklandcitychurch.org",
+    "website": "https://www.oaklandcitychurch.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=2738+E+12th+St,+Oakland,+CA+94601",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Open to everyone in the neighborhood. Free grocery boxes and fresh produce.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Mam"
+    ],
+    "dietary": [
+      "Vegetarian",
+      "Gluten-Free",
+      "Diabetic-Friendly"
+    ],
+    "hasFreshProduce": true,
+    "transitInfo": "Fruitvale BART Station 4 blocks away. AC Transit routes 14 & 40 nearby.",
+    "accessibility": "Ground level hall, ramp access, street parking available.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Walk-ins Welcome",
+      "Client-Choice Market"
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80"
+    ],
+    "hoursSummary": "Sat: 10:00 AM – 1:30 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Tuesday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Wednesday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Thursday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Friday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Saturday",
+        "hours": "10:00 AM – 1:30 PM",
+        "open": 10,
+        "close": 13.5
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Walk-in neighborhood grocery distribution",
+      "Fresh farm gleanings and organic fruit",
+      "Culturally preferred staples for Fruitvale families",
+      "Spanish and Mam language translation on site"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Oranges, apples, carrots, cabbage, cilantro, tomatoes",
+        "stock": "high",
+        "note": "Fresh Saturday distribution"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Maseca, pinto beans, rice, cooking oil, canned tuna",
+        "stock": "high",
+        "note": "Pantry packs"
+      }
+    ],
+    "urgentNeeds": [
+      "Cooking oil",
+      "Dried pinto beans",
+      "Canned protein"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "10:00 AM – 11:30 AM",
+      "12:00 PM – 1:30 PM"
+    ]
+  },
+  {
+    "id": "berkeley-food-network",
+    "name": "Berkeley Food Network & Pantry",
+    "type": "pantry",
+    "typeLabel": "On-Site Choice Food Pantry & Hub",
+    "tagline": "Distributing fresh, nutritious farm food and pantry items in an open choice market.",
+    "neighborhood": "West Berkeley",
+    "address": "1925 9th St",
+    "city": "Berkeley",
+    "state": "CA",
+    "zip": "94710",
+    "cityStateZip": "Berkeley, CA 94710",
+    "lat": 37.8688,
+    "lng": -122.2965,
+    "phone": "(510) 616-5383",
+    "email": "info@berkeleyfoodnetwork.org",
+    "website": "https://www.berkeleyfoodnetwork.org",
+    "directionsUrl": "https://www.google.com/maps/dir/?api=1&destination=1925+9th+St,+Berkeley,+CA+94710",
+    "verifiedDate": "Today · Oct 5, 2026",
+    "verifiedBadge": true,
+    "callAheadWarning": false,
+    "requirements": "Client choice pantry. Free to all Berkeley and East Bay residents. No ID needed.",
+    "languages": [
+      "English",
+      "Spanish (Español)",
+      "Mandarin (中文)",
+      "Arabic (العربية)"
+    ],
+    "dietary": [
+      "Vegetarian",
+      "Vegan",
+      "Halal",
+      "Kosher",
+      "Gluten-Free",
+      "Diabetic-Friendly"
+    ],
+    "hasFreshProduce": true,
+    "transitInfo": "AC Transit lines 72 & 36. Berkeley Amtrak station 6 blocks away.",
+    "accessibility": "Wheelchair roll-in market, wide aisles, low-height shelves.",
+    "eligibilityTags": [
+      "No ID Required",
+      "No Proof of Income",
+      "Client-Choice Market",
+      "Walk-ins Welcome"
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=900&q=80"
+    ],
+    "hoursSummary": "Mon – Thu: 10:00 AM – 5:00 PM · Sat: 10:00 AM – 2:00 PM",
+    "weeklyHours": [
+      {
+        "day": "Monday",
+        "hours": "10:00 AM – 5:00 PM",
+        "open": 10,
+        "close": 17
+      },
+      {
+        "day": "Tuesday",
+        "hours": "10:00 AM – 5:00 PM",
+        "open": 10,
+        "close": 17
+      },
+      {
+        "day": "Wednesday",
+        "hours": "10:00 AM – 5:00 PM",
+        "open": 10,
+        "close": 17
+      },
+      {
+        "day": "Thursday",
+        "hours": "10:00 AM – 5:00 PM",
+        "open": 10,
+        "close": 17
+      },
+      {
+        "day": "Friday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      },
+      {
+        "day": "Saturday",
+        "hours": "10:00 AM – 2:00 PM",
+        "open": 10,
+        "close": 14
+      },
+      {
+        "day": "Sunday",
+        "hours": "Closed",
+        "open": 0,
+        "close": 0
+      }
+    ],
+    "services": [
+      "Client choice grocery store setup",
+      "Fresh organic produce from local community gardens and farms",
+      "Pre-made healthy meal kits for students and seniors",
+      "Eco-friendly reusable bag exchange"
+    ],
+    "inventory": [
+      {
+        "category": "Fresh Produce",
+        "item": "Organic kale, carrots, beets, apples, mandarins",
+        "stock": "high",
+        "note": "Local farm direct"
+      },
+      {
+        "category": "Dairy & Plant Milk",
+        "item": "Oat milk, soy milk, organic eggs, block cheddar",
+        "stock": "high",
+        "note": "Cold cases"
+      },
+      {
+        "category": "Pantry Staples",
+        "item": "Organic rolled oats, brown rice, whole wheat pasta & lentils",
+        "stock": "high",
+        "note": "Bulk and package goods"
+      }
+    ],
+    "urgentNeeds": [
+      "Plant-based milk (oat/soy)",
+      "Peanut butter",
+      "Brown rice"
+    ],
+    "acceptsReservations": true,
+    "reservationWindows": [
+      "10:00 AM – 11:30 AM",
+      "1:00 PM – 2:30 PM",
+      "3:30 PM – 5:00 PM"
+    ]
   }
 ];
+
 
 export function getIsOpenNow(place) {
   if (place.type === 'community-fridge') return { isOpen: true, text: 'Open 24/7' };

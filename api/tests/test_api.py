@@ -318,7 +318,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(error.exception.status, 429)
 
     def test_legacy_reservations_fail_closed_for_their_remaining_pickup_date(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             database_path = Path(directory) / "legacy-limit.db"
             place = json.loads(app.SEED_PATH.read_text(encoding="utf-8"))[0]
             pickup_date = (date.today() + timedelta(days=1)).isoformat()

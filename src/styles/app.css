@@ -2260,6 +2260,14 @@ h2 em {
   height: 100%;
 }
 
+.real-map-container .leaflet-tile {
+  transition: opacity 0.22s ease-out;
+}
+
+.real-map-container .leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
 .map-legend {
   position: absolute;
   bottom: 16px;

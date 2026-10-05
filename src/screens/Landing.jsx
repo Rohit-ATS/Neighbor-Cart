@@ -37,13 +37,14 @@ const REEL = [
 ];
 
 const PLACES = [
-  { name: 'Food Bank of Iowa', city: 'Des Moines, IA', img: IMG('1593113598332-cd288d649433'), pill: 'Open now', live: true, tags: ['Fresh produce', 'No ID required'] },
-  { name: 'Community Fridge', city: 'Chicago, IL', img: IMG('1542838132-92c53300491e'), pill: 'Open 24/7', live: true, tags: ['Self-serve', 'Halal options'] },
-  { name: "St. Mary's Hot Meals", city: 'Brooklyn, NY', img: IMG('1555396273-367ea4eb4db5'), pill: 'Serving today', live: false, tags: ['Hot meals', 'Family friendly'] },
+  { name: 'SF-Marin Food Bank', city: 'San Francisco, CA', img: IMG('1593113598332-cd288d649433'), pill: 'Open now', live: true, tags: ['Fresh produce', 'No ID required'] },
+  { name: 'TCV Food Bank & Mobile Pantry', city: 'Fremont, CA', img: IMG('1542838132-92c53300491e'), pill: 'Takes reservations', live: true, tags: ['Halal options', 'Drive-thru'] },
+  { name: 'Second Harvest Curtner Center', city: 'San Jose, CA', img: IMG('1555396273-367ea4eb4db5'), pill: 'Open today', live: false, tags: ['Fresh produce', 'Walk-ins'] },
+  { name: 'Alameda County Community Food Bank', city: 'Oakland, CA', img: IMG('1588964895597-cfccd6e2dbf9'), pill: 'Open now', live: true, tags: ['East Bay hub', 'Free pickup'] },
 ];
 
 const STATS = [
-  { to: 2400, suffix: '+', label: 'Verified locations nationwide' },
+  { to: 50, suffix: '+', label: 'Verified Bay Area locations' },
   { to: 100, suffix: '%', label: 'Free to use, always' },
   { to: 0, suffix: '', label: 'Documents required to start' },
   { to: 24, suffix: '/7', label: 'Community fridges listed' },

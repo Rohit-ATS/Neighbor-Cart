@@ -86,7 +86,7 @@ const OUT_PATH = new URL('../api/osm_places.json', import.meta.url);
 const argv = process.argv.slice(2);
 const fresh = argv.includes('--fresh');
 const requested = argv.filter((a) => !a.startsWith('--')).map((s) => s.toUpperCase());
-const targets = requested.length ? requested.filter((s) => STATES.includes(s)) : STATES;
+const targets = requested.length ? requested.filter((s) => STATES.includes(s)) : ['CA'];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -445,15 +445,17 @@ for (const file of (await readdir(CACHE_DIR)).filter((f) => f.endsWith('.json'))
   }
 }
 
-places.sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
-await writeFile(OUT_PATH, `${JSON.stringify(places, null, 2)}\n`, 'utf8');
+// Filter strictly to San Francisco and the Greater Bay Area
+const bayAreaPlaces = places.filter((p) => p.lat >= 37.15 && p.lat <= 38.35 && p.lng >= -122.75 && p.lng <= -121.70);
+bayAreaPlaces.sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
+await writeFile(OUT_PATH, `${JSON.stringify(bayAreaPlaces, null, 2)}\n`, 'utf8');
 
-const counts = places.reduce((acc, p) => ({ ...acc, [p.type]: (acc[p.type] ?? 0) + 1 }), {});
-const withAddress = places.filter((p) => p.address && p.city).length;
-const withHours = places.filter((p) => p.rawOpeningHours).length;
-const withPhone = places.filter((p) => p.phone).length;
+const counts = bayAreaPlaces.reduce((acc, p) => ({ ...acc, [p.type]: (acc[p.type] ?? 0) + 1 }), {});
+const withAddress = bayAreaPlaces.filter((p) => p.address && p.city).length;
+const withHours = bayAreaPlaces.filter((p) => p.rawOpeningHours).length;
+const withPhone = bayAreaPlaces.filter((p) => p.phone).length;
 
-console.log(`\nWrote ${places.length} places to api/osm_places.json`);
+console.log(`\nWrote ${bayAreaPlaces.length} Bay Area places to api/osm_places.json`);
 console.log('By category:', counts);
 console.log(`States covered: ${Object.keys(byState).length}`);
 console.log(

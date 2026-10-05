@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { isStockImage, placeImage } from '../lib/placeImages.js';
 
-const DEFAULT_CENTER = [39.5, -98.35]; // Geographical center of the contiguous US
-const DEFAULT_ZOOM = 4;
+const DEFAULT_CENTER = [37.68, -122.25]; // Central Bay Area (SF, Oakland, Fremont, San Jose)
+const DEFAULT_ZOOM = 10;
 
 const ICONS = {
   'food-bank': '🥫',
@@ -57,6 +57,13 @@ export default function MapView({
         zoom: DEFAULT_ZOOM,
         zoomControl: true,
         scrollWheelZoom: true,
+        zoomDelta: 0.5,
+        zoomSnap: 0.5,
+        wheelPxPerZoomLevel: 120,
+        wheelDebounceTime: 40,
+        zoomAnimation: true,
+        fadeAnimation: true,
+        markerZoomAnimation: true,
       });
       mapRef.current = map;
 
@@ -163,9 +170,18 @@ export default function MapView({
 
     if (places.length > 0 && !activeId) {
       if (places.length === 1) {
-        map.setView([places[0].lat, places[0].lng], 13);
+        map.setView([places[0].lat, places[0].lng], 13, {
+          animate: true,
+          duration: 0.8,
+        });
       } else {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        map.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 13,
+          animate: true,
+          duration: 0.9,
+          easeLinearity: 0.25,
+        });
       }
     }
   }, [places, mapLoaded]);
@@ -178,7 +194,11 @@ export default function MapView({
     const marker = markersRef.current.get(activeId);
     if (marker) {
       const latLng = marker.getLatLng();
-      map.flyTo(latLng, 14, { duration: 1.2 });
+      map.flyTo(latLng, 14, {
+        animate: true,
+        duration: 1.0,
+        easeLinearity: 0.25,
+      });
       marker.openPopup();
     }
   }, [activeId]);
