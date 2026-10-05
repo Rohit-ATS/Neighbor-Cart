@@ -1,5 +1,41 @@
 import React, { useState } from 'react';
 import { VOLUNTEER_SHIFTS } from '../data/communityData.js';
+import { downloadIcs, googleCalendarUrl, shiftEvent, shiftWhen } from '../lib/calendar.js';
+
+/* The two ways a shift gets into a calendar. Google opens a pre-filled event
+   that saves in one click; everything else — Apple Calendar, Outlook, Fastmail,
+   Thunderbird — opens the .ics. Neither writes anything on its own: both hand
+   the event over and let the person confirm it. */
+function AddToCalendar({ shift, compact = false }) {
+  const event = shiftEvent(shift);
+  const filename = `${shift.id}-volunteer-shift.ics`;
+
+  return (
+    <div className={`vol-calendar${compact ? ' is-compact' : ''}`}>
+      {!compact && <span className="vcal-label">Add it to your calendar</span>}
+      <div className="vcal-actions">
+        <a
+          className="vcal-btn"
+          href={googleCalendarUrl(event)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="4.5" width="18" height="17" rx="2.5" />
+            <path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v4M10 15h4" />
+          </svg>
+          Google Calendar
+        </a>
+        <button type="button" className="vcal-btn" onClick={() => downloadIcs(event, filename)}>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3.5v11M8 11l4 4 4-4M4.5 19.5h15" />
+          </svg>
+          Apple / Outlook (.ics)
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal' }) {
   const isPage = variant === 'page';
@@ -79,7 +115,7 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
                 🏢 <b>{shift.orgName}</b> · 📍 {shift.location}
               </p>
               <p className="vsc-date">
-                ⏱ {shift.date} · <b>{shift.hoursGranted} hrs</b> volunteer credit
+                ⏱ {shiftWhen(shift)} · <b>{shift.hoursGranted} hrs</b> volunteer credit
               </p>
               <p className="vsc-skills">
                 💡 <b>Requirements:</b> {shift.skillsNeeded}
@@ -90,7 +126,10 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
 
               <div className="vsc-actions">
                 {shift.claimed ? (
-                  <span className="vsc-claimed-badge">✓ Registered for this shift</span>
+                  <>
+                    <span className="vsc-claimed-badge">✓ Registered for this shift</span>
+                    <AddToCalendar shift={shift} compact />
+                  </>
                 ) : (
                   <button
                     type="button"
@@ -131,15 +170,17 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
               </p>
               <div className="claim-details-box">
                 <p>📍 <b>Location:</b> {claimedShiftModal.location}</p>
-                <p>⏱ <b>Time:</b> {claimedShiftModal.date}</p>
+                <p>⏱ <b>Time:</b> {shiftWhen(claimedShiftModal)}</p>
                 <p>📝 <b>Instructions:</b> Wear comfortable closed-toe shoes. Check in with the site lead upon arrival.</p>
               </div>
+              <AddToCalendar shift={claimedShiftModal} />
+
               <button 
                 type="button" 
-                className="btn-primary" 
+                className="btn-secondary" 
                 onClick={() => setClaimedShiftModal(null)}
               >
-                Got It / Close
+                Done
               </button>
             </div>
           </div>

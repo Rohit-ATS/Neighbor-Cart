@@ -45,13 +45,19 @@ export const COMMUNITY_ANNOUNCEMENTS = [
   }
 ];
 
+/* Shifts carry a day offset and a wall-clock time rather than a sentence.
+
+   A claimed shift now goes into someone's real calendar, so the time has to be
+   a time — a frozen "Saturday, Oct 3" was already in the past, and a volunteer
+   relying on the reminder cannot be sent an event for a day that has gone. The
+   line shown on the card is derived from these, so the two cannot drift. */
 export const VOLUNTEER_SHIFTS = [
   {
     id: 'vol-1',
     orgName: 'San Francisco-Marin Food Bank',
     title: 'Warehouse Produce Sorting & Emergency Box Assembly',
     taskType: 'Warehouse Sorting',
-    date: 'Tomorrow · 9:00 AM – 12:00 PM',
+    inDays: 1, startTime: '09:00', endTime: '12:00',
     location: '900 Pennsylvania Ave, San Francisco, CA',
     spotsAvailable: 6,
     skillsNeeded: 'Able to lift 25 lbs, comfortable on feet',
@@ -65,7 +71,7 @@ export const VOLUNTEER_SHIFTS = [
     orgName: 'Alameda County Community Food Bank',
     title: 'Emergency Food Box Assembly & Quality Check',
     taskType: 'Warehouse Sorting',
-    date: 'Saturday, Oct 3 · 8:30 AM – 12:30 PM',
+    inDays: 3, startTime: '08:30', endTime: '12:30',
     location: '7900 Edgewater Dr, Oakland, CA',
     spotsAvailable: 4,
     skillsNeeded: 'Closed-toe shoes, team-oriented mindset',
@@ -79,7 +85,7 @@ export const VOLUNTEER_SHIFTS = [
     orgName: 'Second Harvest of Silicon Valley',
     title: 'Mobile Pantry Distribution Assistant (San Jose)',
     taskType: 'Mobile Distribution',
-    date: 'Saturday, Oct 3 · 9:00 AM – 1:00 PM',
+    inDays: 3, startTime: '09:00', endTime: '13:00',
     location: '400 Curtner Ave, San Jose, CA',
     spotsAvailable: 3,
     skillsNeeded: 'Bilingual Spanish or Vietnamese helpful, loading client carts',
@@ -93,7 +99,7 @@ export const VOLUNTEER_SHIFTS = [
     orgName: 'Tri-City Volunteers Food Bank',
     title: 'Fremont Neighborhood Grocery Rescue & Sorting',
     taskType: 'Food Rescue Pickup',
-    date: 'Friday, Oct 2 · 10:00 AM – 1:30 PM',
+    inDays: 5, startTime: '10:00', endTime: '13:30',
     location: '37365 Ash St, Fremont, CA',
     spotsAvailable: 2,
     skillsNeeded: 'Comfortable loading produce crates, active movement',
@@ -107,7 +113,7 @@ export const VOLUNTEER_SHIFTS = [
     orgName: 'GLIDE Memorial Church',
     title: 'Daily Hot Meal Prep & Dining Room Service',
     taskType: 'Mobile Distribution',
-    date: 'Monday, Oct 5 · 10:30 AM – 1:30 PM',
+    inDays: 7, startTime: '10:30', endTime: '13:30',
     location: '330 Ellis St, San Francisco, CA',
     spotsAvailable: 5,
     skillsNeeded: 'Friendly greeting demeanor, hair tied back',

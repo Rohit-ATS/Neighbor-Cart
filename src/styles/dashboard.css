@@ -2460,3 +2460,73 @@
     border-left: 0;
   }
 }
+
+/* ==========================================================================
+   ADD A SHIFT TO A CALENDAR
+   Offered twice: in the confirmation, where it is the natural next step, and
+   on the claimed card afterwards, because closing a dialog should not be how
+   someone loses the only chance to save the date.
+   ========================================================================== */
+
+.vol-calendar {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 14px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--d-line-soft, #ece4d4);
+  border-radius: 14px;
+  background: var(--d-tint, #fdf8ef);
+  text-align: left;
+}
+
+.vcal-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--d-brown, rgba(72, 40, 32, .7));
+}
+
+.vcal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.vcal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid rgba(72, 40, 32, .18);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--d-brown, #482820);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.vcal-btn:hover {
+  border-color: var(--d-crimson, #920711);
+  color: var(--d-crimson, #920711);
+  background: var(--d-cream-2, #fdf4ec);
+}
+
+/* On a claimed card it is a footnote to the badge, not a second headline. */
+.vol-calendar.is-compact {
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.vol-calendar.is-compact .vcal-btn {
+  padding: 6px 12px;
+  font-size: 11.5px;
+}
+
+/* The card's action row stacks once it holds the badge and the two links. */
+.vsc-actions:has(.vol-calendar) {
+  display: block;
+}
