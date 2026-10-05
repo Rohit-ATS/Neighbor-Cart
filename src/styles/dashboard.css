@@ -2398,9 +2398,7 @@
 }
 
 .places-workspace.has-floating-topbar .ai-chat--section,
-.places-workspace.has-floating-topbar .modal-backdrop.is-page > .intake-modal-card,
-.places-workspace.has-floating-topbar .modal-backdrop.is-page > .community-modal-card,
-.places-workspace.has-floating-topbar .modal-backdrop.is-page > .intake-modal-card.lexis-modal {
+.places-workspace.has-floating-topbar .modal-backdrop.is-page > * {
   height: 100vh;
 }
 
@@ -2410,3 +2408,55 @@
   }
 }
 
+/* ==========================================================================
+   WORKSPACE PAGES
+   The plan, the community feed, the volunteer hub, rescue dispatch and the
+   nonprofit portal are sections of the workspace, not popups. They keep the markup — and therefore every style — of the card
+   they used to be, so the wrapper only has to undo what made it a popup: the
+   fixed backdrop, the floating card's own width, corners and shadow, and the
+   pop-in it no longer arrives with.
+
+   It lives at the end of this stylesheet because that is the only thing that
+   settles it: the rules it undoes are in this file too, at the same
+   specificity, so whichever comes last wins.
+   ========================================================================== */
+
+.workspace-page {
+  display: block;
+  min-height: 0;
+}
+
+.modal-backdrop.is-page {
+  position: static;
+  z-index: auto;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  display: block;
+  padding: 0;
+  overflow: visible;
+  animation: none;
+}
+
+/* Whatever card the page is holding: every panel that became a page uses the
+   same wrapper, so naming them one by one only invited the next one to be
+   forgotten. */
+.modal-backdrop.is-page > * {
+  width: 100%;
+  max-width: none;
+  height: calc(100vh - 64px);
+  max-height: none;
+  border: 0;
+  border-left: 1px solid var(--lg-line, #ece3cd);
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+@media (max-width: 840px) {
+  .modal-backdrop.is-page > * {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    border-left: 0;
+  }
+}

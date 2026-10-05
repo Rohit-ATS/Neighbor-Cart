@@ -5278,6 +5278,22 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 
 .rescue-action-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 22px; }
 
+.rescue-dispatch-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -6px 0 18px;
+  padding: 13px 15px;
+  border: 1px solid #b8d8bd;
+  border-radius: 12px;
+  background: #f1f9f1;
+  color: #24472e;
+}
+.rescue-dispatch-notice div { display: grid; gap: 3px; }
+.rescue-dispatch-notice span { font-size: 13px; line-height: 1.45; }
+.rescue-dispatch-notice button { border: 0; background: transparent; color: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+
 .rescue-listings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 
 .rescue-item-card {

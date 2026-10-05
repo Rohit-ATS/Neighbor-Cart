@@ -8,6 +8,7 @@ import LocationButton from './LocationButton.jsx';
 import { getSectionKnowledge } from '../lib/pageContext.js';
 import { classifyMessage, mergeNeeds } from '../lib/needs.js';
 import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts } from '../lib/residentProfile.js';
+import { buildRescuePlan, isFoodRescueIntent, rescueMessage } from '../lib/foodRescue.js';
 
 /* The conversation itself.
 
@@ -96,7 +97,7 @@ export const parseExclusions = (text) => {
 const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 const clockTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-export default function AiChat({ variant = 'section', sectionId = null, onClose, onSelectPlace, onShowMatches }) {
+export default function AiChat({ variant = 'section', sectionId = null, onClose, onSelectPlace, onShowMatches, onOpenRescue }) {
   // What the person was looking at when they opened the navigator. It shapes
   // the opener, the starters, and the context the model is given.
   const section = sectionId ? getSectionKnowledge(sectionId) : null;
@@ -193,6 +194,30 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     // untouched, rather than spending a model call on a keyboard slip.
     if (reading.kind === 'gibberish' || reading.kind === 'unclear') {
       setMessages((prev) => [...prev, unreadableReply(question, reading.kind)]);
+      return;
+    }
+
+    // Surplus food needs a logistics handoff, not the resident-facing search
+    // flow. Keep it local and explicit: matches are candidates to confirm,
+    // never a claim that a recipient has already accepted the food.
+    if (isFoodRescueIntent(question)) {
+      const rescuePlan = buildRescuePlan(question, PLACES);
+      setMessages((prev) => [...prev, {
+        sender: 'ai',
+        text: rescueMessage(rescuePlan),
+        rescuePlan,
+        citations: rescuePlan.candidates.map((place) => ({
+          placeId: place.id,
+          name: place.name,
+          address: `${place.address}, ${place.cityStateZip}`,
+          verifiedDate: place.verifiedDate,
+          hours: place.hoursSummary,
+          phone: place.phone,
+          callAhead: true,
+        })),
+        warning: 'Recipient capacity and safe-handling requirements must be confirmed before a pickup is assigned.',
+        timestamp: clockTime(),
+      }]);
       return;
     }
 
@@ -602,6 +627,28 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
               {message.warning && (
                 <div className="ai-call-ahead-alert">
                   ⚠️ <b>Call ahead notice:</b> {message.warning}
+                </div>
+              )}
+
+              {message.rescuePlan && (
+                <div className="ai-rescue-plan" aria-label="Surplus food rescue plan">
+                  <div className="ai-rescue-plan-head">
+                    <span aria-hidden="true">♻️</span>
+                    <b>Food rescue handoff</b>
+                    <em>{message.rescuePlan.urgency}</em>
+                  </div>
+                  <div className="ai-rescue-plan-details">
+                    <span><b>Food:</b> {message.rescuePlan.food}</span>
+                    <span><b>Handling:</b> {message.rescuePlan.storage}</span>
+                    <span><b>Amount:</b> {message.rescuePlan.quantityLbs ? `${message.rescuePlan.quantityLbs.toLocaleString()} lbs` : 'Need estimate'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="ai-rescue-plan-action"
+                    onClick={() => { onOpenRescue?.(); onClose?.(); }}
+                  >
+                    Open rescue dispatch →
+                  </button>
                 </div>
               )}
 

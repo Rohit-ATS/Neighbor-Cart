@@ -53,6 +53,7 @@ export default function AiLauncher({
   appearance = 'cart',   // 'guide' on the landing page, 'cart' in the workspace
   onSelectPlace,
   onShowMatches,
+  onOpenRescue,
   onOpenTextBoard,
   hidden = false,
 }) {
@@ -299,6 +300,7 @@ export default function AiLauncher({
           onClose={() => setAssistantOpen(false)}
           onSelectPlace={(place) => { onSelectPlace?.(place); }}
           onShowMatches={(matches) => { onShowMatches?.(matches); setOpen(false); }}
+          onOpenRescue={onOpenRescue}
         />
       )}
     </>

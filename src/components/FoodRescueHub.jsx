@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FOOD_RESCUE_LISTINGS } from '../data/communityData.js';
 import { PLACES } from '../data/places.js';
 
-export default function FoodRescueHub({ onClose }) {
-  const [listings, setListings] = useState(FOOD_RESCUE_LISTINGS);
+/* A workspace page when `variant="page"`, and the modal it has always been
+   otherwise. The page wrapper drops only what made it a popup: the backdrop's
+   dismiss behaviour and the close button. */
+export default function FoodRescueHub({ onClose, variant = 'modal' }) {
+  const isPage = variant === 'page';
+  const [listings, setListings] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('neighbor-cart:rescue-dispatches') || '[]');
+      return Array.isArray(saved) ? [...saved, ...FOOD_RESCUE_LISTINGS] : FOOD_RESCUE_LISTINGS;
+    } catch {
+      return FOOD_RESCUE_LISTINGS;
+    }
+  });
   const [showPostForm, setShowPostForm] = useState(false);
   const [donorName, setDonorName] = useState('');
   const [foodType, setFoodType] = useState('');
@@ -11,6 +22,12 @@ export default function FoodRescueHub({ onClose }) {
   const [storageReq, setStorageReq] = useState('Refrigerated');
   const [expirationDays, setExpirationDays] = useState('3 days');
   const [donorCity, setDonorCity] = useState('Des Moines, IA');
+  const [dispatchNotice, setDispatchNotice] = useState(null);
+
+  useEffect(() => {
+    const newDispatches = listings.filter((item) => String(item.id).startsWith('res-')).filter((item) => !FOOD_RESCUE_LISTINGS.some((seed) => seed.id === item.id));
+    localStorage.setItem('neighbor-cart:rescue-dispatches', JSON.stringify(newDispatches));
+  }, [listings]);
 
   const totalRescuedLbs = listings.reduce((sum, item) => sum + item.quantityLbs, 0);
   const estimatedMeals = Math.round(totalRescuedLbs / 1.2);
@@ -19,10 +36,13 @@ export default function FoodRescueHub({ onClose }) {
     e.preventDefault();
     const qty = parseInt(quantityLbs, 10) || 500;
 
-    // Intelligent match algorithm matching nearby pantry with refrigeration capacity
-    const matchedPantry = PLACES.find((p) => 
-      storageReq === 'Refrigerated' ? p.inventory.some((i) => i.category.includes('Produce') || i.category.includes('Dairy')) : true
-    ) || PLACES[0];
+    const city = donorCity.toLowerCase().split(',')[0].trim();
+    // A candidate is never an automatic acceptance. This prioritizes verified
+    // food banks, pantries, and meal programs in the donor's city for a human
+    // capacity and food-safety confirmation.
+    const matchedPantry = [...PLACES]
+      .filter((place) => ['food-bank', 'pantry', 'hot-meal'].includes(place.type))
+      .sort((a, b) => Number(b.city?.toLowerCase().includes(city)) - Number(a.city?.toLowerCase().includes(city)))[0] || PLACES[0];
 
     const newListing = {
       id: 'res-' + Date.now(),
@@ -34,9 +54,10 @@ export default function FoodRescueHub({ onClose }) {
       expirationDays,
       location: donorCity,
       matchedOrg: matchedPantry.name,
-      status: `Matched with ${matchedPantry.name} · Awaiting Driver`,
-      driverAssigned: 'Pending Volunteer Claim',
-      pickupWindow: 'Today within 4 hours'
+      status: 'Recipient confirmation needed',
+      driverAssigned: 'Not assigned',
+      pickupWindow: 'Set by donor after recipient confirmation',
+      workflowStep: 'recipient-review',
     };
 
     setListings([newListing, ...listings]);
@@ -44,12 +65,31 @@ export default function FoodRescueHub({ onClose }) {
     setDonorName('');
     setFoodType('');
     setQuantityLbs('');
-    alert(`Surplus food logged! Intelligently matched with ${matchedPantry.name} based on cold storage capacity and local community demand.`);
+    setDispatchNotice({
+      recipient: matchedPantry.name,
+      text: `Dispatch created. ${matchedPantry.name} is a suggested recipient; confirm their capacity, accepted items, and pickup time before assigning a driver.`,
+    });
+  };
+
+  const claimPickup = (listing) => {
+    if (listing.workflowStep === 'recipient-review') {
+      setDispatchNotice({ recipient: listing.matchedOrg, text: `Waiting for ${listing.matchedOrg} to confirm capacity. A driver can be assigned after that confirmation.` });
+      return;
+    }
+    setListings((current) => current.map((item) => item.id === listing.id
+      ? { ...item, status: 'Driver assigned · Pickup scheduled', driverAssigned: 'You (volunteer driver)', workflowStep: 'pickup-scheduled' }
+      : item));
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="rescue-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'rescue' : undefined}
+    >
+      <div className="rescue-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Header */}
         <div className="rescue-header">
           <div>
@@ -57,7 +97,9 @@ export default function FoodRescueHub({ onClose }) {
             <h2 className="np-title">Food Rescue Dispatch & Matching</h2>
             <p className="np-sub">Connecting surplus food from grocers, bakeries, and farms with nearby food banks in real time.</p>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close rescue hub">×</button>
+          {!isPage && (
+            <button className="modal-close" onClick={onClose} aria-label="Close rescue hub">×</button>
+          )}
         </div>
 
         {/* Impact Bar */}
@@ -87,6 +129,13 @@ export default function FoodRescueHub({ onClose }) {
             {showPostForm ? 'Cancel Form' : '＋ Post Surplus Food'}
           </button>
         </div>
+
+        {dispatchNotice && (
+          <div className="rescue-dispatch-notice" role="status">
+            <div><b>♻️ Dispatch update</b><span>{dispatchNotice.text}</span></div>
+            <button type="button" onClick={() => setDispatchNotice(null)} aria-label="Dismiss dispatch update">×</button>
+          </div>
+        )}
 
         {/* Post Surplus Form */}
         {showPostForm && (
@@ -196,9 +245,10 @@ export default function FoodRescueHub({ onClose }) {
                 <button
                   type="button"
                   className="btn-secondary small"
-                  onClick={() => alert(`Pickup details sent to volunteer driver!`)}
+                  onClick={() => claimPickup(item)}
+                  disabled={item.workflowStep === 'pickup-scheduled'}
                 >
-                  Claim Pickup Route
+                  {item.workflowStep === 'recipient-review' ? 'Await recipient confirmation' : item.workflowStep === 'pickup-scheduled' ? 'Pickup scheduled' : 'Claim pickup route'}
                 </button>
               </div>
             </div>

@@ -159,6 +159,7 @@ const WORKSPACE_PATHS = {
   plan: appHash('places/plan'),
   community: appHash('places/community'),
   volunteer: appHash('places/volunteer'),
+  rescue: appHash('places/rescue'),
   nonprofit: appHash('places/nonprofit'),
 };
 
@@ -215,7 +216,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
      the workspace rather than modals, so a conversation or a half-filled intake
      survives opening a place's details beside it — and each one has a URL that
      can be linked to and reloaded. */
-  const [workspaceView, setWorkspaceView] = useState(workspaceFromPath); // 'directory' | 'chat' | 'plan' | 'community'
+  // 'directory' | 'chat' | 'plan' | 'community' | 'volunteer' | 'rescue' | 'nonprofit'
+  const [workspaceView, setWorkspaceView] = useState(workspaceFromPath);
 
   const showWorkspace = useCallback((view) => {
     setWorkspaceView(view);
@@ -266,7 +268,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   }, []);
 
   // Modals state
-  const [showRescue, setShowRescue] = useState(false);
   const [showImpact, setShowImpact] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
@@ -274,7 +275,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
      tagged region refines it further (a place card, the passes drawer). */
   const openPanel = showAdmin ? 'admin'
     : showImpact ? 'impact'
-    : showRescue ? 'rescue'
     : showMyPasses ? 'passes'
     : placeToReserve ? 'reservation'
     : activePlace ? 'place-detail'
@@ -282,6 +282,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     : workspaceView === 'volunteer' ? 'volunteer'
     : workspaceView === 'community' ? 'community'
     : workspaceView === 'plan' ? 'intake'
+    : WORKSPACE_PATHS[workspaceView] ? workspaceView
     : 'directory';
   const aiSection = useSectionContext(openPanel);
 
@@ -293,7 +294,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       intake: () => showWorkspace('plan'),
       community: () => showWorkspace('community'),
       volunteer: () => showWorkspace('volunteer'),
-      rescue: () => setShowRescue(true),
+      rescue: () => showWorkspace('rescue'),
       nonprofit: () => showWorkspace('nonprofit'),
       impact: () => setShowImpact(true),
       admin: () => setShowAdmin(true),
@@ -903,8 +904,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowRescue(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'rescue' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('rescue'); setMobileMenuOpen(false); }}
                 title="Food Rescue Dispatch"
               >
                 <span className="ln-icon">
@@ -1017,6 +1018,10 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             }}
           />
         </section>
+      ) : workspaceView === 'rescue' ? (
+        <section className="workspace-page" aria-label="Food rescue dispatch">
+          <FoodRescueHub variant="page" />
+        </section>
       ) : workspaceView === 'nonprofit' ? (
         /* The nonprofit portal, as its own page of the workspace. */
         <section className="workspace-page" aria-label="Nonprofit Portal">
@@ -1040,6 +1045,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               setAiMatchIds(matches.map((match) => match.id));
               showWorkspace('directory');
             }}
+            onOpenRescue={() => showWorkspace('rescue')}
           />
         </section>
       ) : (
@@ -1575,13 +1581,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         />
       )}
 
-      {/* Food Rescue Hub Modal */}
-      {showRescue && (
-        <FoodRescueHub
-          onClose={() => setShowRescue(false)}
-        />
-      )}
-
       {/* Impact Dashboard Modal */}
       {showImpact && (
         <ImpactDashboard
@@ -1643,6 +1642,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             setAiMatchIds(matches.map((match) => match.id));
             showWorkspace('directory');
           }}
+          onOpenRescue={() => showWorkspace('rescue')}
         />
       </div> {/* /.places-workspace-frame */}
     </div>
