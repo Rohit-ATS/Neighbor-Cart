@@ -59,7 +59,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
   const isPage = variant === 'page';
   const dismiss = () => { if (!isPage) onClose?.(); };
   const [step, setStep] = useState('questions'); // 'questions' | 'plan' | 'referral'
-  const [zip, setZip] = useState('50309');
+  const [zip, setZip] = useState('94110');
   const [address, setAddress] = useState('');
   const [householdSize, setHouseholdSize] = useState('2-3 people');
   const [urgency, setUrgency] = useState('today'); // 'today' | 'this-week' | 'ongoing'
@@ -87,15 +87,15 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       s3Hint: 'We only suggest places you can actually reach this way.',
       s4Hint: 'Pick any that apply, or skip this — it narrows the shelves we check.',
       q3: 'When do you need food?',
-      today: 'Immediately today (Within 24 hours)',
-      week: 'This upcoming weekend / week',
-      ongoing: 'Ongoing monthly assistance',
-      q4: 'Transportation Method',
-      car: 'Personal Car / Drive-thru',
-      transitOpt: 'Public Transit (Bus / Train)',
-      walkOpt: 'Walking / Nearby only',
-      deliveryOpt: 'Homebound / Need Delivery',
-      dietLabel: 'Dietary Needs & Accommodations',
+      today: 'Today, within 24 hours',
+      week: 'This week or weekend',
+      ongoing: 'Every month, ongoing',
+      q4: 'How will you get there?',
+      car: 'By car',
+      transitOpt: 'Public transit',
+      walkOpt: 'On foot',
+      deliveryOpt: 'I need delivery',
+      dietLabel: 'Any dietary needs?',
       btnGenerate: 'Generate my free food plan',
       planTitle: 'Your Personalized Food Access Plan',
       step1: 'Step 1: Immediate Food for Today',
@@ -119,15 +119,15 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       s3Hint: 'Solo sugerimos lugares a los que realmente puede llegar así.',
       s4Hint: 'Elija lo que corresponda, u omita este paso.',
       q3: '¿Cuándo necesita alimentos?',
-      today: 'Inmediatamente hoy (En 24 horas)',
-      week: 'Este fin de semana / semana',
-      ongoing: 'Ayuda mensual continua',
-      q4: 'Método de Transporte',
-      car: 'Auto Propio / Drive-thru',
-      transitOpt: 'Transporte Público (Autobús / Metro)',
-      walkOpt: 'Caminando / Solo cerca',
-      deliveryOpt: 'No puedo salir / Necesito Entrega',
-      dietLabel: 'Necesidades Dietéticas y Preferencias',
+      today: 'Hoy, en 24 horas',
+      week: 'Esta semana o fin de semana',
+      ongoing: 'Cada mes, de forma continua',
+      q4: '¿Cómo llegará?',
+      car: 'En auto',
+      transitOpt: 'Transporte público',
+      walkOpt: 'A pie',
+      deliveryOpt: 'Necesito entrega',
+      dietLabel: '¿Alguna necesidad alimentaria?',
       btnGenerate: 'Generar mi plan de comida gratuito',
       planTitle: 'Su Plan Personalizado de Alimentos',
       step1: 'Paso 1: Alimentos Inmediatos para Hoy',
