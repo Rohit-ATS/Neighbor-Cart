@@ -1822,9 +1822,11 @@ h2 em {
 }
 
 .adv-filter-group {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .adv-filter-label {
@@ -1833,6 +1835,79 @@ h2 em {
   color: #34483e;
   letter-spacing: -0.2px;
 }
+
+.adv-filter-trigger {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1.5px solid #d4ccc0;
+  border-radius: 10px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.adv-filter-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adv-filter-trigger svg { flex: 0 0 auto; transition: transform 0.22s ease; }
+.adv-filter-group.is-open .adv-filter-trigger {
+  border-color: #920711;
+  box-shadow: 0 0 0 3px rgba(146, 7, 17, 0.1);
+}
+.adv-filter-group.is-open .adv-filter-trigger svg { transform: rotate(180deg); }
+
+.adv-filter-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 7px);
+  left: 0;
+  width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 7px;
+  border: 1px solid #ded6ca;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 15px 30px rgba(57, 38, 26, 0.16), 0 3px 8px rgba(57, 38, 26, 0.08);
+  transform-origin: top center;
+}
+
+.adv-filter-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #4a3026;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.adv-filter-option:hover,
+.adv-filter-option:focus-visible { background: #f8eee9; color: #920711; outline: none; }
+.adv-filter-option.is-selected { background: #f5e7e1; color: #920711; }
+.adv-filter-option span { font-size: 15px; font-weight: 800; }
 
 .select-wrapper {
   position: relative;
@@ -6085,4 +6160,149 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 
 @media (max-width: 680px) {
   .asi-reasons { display: none; }
+}
+
+/* ==========================================================================
+   THE INTAKE FORM, AS FOUR STEPS
+   The page promises four quick questions, so it has to look like four. Each
+   step is numbered, says what it is for in one line, and holds its answers in
+   a tray that is visibly part of it — which is what makes a long column of
+   fields read as a short list of decisions.
+   ========================================================================== */
+
+.intake-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  /* The rule running down the left ties the four numbers into one sequence,
+     so the eye reads a path rather than four unrelated cards. */
+  position: relative;
+}
+
+.intake-step {
+  position: relative;
+  padding: 18px 20px 20px;
+  background: #fffdf8;
+  border: 1px solid #ece4d4;
+  border-radius: 16px;
+}
+
+.istep-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.istep-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #1b1c14;
+  color: #fffdf5;
+  font-family: 'DM Mono', monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.istep-copy { min-width: 0; }
+
+.istep-copy h3 {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 15px;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+  line-height: 1.3;
+  color: #1b1c14;
+}
+
+/* "optional" is a permission, not a heading, so it never shouts. */
+.istep-copy h3 small,
+.intake-form .form-label small {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(27, 28, 20, 0.42);
+}
+
+.istep-copy p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(27, 28, 20, 0.6);
+}
+
+/* The answers sit under the number, not beside it, so the two questions with
+   choice cards line up with the two that have fields. */
+.istep-body {
+  display: grid;
+  gap: 12px;
+  padding-left: 38px;
+}
+
+/* The three urgency cards used to run two-up with the third stretched across,
+   which made the odd one out look like a different kind of answer. They are
+   all one width now, and the grid simply wraps. */
+.intake-step .intake-choice-grid {
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+}
+
+.intake-choice-card.full-width { grid-column: auto; }
+
+/* The icon is drawn, so it takes the card's colour rather than setting its
+   own. */
+.intake-step .icc-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: #1b1c14;
+}
+
+.intake-step .intake-choice-card.is-selected .icc-icon {
+  background: #1b1c14;
+  color: #fffdf5;
+}
+
+/* ---- the one action ---- */
+
+.intake-submit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px solid #ece4d4;
+}
+
+.isb-note {
+  margin: 0;
+  flex: 1 1 220px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(27, 28, 20, 0.6);
+}
+
+/* A full-bleed black slab read as a page footer rather than as the thing to
+   press. It is sized to its words and sits at the end of the sequence. */
+.intake-submit-bar .lexis-submit-btn {
+  width: auto;
+  flex: none;
+}
+
+@media (max-width: 680px) {
+  .intake-step { padding: 16px 14px 18px; }
+  .istep-body { padding-left: 0; }
+  .intake-submit-bar .lexis-submit-btn { width: 100%; }
 }

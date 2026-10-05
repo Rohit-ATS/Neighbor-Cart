@@ -38,6 +38,63 @@ const DRAWER_ROW = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 0.9, 0.3, 1] } },
 };
 
+function AnimatedFilterMenu({ id, label, allLabel, options, value, onChange, openMenu, setOpenMenu, reduceMotion }) {
+  const isOpen = openMenu === id;
+  const selectedLabel = value === 'all' ? allLabel : value;
+
+  return (
+    <div
+      className={`adv-filter-group${isOpen ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpenMenu(null);
+      }}
+    >
+      <span className="adv-filter-label">{label}</span>
+      <button
+        type="button"
+        className="adv-filter-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setOpenMenu(isOpen ? null : id)}
+      >
+        <span>{selectedLabel}</span>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="adv-filter-menu"
+            role="listbox"
+            aria-label={label}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5, scale: 0.98 }}
+            transition={reduceMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 360, damping: 28, mass: 0.7 }}
+          >
+            {[{ value: 'all', label: allLabel }, ...options.map((option) => ({ value: option, label: option }))].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={value === option.value}
+                className={`adv-filter-option${value === option.value ? ' is-selected' : ''}`}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => { onChange(option.value); setOpenMenu(null); }}
+              >
+                {option.label}
+                {value === option.value && <span aria-hidden="true">✓</span>}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /* The "What do you need?" row.
 
    Every chip reads a field the place model already has — nothing here is
@@ -144,6 +201,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const [selectedDiet, setSelectedDiet] = useState('all');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedEligibility, setSelectedEligibility] = useState('all');
+  const [openAdvancedFilter, setOpenAdvancedFilter] = useState(null);
   const [activePlace, setActivePlace] = useState(null);
   const [placeToReserve, setPlaceToReserve] = useState(null);
   const [mobileTab, setMobileTab] = useState('both');
@@ -1214,53 +1272,21 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
             {/* Secondary Advanced Filters Dropdowns */}
             <motion.div className="advanced-filter-row" variants={DRAWER_ROW}>
-              <div className="adv-filter-group">
-                <label className="adv-filter-label">🥗 Dietary Accommodations</label>
-                <div className="select-wrapper">
-                  <select
-                    className="adv-filter-select"
-                    value={selectedDiet}
-                    onChange={(e) => setSelectedDiet(e.target.value)}
-                  >
-                    <option value="all">All Dietary Types (Vegetarian, Halal, etc.)</option>
-                    {DIETARY_OPTIONS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="adv-filter-group">
-                <label className="adv-filter-label">🗣 Languages Spoken</label>
-                <div className="select-wrapper">
-                  <select
-                    className="adv-filter-select"
-                    value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value)}
-                  >
-                    <option value="all">All Languages Spoken</option>
-                    {LANGUAGE_OPTIONS.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="adv-filter-group">
-                <label className="adv-filter-label">🛡 Access & Eligibility</label>
-                <div className="select-wrapper">
-                  <select
-                    className="adv-filter-select"
-                    value={selectedEligibility}
-                    onChange={(e) => setSelectedEligibility(e.target.value)}
-                  >
-                    <option value="all">All Eligibility Rules (No ID, Walk-in)</option>
-                    {ELIGIBILITY_OPTIONS.map((el) => (
-                      <option key={el} value={el}>{el}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <AnimatedFilterMenu
+                id="diet" label="🥗 Dietary Accommodations" allLabel="All Dietary Types (Vegetarian, Halal, etc.)"
+                options={DIETARY_OPTIONS} value={selectedDiet} onChange={setSelectedDiet}
+                openMenu={openAdvancedFilter} setOpenMenu={setOpenAdvancedFilter} reduceMotion={reduceMotion}
+              />
+              <AnimatedFilterMenu
+                id="language" label="🗣 Languages Spoken" allLabel="All Languages Spoken"
+                options={LANGUAGE_OPTIONS} value={selectedLanguage} onChange={setSelectedLanguage}
+                openMenu={openAdvancedFilter} setOpenMenu={setOpenAdvancedFilter} reduceMotion={reduceMotion}
+              />
+              <AnimatedFilterMenu
+                id="eligibility" label="🛡 Access & Eligibility" allLabel="All Eligibility Rules (No ID, Walk-in)"
+                options={ELIGIBILITY_OPTIONS} value={selectedEligibility} onChange={setSelectedEligibility}
+                openMenu={openAdvancedFilter} setOpenMenu={setOpenAdvancedFilter} reduceMotion={reduceMotion}
+              />
             </motion.div>
 
             {/* Quick check toggles */}

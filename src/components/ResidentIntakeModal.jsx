@@ -2,6 +2,55 @@ import React, { useState } from 'react';
 import { PLACES } from '../data/places.js';
 import { saveResidentProfile } from '../lib/residentProfile.js';
 
+/* Line icons rather than emoji. An emoji is a different typeface rendered by
+   the operating system — it sets its own colour, its own weight and its own
+   idea of a car, which is why the row of them read as clip art pasted into a
+   form. These are drawn in the same stroke as the rest of the product and take
+   the colour of the card they sit in, including when it is selected. */
+const Icon = ({ children }) => (
+  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {children}
+  </svg>
+);
+
+/* The answers, as data: the markup for a choice card is the same four times
+   over, and keeping it in one place is what lets the two questions stay
+   visually identical. `labelKey` reads from the translated copy below, so
+   these carry no English of their own except the hint. */
+const URGENCY_OPTIONS = [
+  {
+    id: 'today', labelKey: 'today', hint: 'Walk-in hot meals, fridges & crisis boxes',
+    icon: <Icon><polygon points="13 2 3 14 11 14 10 22 21 10 13 10 13 2" /></Icon>,
+  },
+  {
+    id: 'this-week', labelKey: 'week', hint: 'Pantry appointments & weekend distributions',
+    icon: <Icon><rect x="3" y="4.5" width="18" height="17" rx="2.5" /><path d="M3 9.5h18M8 2.5v4M16 2.5v4" /></Icon>,
+  },
+  {
+    id: 'ongoing', labelKey: 'ongoing', hint: 'Monthly allotments, SNAP enrollment & delivery',
+    icon: <Icon><path d="M20.5 11.5a8.5 8.5 0 0 0-14.6-5.4L3 9M3.5 12.5a8.5 8.5 0 0 0 14.6 5.4L21 15" /><path d="M3 4.5v4.6h4.6M21 19.5v-4.6h-4.6" /></Icon>,
+  },
+];
+
+const TRANSIT_OPTIONS = [
+  {
+    id: 'car', labelKey: 'car', hint: 'Drive-thru trunk loading eligible',
+    icon: <Icon><path d="M5 17h14M4.5 17v-4.2l2-5.3A1.8 1.8 0 0 1 8.2 6.3h7.6a1.8 1.8 0 0 1 1.7 1.2l2 5.3V17" /><path d="M4.5 12.8h15" /><circle cx="7.8" cy="17" r="1.6" /><circle cx="16.2" cy="17" r="1.6" /></Icon>,
+  },
+  {
+    id: 'transit', labelKey: 'transitOpt', hint: 'Near a bus route or rail station',
+    icon: <Icon><rect x="4.5" y="3.5" width="15" height="13" rx="2.5" /><path d="M4.5 10.5h15M7.5 20l1.8-3.5M16.5 20l-1.8-3.5" /><circle cx="8.3" cy="13.6" r="1" /><circle cx="15.7" cy="13.6" r="1" /></Icon>,
+  },
+  {
+    id: 'walk', labelKey: 'walkOpt', hint: 'Within about a mile of you',
+    icon: <Icon><circle cx="13" cy="4.2" r="1.8" /><path d="M11.4 21l1.3-5.6-2.4-2.1.9-4.6 3.3 1.5 2.1 2.4M10 10.3 7.2 12l-.9 3.2M12.7 15.4 15 21" /></Icon>,
+  },
+  {
+    id: 'delivery', labelKey: 'deliveryOpt', hint: 'Brought to your door at home',
+    icon: <Icon><path d="M12 3.2 20.5 7.6v8.8L12 20.8 3.5 16.4V7.6Z" /><path d="M3.5 7.6 12 12m0 0 8.5-4.4M12 12v8.8" /></Icon>,
+  },
+];
+
 /* The navigator renders either as a workspace page (`variant="page"`) or as the
    modal it has always been. On a page there is nothing to dismiss, so the close
    button is dropped and the steps that used to close the modal on their way out
@@ -28,9 +77,15 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       title: 'Personalized Food Access Navigator',
       sub: 'Answer 4 quick questions to receive a custom food assistance plan matched to your schedule, diet, and transit.',
       privacy: '🔒 100% confidential. No ID or paperwork required.',
-      q1: 'ZIP Code or City',
-      address: 'Street address or neighborhood (optional)',
-      q2: 'Household Size',
+      q1: 'ZIP code or city',
+      address: 'Street address or neighborhood',
+      optional: 'optional',
+      q2: 'Household size',
+      s1Title: 'Where you are, and who you’re feeding',
+      s1Hint: 'A ZIP code is enough. An address only helps us judge walking distance.',
+      s2Hint: 'This decides whether we look for a hot meal tonight or a monthly box.',
+      s3Hint: 'We only suggest places you can actually reach this way.',
+      s4Hint: 'Pick any that apply, or skip this — it narrows the shelves we check.',
       q3: 'When do you need food?',
       today: 'Immediately today (Within 24 hours)',
       week: 'This upcoming weekend / week',
@@ -41,7 +96,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       walkOpt: 'Walking / Nearby only',
       deliveryOpt: 'Homebound / Need Delivery',
       dietLabel: 'Dietary Needs & Accommodations',
-      btnGenerate: 'Generate My Free Food Plan →',
+      btnGenerate: 'Generate my free food plan',
       planTitle: 'Your Personalized Food Access Plan',
       step1: 'Step 1: Immediate Food for Today',
       step2: 'Step 2: Full Family Grocery Pantry',
@@ -54,9 +109,15 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       title: 'Navegador Personalizado de Acceso a Alimentos',
       sub: 'Responda 4 preguntas para recibir un plan de alimentos adaptado a su horario, dieta y transporte.',
       privacy: '🔒 100% confidencial. No se requiere identificación ni documentos.',
-      q1: 'Código Postal o Ciudad',
-      address: 'Dirección o vecindario (opcional)',
-      q2: 'Tamaño del Hogar',
+      q1: 'Código postal o ciudad',
+      address: 'Dirección o vecindario',
+      optional: 'opcional',
+      q2: 'Tamaño del hogar',
+      s1Title: 'Dónde está y a cuántas personas alimenta',
+      s1Hint: 'Con el código postal basta. La dirección solo ayuda a calcular la distancia a pie.',
+      s2Hint: 'Esto decide si buscamos una comida caliente hoy o una caja mensual.',
+      s3Hint: 'Solo sugerimos lugares a los que realmente puede llegar así.',
+      s4Hint: 'Elija lo que corresponda, u omita este paso.',
       q3: '¿Cuándo necesita alimentos?',
       today: 'Inmediatamente hoy (En 24 horas)',
       week: 'Este fin de semana / semana',
@@ -67,7 +128,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
       walkOpt: 'Caminando / Solo cerca',
       deliveryOpt: 'No puedo salir / Necesito Entrega',
       dietLabel: 'Necesidades Dietéticas y Preferencias',
-      btnGenerate: 'Generar Mi Plan de Comida Gratuito →',
+      btnGenerate: 'Generar mi plan de comida gratuito',
       planTitle: 'Su Plan Personalizado de Alimentos',
       step1: 'Paso 1: Alimentos Inmediatos para Hoy',
       step2: 'Paso 2: Despensa Familiar Completa',
@@ -215,167 +276,163 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
               </div>
 
               <form onSubmit={handleGenerate} className="intake-form">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">{text.q1}</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={zip}
-                      onChange={(e) => setZip(e.target.value)}
-                      placeholder="e.g. 50309, Des Moines, NYC..."
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">{text.q2}</label>
-                    <select
-                      className="form-input"
-                      value={householdSize}
-                      onChange={(e) => setHouseholdSize(e.target.value)}
-                    >
-                      <option value="1 person">1 person</option>
-                      <option value="2-3 people">2-3 people</option>
-                      <option value="4-5 people">4-5 people</option>
-                      <option value="6+ people">6+ people</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">{text.address}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. 123 Main St or Northside neighborhood"
-                    autoComplete="street-address"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">{text.q3}</label>
-                  <div className="intake-choice-grid">
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${urgency === 'today' ? 'is-selected' : ''}`}
-                      onClick={() => setUrgency('today')}
-                    >
-                      <span className="icc-icon">⚡</span>
-                      <div className="icc-info">
-                        <strong>{text.today}</strong>
-                        <span>Walk-in hot meals, fridges & crisis boxes</span>
+                {/* Four numbered steps, in the order the plan is built from
+                    them. The promise at the top of the page is four questions,
+                    so the page has to show four — a flat column of five fields
+                    is the same work without the shape that makes it feel short.
+                    Each step says what it is for, because "Transportation
+                    method" only sounds obvious once you know it decides which
+                    places can be reached. */}
+                <ol className="intake-steps">
+                  <li className="intake-step">
+                    <div className="istep-head">
+                      <span className="istep-num">1</span>
+                      <div className="istep-copy">
+                        <h3>{text.s1Title}</h3>
+                        <p>{text.s1Hint}</p>
                       </div>
-                      <span className="icc-check" />
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${urgency === 'this-week' ? 'is-selected' : ''}`}
-                      onClick={() => setUrgency('this-week')}
-                    >
-                      <span className="icc-icon">📅</span>
-                      <div className="icc-info">
-                        <strong>{text.week}</strong>
-                        <span>Pantry appointments & weekend distributions</span>
+                    </div>
+                    <div className="istep-body">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="intake-zip">{text.q1}</label>
+                          <input
+                            id="intake-zip"
+                            type="text"
+                            className="form-input"
+                            value={zip}
+                            onChange={(e) => setZip(e.target.value)}
+                            placeholder="e.g. 94110, San Francisco, Fremont…"
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="intake-household">{text.q2}</label>
+                          <select
+                            id="intake-household"
+                            className="form-input"
+                            value={householdSize}
+                            onChange={(e) => setHouseholdSize(e.target.value)}
+                          >
+                            <option value="1 person">1 person</option>
+                            <option value="2-3 people">2-3 people</option>
+                            <option value="4-5 people">4-5 people</option>
+                            <option value="6+ people">6+ people</option>
+                          </select>
+                        </div>
                       </div>
-                      <span className="icc-check" />
-                    </button>
 
-                    <button
-                      type="button"
-                      className={`intake-choice-card full-width ${urgency === 'ongoing' ? 'is-selected' : ''}`}
-                      onClick={() => setUrgency('ongoing')}
-                    >
-                      <span className="icc-icon">🔄</span>
-                      <div className="icc-info">
-                        <strong>{text.ongoing}</strong>
-                        <span>Monthly food bank allotments, SNAP enrollment, & grocery delivery</span>
-                      </div>
-                      <span className="icc-check" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">{text.q4}</label>
-                  <div className="intake-choice-grid">
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${transit === 'car' ? 'is-selected' : ''}`}
-                      onClick={() => setTransit('car')}
-                    >
-                      <span className="icc-icon">🚗</span>
-                      <div className="icc-info">
-                        <strong>{text.car}</strong>
-                        <span>Drive-thru trunk loading eligible</span>
-                      </div>
-                      <span className="icc-check" />
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${transit === 'transit' ? 'is-selected' : ''}`}
-                      onClick={() => setTransit('transit')}
-                    >
-                      <span className="icc-icon">🚌</span>
-                      <div className="icc-info">
-                        <strong>{text.transitOpt}</strong>
-                        <span>Near public bus or transit lines</span>
-                      </div>
-                      <span className="icc-check" />
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${transit === 'walk' ? 'is-selected' : ''}`}
-                      onClick={() => setTransit('walk')}
-                    >
-                      <span className="icc-icon">🚶</span>
-                      <div className="icc-info">
-                        <strong>{text.walkOpt}</strong>
-                        <span>Under 1-mile walking distance</span>
-                      </div>
-                      <span className="icc-check" />
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`intake-choice-card ${transit === 'delivery' ? 'is-selected' : ''}`}
-                      onClick={() => setTransit('delivery')}
-                    >
-                      <span className="icc-icon">📦</span>
-                      <div className="icc-info">
-                        <strong>{text.deliveryOpt}</strong>
-                        <span>Homebound door delivery options</span>
-                      </div>
-                      <span className="icc-check" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">{text.dietLabel}</label>
-                  <div className="intake-diet-tags">
-                    {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans', 'Other'].map((diet) => (
-                      <label key={diet} className={`intake-diet-chip ${dietary.includes(diet) ? 'is-checked' : ''}`}>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="intake-address">
+                          {text.address} <small>{text.optional}</small>
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={dietary.includes(diet)}
-                          onChange={() => diet === 'Other' ? openOtherComposer() : toggleDiet(diet)}
+                          id="intake-address"
+                          type="text"
+                          className="form-input"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="e.g. 123 Main St or Mission District"
+                          autoComplete="street-address"
                         />
-                        <span className="idc-box" />
-                        <span className="idc-text">{diet === 'Other' && otherNeed ? `Other: ${otherNeed}` : diet}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  </li>
 
-                <div className="modal-actions-bar">
+                  <li className="intake-step">
+                    <div className="istep-head">
+                      <span className="istep-num">2</span>
+                      <div className="istep-copy">
+                        <h3>{text.q3}</h3>
+                        <p>{text.s2Hint}</p>
+                      </div>
+                    </div>
+                    <div className="istep-body">
+                      <div className="intake-choice-grid" role="radiogroup" aria-label={text.q3}>
+                        {URGENCY_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={urgency === option.id}
+                            className={`intake-choice-card ${urgency === option.id ? 'is-selected' : ''}`}
+                            onClick={() => setUrgency(option.id)}
+                          >
+                            <span className="icc-icon">{option.icon}</span>
+                            <span className="icc-info">
+                              <strong>{text[option.labelKey]}</strong>
+                              <span>{option.hint}</span>
+                            </span>
+                            <span className="icc-check" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+
+                  <li className="intake-step">
+                    <div className="istep-head">
+                      <span className="istep-num">3</span>
+                      <div className="istep-copy">
+                        <h3>{text.q4}</h3>
+                        <p>{text.s3Hint}</p>
+                      </div>
+                    </div>
+                    <div className="istep-body">
+                      <div className="intake-choice-grid" role="radiogroup" aria-label={text.q4}>
+                        {TRANSIT_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={transit === option.id}
+                            className={`intake-choice-card ${transit === option.id ? 'is-selected' : ''}`}
+                            onClick={() => setTransit(option.id)}
+                          >
+                            <span className="icc-icon">{option.icon}</span>
+                            <span className="icc-info">
+                              <strong>{text[option.labelKey]}</strong>
+                              <span>{option.hint}</span>
+                            </span>
+                            <span className="icc-check" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+
+                  <li className="intake-step">
+                    <div className="istep-head">
+                      <span className="istep-num">4</span>
+                      <div className="istep-copy">
+                        <h3>{text.dietLabel} <small>{text.optional}</small></h3>
+                        <p>{text.s4Hint}</p>
+                      </div>
+                    </div>
+                    <div className="istep-body">
+                      <div className="intake-diet-tags">
+                        {['Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Diabetic-Friendly', 'Baby Formula / Infant Food', 'No-Cook / Pull-Tab Cans', 'Other'].map((diet) => (
+                          <label key={diet} className={`intake-diet-chip ${dietary.includes(diet) ? 'is-checked' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={dietary.includes(diet)}
+                              onChange={() => diet === 'Other' ? openOtherComposer() : toggleDiet(diet)}
+                            />
+                            <span className="idc-box" />
+                            <span className="idc-text">{diet === 'Other' && otherNeed ? `Other: ${otherNeed}` : diet}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+                </ol>
+
+                {/* The one action on the page, and what it costs: nothing. */}
+                <div className="intake-submit-bar">
+                  <p className="isb-note">{text.privacy}</p>
                   <button type="submit" className="lexis-submit-btn">
                     <span>{text.btnGenerate}</span>
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="5" y1="12" x2="19" y2="12" />
                       <polyline points="12 5 19 12 12 19" />
                     </svg>
