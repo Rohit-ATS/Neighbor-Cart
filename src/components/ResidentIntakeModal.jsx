@@ -55,7 +55,7 @@ const TRANSIT_OPTIONS = [
    modal it has always been. On a page there is nothing to dismiss, so the close
    button is dropped and the steps that used to close the modal on their way out
    — opening a place, submitting a referral — simply leave the page standing. */
-export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en', variant = 'modal', profileMode = false }) {
+export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en', variant = 'modal' }) {
   const isPage = variant === 'page';
   const dismiss = () => { if (!isPage) onClose?.(); };
   const [step, setStep] = useState('questions'); // 'questions' | 'plan' | 'referral'
@@ -242,9 +242,9 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
             <span className="lmh-eyebrow">
               <span className="lmh-dot" /> Resident Support Navigator
             </span>
-            <h2 className="lmh-title">{step === 'questions' ? (profileMode ? 'Personal Information' : text.title) : step === 'plan' ? text.planTitle : 'Confidential Partner Referral'}</h2>
+            <h2 className="lmh-title">{step === 'questions' ? text.title : step === 'plan' ? text.planTitle : 'Confidential Partner Referral'}</h2>
             <p className="lmh-sub">
-              {step === 'questions' ? (profileMode ? 'Review and update the information saved only in this browser to personalize your food plan.' : text.sub) : step === 'plan' ? `Customized for ${planResult?.householdSize} in ZIP ${planResult?.zip}.` : 'Zero paperwork required. 100% confidential assistance.'}
+              {step === 'questions' ? text.sub : step === 'plan' ? `Customized for ${planResult?.householdSize} in ZIP ${planResult?.zip}.` : 'Zero paperwork required. 100% confidential assistance.'}
             </p>
           </div>
 
