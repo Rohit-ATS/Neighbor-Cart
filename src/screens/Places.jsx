@@ -18,7 +18,7 @@ import AiLauncher from '../components/AiLauncher.jsx';
 import ExpandingSearchDock from '../components/ExpandingSearchDock.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
 import { parseSearch, SEARCH_EXAMPLES } from '../lib/searchParser.js';
-import { appPath } from '../lib/routes.js';
+import { appHash } from '../lib/routes.js';
 
 /* Two catalogues describe the same pantry differently, so matching is by
    normalised name plus a ~150m coordinate bucket rather than exact equality. */
@@ -93,18 +93,17 @@ const matchesNeeds = (place, selected) => {
    it is gone again before anyone wonders why. */
 const TOPBAR_HOLD_MS = 1400;
 
-/* The workspace sections that are pages in their own right, and the path each
-   one answers to. They are sub-paths of /places, so App's own landing/places
-   split still reads them as the workspace. */
+/* Workspace sections live in the URL hash. That keeps them linkable and
+   reload-safe on static GitHub Pages hosting. */
 const WORKSPACE_PATHS = {
-  directory: appPath('places'),
-  chat: appPath('places/navigator'),
-  plan: appPath('places/plan'),
-  community: appPath('places/community'),
+  directory: appHash('places'),
+  chat: appHash('places/navigator'),
+  plan: appHash('places/plan'),
+  community: appHash('places/community'),
 };
 
 const workspaceFromPath = () => {
-  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  const path = window.location.hash.replace(/\/+$/, '') || WORKSPACE_PATHS.directory;
   return Object.keys(WORKSPACE_PATHS).find(
     (view) => view !== 'directory' && WORKSPACE_PATHS[view] === path,
   ) || 'directory';
@@ -151,7 +150,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const showWorkspace = useCallback((view) => {
     setWorkspaceView(view);
     const path = WORKSPACE_PATHS[view] || WORKSPACE_PATHS.directory;
-    if (window.location.pathname !== path) window.history.pushState(null, '', path);
+    if (window.location.hash !== path) window.history.pushState(null, '', path);
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
