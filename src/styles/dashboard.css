@@ -2529,9 +2529,18 @@
   font-size: 11.5px;
 }
 
-/* The card's action row stacks once it holds the badge and the two links. */
-.vsc-actions:has(.vol-calendar) {
+/* Unclaimed, the actions are one button in a narrow right-hand rail. Claimed,
+   they hold a badge, a cancel control and two calendar links — far too much for
+   that rail, which is why the title was being squeezed into a wrapped column.
+   So a claimed card gives them a full-width row of their own underneath. */
+.modal-backdrop .vsc-actions:has(.vol-calendar) {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  align-self: stretch;
   display: block;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-line-soft);
 }
 
 /* ==========================================================================
@@ -2653,3 +2662,75 @@
   line-height: 1.55;
   text-align: center;
 }
+
+/* ---- giving a shift back ----
+
+   Cancelling is undoable — the shift can be claimed again — but the spot goes
+   back into the pool meanwhile and someone else may take it. That is enough
+   consequence to deserve a second tap, and not enough to deserve a modal. */
+
+.modal-backdrop .vsc-claimed-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.modal-backdrop .vsc-cancel-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--d-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color .16s var(--d-ease);
+}
+.modal-backdrop .vsc-cancel-btn:hover { color: var(--d-crimson); }
+
+.modal-backdrop .vsc-cancel-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding: 7px 12px;
+  border: 1px solid rgba(146, 7, 17, .22);
+  border-radius: 12px;
+  background: rgba(146, 7, 17, .05);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--d-brown);
+}
+.modal-backdrop .vsc-cancel-confirm small {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--d-muted);
+}
+
+.modal-backdrop .vsc-cancel-yes,
+.modal-backdrop .vsc-cancel-no {
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.modal-backdrop .vsc-cancel-yes {
+  border: 1px solid var(--d-crimson);
+  background: var(--d-crimson);
+  color: var(--d-cream);
+}
+.modal-backdrop .vsc-cancel-yes:hover { background: var(--d-crimson-deep, #7a0510); }
+.modal-backdrop .vsc-cancel-no {
+  border: 1px solid var(--d-line);
+  background: var(--d-surface);
+  color: var(--d-brown);
+}
+.modal-backdrop .vsc-cancel-no:hover { border-color: var(--d-crimson); color: var(--d-crimson); }

@@ -42,6 +42,10 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
   const [shifts, setShifts] = useState(VOLUNTEER_SHIFTS);
   const [selectedTaskType, setSelectedTaskType] = useState('all');
   const [claimedShiftModal, setClaimedShiftModal] = useState(null);
+  /* Which shift is one tap from being given up. Cancelling is easy to undo —
+     you can claim it again — but the spot goes back into the pool meanwhile and
+     someone else may take it, so a stray click should not be enough. */
+  const [confirmingCancel, setConfirmingCancel] = useState(null);
 
   const filteredShifts = shifts.filter((s) => {
     if (selectedTaskType !== 'all' && s.taskType !== selectedTaskType) return false;
@@ -57,6 +61,15 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
       )
     );
     setClaimedShiftModal(shift);
+  };
+
+  const handleCancelShift = (shift) => {
+    setShifts((previous) => previous.map((entry) => (
+      entry.id === shift.id
+        ? { ...entry, claimed: false, spotsAvailable: entry.spotsAvailable + 1 }
+        : entry
+    )));
+    setConfirmingCancel(null);
   };
 
   return (
@@ -127,7 +140,30 @@ export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal'
               <div className="vsc-actions">
                 {shift.claimed ? (
                   <>
-                    <span className="vsc-claimed-badge">✓ Registered for this shift</span>
+                    <div className="vsc-claimed-row">
+                      <span className="vsc-claimed-badge">✓ Registered for this shift</span>
+                      {confirmingCancel === shift.id ? (
+                        <span className="vsc-cancel-confirm">
+                          {/* Said plainly, because nothing here reaches into
+                              the calendar the shift was added to. */}
+                          <span>Give up your spot? <small>The calendar entry stays until you delete it.</small></span>
+                          <button type="button" className="vsc-cancel-yes" onClick={() => handleCancelShift(shift)}>
+                            Yes, cancel
+                          </button>
+                          <button type="button" className="vsc-cancel-no" onClick={() => setConfirmingCancel(null)}>
+                            Keep it
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="vsc-cancel-btn"
+                          onClick={() => setConfirmingCancel(shift.id)}
+                        >
+                          Cancel registration
+                        </button>
+                      )}
+                    </div>
                     <AddToCalendar shift={shift} compact />
                   </>
                 ) : (
