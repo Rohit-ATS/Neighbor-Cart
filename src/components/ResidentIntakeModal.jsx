@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PLACES } from '../data/places.js';
-import { saveResidentProfile } from '../lib/residentProfile.js';
+import { getResidentProfile, saveResidentProfile } from '../lib/residentProfile.js';
 
 /* Line icons rather than emoji. An emoji is a different typeface rendered by
    the operating system — it sets its own colour, its own weight and its own
@@ -55,17 +55,17 @@ const TRANSIT_OPTIONS = [
    modal it has always been. On a page there is nothing to dismiss, so the close
    button is dropped and the steps that used to close the modal on their way out
    — opening a place, submitting a referral — simply leave the page standing. */
-export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en', variant = 'modal' }) {
+export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en', variant = 'modal', profileMode = false }) {
   const isPage = variant === 'page';
   const dismiss = () => { if (!isPage) onClose?.(); };
   const [step, setStep] = useState('questions'); // 'questions' | 'plan' | 'referral'
-  const [zip, setZip] = useState('94110');
-  const [address, setAddress] = useState('');
-  const [householdSize, setHouseholdSize] = useState('2-3 people');
-  const [urgency, setUrgency] = useState('today'); // 'today' | 'this-week' | 'ongoing'
-  const [transit, setTransit] = useState('car'); // 'car' | 'transit' | 'walk' | 'delivery'
-  const [dietary, setDietary] = useState([]);
-  const [otherNeed, setOtherNeed] = useState('');
+  const [zip, setZip] = useState(() => getResidentProfile()?.location || '94110');
+  const [address, setAddress] = useState(() => getResidentProfile()?.address || '');
+  const [householdSize, setHouseholdSize] = useState(() => getResidentProfile()?.householdSize || '2-3 people');
+  const [urgency, setUrgency] = useState(() => getResidentProfile()?.urgency || 'today'); // 'today' | 'this-week' | 'ongoing'
+  const [transit, setTransit] = useState(() => getResidentProfile()?.transportation || 'car'); // 'car' | 'transit' | 'walk' | 'delivery'
+  const [dietary, setDietary] = useState(() => getResidentProfile()?.dietary || []);
+  const [otherNeed, setOtherNeed] = useState(() => getResidentProfile()?.otherNeed || '');
   const [otherNeedDraft, setOtherNeedDraft] = useState('');
   const [showOtherComposer, setShowOtherComposer] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(true);
@@ -242,9 +242,9 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
             <span className="lmh-eyebrow">
               <span className="lmh-dot" /> Resident Support Navigator
             </span>
-            <h2 className="lmh-title">{step === 'questions' ? text.title : step === 'plan' ? text.planTitle : 'Confidential Partner Referral'}</h2>
+            <h2 className="lmh-title">{step === 'questions' ? (profileMode ? 'Personal Information' : text.title) : step === 'plan' ? text.planTitle : 'Confidential Partner Referral'}</h2>
             <p className="lmh-sub">
-              {step === 'questions' ? text.sub : step === 'plan' ? `Customized for ${planResult?.householdSize} in ZIP ${planResult?.zip}.` : 'Zero paperwork required. 100% confidential assistance.'}
+              {step === 'questions' ? (profileMode ? 'Review and update the information saved only in this browser to personalize your food plan.' : text.sub) : step === 'plan' ? `Customized for ${planResult?.householdSize} in ZIP ${planResult?.zip}.` : 'Zero paperwork required. 100% confidential assistance.'}
             </p>
           </div>
 

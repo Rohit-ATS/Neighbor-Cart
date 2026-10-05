@@ -1,0 +1,9 @@
+<body style="margin:0">
+<iframe id="f" src="/#/places/navigator" style="width:1340px;height:900px;border:0;display:block"></iframe>
+<script>
+  f.onload = () => setTimeout(() => {
+    const d = f.contentDocument;
+    d.querySelectorAll('.ai-consent-row input').forEach((i) => i.click());
+  }, 1500);
+</script>
+</body>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { PLACES, getIsOpenNow } from '../data/places.js';
 import { askHarvestLink } from '../lib/api.js';
 import { formatMiles, haversineMiles, useUserLocation } from '../lib/geo.js';
@@ -94,6 +95,24 @@ export const parseExclusions = (text) => {
   }
   return found;
 };
+/* The two optional services, each described by what it buys rather than by the
+   data it takes — and with the cost of declining spelled out, so leaving one
+   off is a decision rather than the path of least resistance. */
+const CONSENT_CHOICES = [
+  {
+    id: 'bedrock',
+    title: 'Tailor answers to my saved details',
+    onHint: 'Your ZIP, household size, timing, transport and food needs go to Amazon Bedrock with each question.',
+    offHint: 'Answers stay general. Your saved intake details are not sent anywhere.',
+  },
+  {
+    id: 'google',
+    title: 'Use real travel times',
+    onHint: 'Your precise location goes to Google Maps to time the journey door to door.',
+    offHint: 'Distances are measured in a straight line on this device, so they read shorter than the trip.',
+  },
+];
+
 const hasLocation = (text) => /\b(chicago|cook county|pilsen|new york|nyc|bronx|manhattan|los angeles|california|iowa|des moines)\b|\b\d{5}(?:-\d{4})?\b/i.test(text);
 const clockTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -124,6 +143,16 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
   const [residentProfile, setResidentProfile] = useState(() => getResidentProfile());
   const [bedrockProfileConsent, setBedrockProfileConsent] = useState(false);
   const [googleRoutesConsent, setGoogleRoutesConsent] = useState(false);
+  /* Reopened by hand after folding. It is not reset when a consent is
+     withdrawn — the panel is already open in that case. */
+  const [consentOpen, setConsentOpen] = useState(false);
+  const allConsentGiven = bedrockProfileConsent && googleRoutesConsent;
+
+  /* Granting the second consent folds the panel away; withdrawing either one
+     brings it back, so the controls are always where the state is. */
+  useEffect(() => {
+    if (allConsentGiven) setConsentOpen(false);
+  }, [allConsentGiven]);
 
   useEffect(() => {
     sessionStorage.setItem('harvestlink-ai-needs-v3', JSON.stringify(rememberedNeeds));
@@ -718,26 +747,69 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
       </div>
 
       <div className="ai-chat-composer">
-        <fieldset className="ai-provider-consent">
-          <legend>Privacy choices for optional services</legend>
-          <p>AI answers send this chat message and recent chat to Amazon Bedrock. Your street address stays on this device.</p>
-          <label>
-            <input
-              type="checkbox"
-              checked={bedrockProfileConsent}
-              onChange={(event) => setBedrockProfileConsent(event.target.checked)}
-            />
-            Also share my saved ZIP/city, household size, timing, transportation, and food needs with Amazon Bedrock for a tailored answer.
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={googleRoutesConsent}
-              onChange={(event) => setGoogleRoutesConsent(event.target.checked)}
-            />
-            Share my precise location with Google Maps/Routes for real travel times. Without this, maps use local straight-line distance.
-          </label>
-        </fieldset>
+        {/* Two choices, each stated as what it buys and what it costs. Once
+            both are made there is nothing left to decide, so the panel folds
+            down to a single line — but it stays on screen, because consent you
+            cannot find again is consent you cannot withdraw. */}
+        <div className={`ai-consent${allConsentGiven && !consentOpen ? ' is-folded' : ''}`}>
+          <AnimatePresence initial={false} mode="wait">
+            {allConsentGiven && !consentOpen ? (
+              <motion.button
+                key="folded"
+                type="button"
+                className="ai-consent-summary"
+                onClick={() => setConsentOpen(true)}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+              >
+                <span className="acs-tick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <span>Sharing with Bedrock and Google Maps</span>
+                <em>Change</em>
+              </motion.button>
+            ) : (
+              <motion.fieldset
+                key="open"
+                className="ai-consent-panel"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+              >
+                <legend>Privacy choices</legend>
+                <p className="ai-consent-base">
+                  Asking a question sends it, and the recent chat, to Amazon Bedrock. Your street address never leaves this device.
+                </p>
+
+                {CONSENT_CHOICES.map((choice) => {
+                  const on = choice.id === 'bedrock' ? bedrockProfileConsent : googleRoutesConsent;
+                  const set = choice.id === 'bedrock' ? setBedrockProfileConsent : setGoogleRoutesConsent;
+                  return (
+                    <label key={choice.id} className={`ai-consent-row${on ? ' is-on' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={(event) => set(event.target.checked)}
+                      />
+                      <span className="acr-switch" aria-hidden="true"><i /></span>
+                      <span className="acr-copy">
+                        <b>{choice.title}</b>
+                        {/* What you give up by leaving it off, so "no" is an
+                            informed answer and not just the quiet default. */}
+                        <small>{on ? choice.onHint : choice.offHint}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </motion.fieldset>
+            )}
+          </AnimatePresence>
+        </div>
         {/* Composer: springs open on focus, suggestions ride in its tray */}
         <AskBar
           placeholder="Ask anything about food help near you…"
