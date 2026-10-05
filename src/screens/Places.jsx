@@ -4,7 +4,7 @@ import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILIT
 import MapView from '../components/MapView.jsx';
 import PlaceDetailModal from '../components/PlaceDetailModal.jsx';
 import ReservationModal from '../components/ReservationModal.jsx';
-import { currentPosition, discoverPlaces, enrichPlaces, listLocations, listReservations } from '../lib/api.js';
+import { askHarvestLink, currentPosition, discoverPlaces, enrichPlaces, listLocations, listReservations } from '../lib/api.js';
 import { isStockImage, placeImage } from '../lib/placeImages.js';
 import AiChat from '../components/AiChat.jsx';
 import ResidentIntakeModal from '../components/ResidentIntakeModal.jsx';
@@ -18,6 +18,7 @@ import AiLauncher from '../components/AiLauncher.jsx';
 import ExpandingSearchDock from '../components/ExpandingSearchDock.jsx';
 import { useSectionContext } from '../lib/pageContext.js';
 import { parseSearch, SEARCH_EXAMPLES } from '../lib/searchParser.js';
+import { suggestPlaces, mergeNavigatorPicks } from '../lib/suggestPlaces.js';
 import { appHash } from '../lib/routes.js';
 
 /* Two catalogues describe the same pantry differently, so matching is by
@@ -122,6 +123,15 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   // The sentence as typed, and what the parser made of it.
   const [aiQuery, setAiQuery] = useState('');
   const [understood, setUnderstood] = useState([]);
+  /* The suggestions under the bar, and which one the arrow keys are on. The
+     list itself is derived from what has been typed; only its openness and the
+     highlight are state, so a keystroke can never show a stale list. */
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  /* What the hosted navigator added to the local ranking, keyed by the exact
+     sentence it answered, so a backspace-and-retype does not re-ask it. */
+  const [navigatorPicks, setNavigatorPicks] = useState({ query: '', placeIds: [], note: '' });
+  const [navigatorThinking, setNavigatorThinking] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [places, setPlaces] = useState(PLACES);
   const [placesTotal, setPlacesTotal] = useState(PLACES.length);
@@ -169,6 +179,9 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const [topbarHoverable, setTopbarHoverable] = useState(false);
   const [topbarOpen, setTopbarOpen] = useState(false);
   const topbarTimer = useRef(null);
+  // When the hosted navigator may be asked again after it pushed back.
+  const navigatorCooldown = useRef(0);
+  const askBarRef = useRef(null);
 
   useEffect(() => {
     const query = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -326,12 +339,123 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     setNeeds([]);
   };
 
+  /* The places the half-typed sentence already points at. Derived, not stored,
+     and computed offline — it is on screen by the next frame, with or without
+     a network. */
+  const localSuggestions = useMemo(
+    () => suggestPlaces(aiQuery, places, { origin: userPosition, limit: 6 }),
+    [aiQuery, places, userPosition],
+  );
+
+  /* The hosted navigator reads the same sentence and may name places the rules
+     above cannot reach. It is strictly an addition: the list is already on
+     screen before this is asked, and stays if it never answers.
+
+     It is asked sparingly and on purpose. The server allows a handful of AI
+     requests a minute for the whole network, which a per-keystroke typeahead
+     would spend in seconds — so it waits for a real pause, wants a sentence
+     rather than a word, asks each sentence once, and stops asking for a while
+     if the server pushes back. */
+  useEffect(() => {
+    const query = aiQuery.trim();
+    if (!suggestOpen || query.length < 12 || !query.includes(' ')) return undefined;
+    if (navigatorPicks.query === query) return undefined;
+    if (Date.now() < navigatorCooldown.current) return undefined;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setNavigatorThinking(true);
+      try {
+        const answer = await askHarvestLink({
+          message: query,
+          history: [],
+          // The navigator may only name places it was shown, so the catalog is
+          // the directory as it stands — the same records on screen.
+          catalog: places.slice(0, 60).map((place) => ({
+            id: place.id,
+            name: place.name,
+            address: `${place.address}, ${place.cityStateZip}`,
+            city: place.city,
+            services: place.services || [],
+            dietary: place.dietary || [],
+            hours: place.hoursSummary,
+            reservations: Boolean(place.acceptsReservations),
+          })),
+          memory: [],
+          context: 'The resident is typing into the directory search bar and wants matching places, not a conversation.',
+          residentProfile: null,
+          bedrockProfileConsent: false,
+        });
+        if (cancelled) return;
+        setNavigatorPicks({
+          query,
+          placeIds: (answer.placeIds || []).filter((id) => places.some((place) => place.id === id)),
+          note: answer.reply || '',
+        });
+      } catch {
+        if (cancelled) return;
+        /* Out of requests, no key, or offline. The local ranking is already
+           the answer; back off so a long sentence cannot keep retrying. */
+        navigatorCooldown.current = Date.now() + 60_000;
+        setNavigatorPicks({ query, placeIds: [], note: '' });
+      } finally {
+        if (!cancelled) setNavigatorThinking(false);
+      }
+    }, 700);
+
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [aiQuery, suggestOpen, places, navigatorPicks.query]);
+
+  /* What is actually offered: the local ranking, with the navigator's picks
+     lifted to the top once they arrive for this exact sentence. */
+  const suggestions = useMemo(() => (
+    navigatorPicks.query === aiQuery.trim()
+      ? mergeNavigatorPicks(localSuggestions, navigatorPicks.placeIds, places, { origin: userPosition, limit: 6 })
+      : localSuggestions
+  ), [localSuggestions, navigatorPicks, aiQuery, places, userPosition]);
+
+  const typedChips = useMemo(
+    () => (aiQuery.trim().length >= 3 ? parseSearch(aiQuery).understood : []),
+    [aiQuery],
+  );
+
+  const closeSuggestions = useCallback(() => {
+    setSuggestOpen(false);
+    setActiveSuggestion(-1);
+  }, []);
+
+  /* Choosing a suggestion is choosing a place, not a search: it opens that
+     place rather than rearranging the directory behind it. */
+  const chooseSuggestion = useCallback((entry) => {
+    if (!entry) return;
+    closeSuggestions();
+    setActivePlace(entry.place);
+  }, [closeSuggestions]);
+
+  const onAskBarKeyDown = (event) => {
+    if (event.key === 'Escape') { closeSuggestions(); return; }
+    if (!suggestOpen || suggestions.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveSuggestion((index) => (index + 1) % suggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSuggestion((index) => (index <= 0 ? suggestions.length - 1 : index - 1));
+    } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+      // Enter on a highlighted suggestion opens it; Enter on the sentence
+      // itself still runs the search, which is what the form does.
+      event.preventDefault();
+      chooseSuggestion(suggestions[activeSuggestion]);
+    }
+  };
+
   /* One sentence in, the whole filter set out. The chips it produces are the
      receipt: everything it decided is visible and individually removable, so a
      wrong guess costs one click rather than a confusing result list. */
   const runAiSearch = (text) => {
     const query = (text ?? aiQuery).trim();
     setAiQuery(query);
+    closeSuggestions();
     if (!query) { resetFilters(); return; }
 
     const { filters, understood: chips } = parseSearch(query);
@@ -904,6 +1028,15 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               )}
             </div>
 
+            <div
+              className="ai-search-dock"
+              ref={askBarRef}
+              onBlur={(event) => {
+                // Only a focus that left the bar entirely closes the panel, or
+                // clicking a suggestion would dismiss it before it registered.
+                if (!event.currentTarget.contains(event.relatedTarget)) closeSuggestions();
+              }}
+            >
             <form
               className="ai-search-row"
               onSubmit={(e) => { e.preventDefault(); runAiSearch(); }}
@@ -920,13 +1053,85 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
                 placeholder="Describe what you need — “hot meals near me tonight, no ID”"
                 aria-label="Describe what food help you need"
                 value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
+                onChange={(e) => {
+                  setAiQuery(e.target.value);
+                  setSuggestOpen(true);
+                  setActiveSuggestion(-1);
+                }}
+                onFocus={() => setSuggestOpen(true)}
+                onKeyDown={onAskBarKeyDown}
+                role="combobox"
+                aria-expanded={suggestOpen && suggestions.length > 0}
+                aria-controls="ai-search-suggestions"
+                aria-autocomplete="list"
+                aria-activedescendant={activeSuggestion >= 0 ? `ai-suggestion-${activeSuggestion}` : undefined}
+                autoComplete="off"
               />
               {aiQuery && (
                 <button type="button" className="ai-search-clear" onClick={resetFilters} aria-label="Clear search">×</button>
               )}
               <button type="submit" className="ai-search-go">Search</button>
             </form>
+
+            {/* What the bar has made of the sentence so far: the places it can
+                already name, each saying why. */}
+            {suggestOpen && (suggestions.length > 0 || navigatorThinking) && (
+              <div className="ai-suggest-panel" id="ai-search-suggestions" role="listbox" aria-label="Suggested places">
+                <div className="ai-suggest-head">
+                  <span className="ai-suggest-title">
+                    {suggestions.length > 0
+                      ? `${suggestions.length} place${suggestions.length === 1 ? '' : 's'} match what you typed`
+                      : 'Reading what you typed…'}
+                  </span>
+                  {typedChips.length > 0 && (
+                    <span className="ai-suggest-reading">
+                      {typedChips.map((chip) => chip.label).join(' · ')}
+                    </span>
+                  )}
+                </div>
+
+                <ul className="ai-suggest-list">
+                  {suggestions.map((entry, index) => (
+                    <li key={entry.place.id}>
+                      <button
+                        type="button"
+                        id={`ai-suggestion-${index}`}
+                        role="option"
+                        aria-selected={index === activeSuggestion}
+                        className={`ai-suggest-item${index === activeSuggestion ? ' is-active' : ''}`}
+                        onMouseEnter={() => setActiveSuggestion(index)}
+                        onClick={() => chooseSuggestion(entry)}
+                      >
+                        <span className="asi-main">
+                          <b className="asi-name">{entry.place.name}</b>
+                          <span className="asi-where">{entry.place.cityStateZip}</span>
+                        </span>
+                        <span className="asi-reasons">
+                          {entry.fromNavigator && <em className="asi-pick">Navigator pick</em>}
+                          {entry.reasons.map((reason) => (
+                            <em key={reason} className={reason === 'Open now' ? 'asi-reason is-open' : 'asi-reason'}>
+                              {reason}
+                            </em>
+                          ))}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="ai-suggest-foot">
+                  <button
+                    type="button"
+                    className="ai-suggest-all"
+                    onClick={() => runAiSearch()}
+                  >
+                    Search the whole directory for “{aiQuery.trim()}”
+                  </button>
+                  {navigatorThinking && <span className="ai-suggest-thinking">Navigator is reading your sentence…</span>}
+                </div>
+              </div>
+            )}
+            </div>
 
             {understood.length > 0 ? (
               <div className="ai-search-understood">

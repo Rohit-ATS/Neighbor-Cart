@@ -5928,3 +5928,161 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
     border-left: 0;
   }
 }
+
+/* ==========================================================================
+   THE ASK BAR'S SUGGESTIONS
+   Places the half-typed sentence already points at, each carrying the reasons
+   it was offered. The panel hangs off the bar rather than pushing the filter
+   card around, so the page behind it does not jump on every keystroke.
+   ========================================================================== */
+
+.ai-search-dock { position: relative; }
+
+.ai-suggest-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  padding: 12px 10px 10px;
+  background: var(--panel, #fff);
+  border: 1px solid #ded6c8;
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(45, 4, 7, .16);
+  animation: ai-suggest-in .18s cubic-bezier(.22, .9, .3, 1) both;
+}
+
+@keyframes ai-suggest-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+.ai-suggest-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 0 10px 8px;
+}
+
+.ai-suggest-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-45, rgba(27, 28, 20, .45));
+}
+
+.ai-suggest-reading {
+  font-size: 12.5px;
+  color: var(--green);
+}
+
+.ai-suggest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ai-suggest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background .14s ease;
+}
+
+.ai-suggest-item.is-active { background: var(--panel-2, #f4efe1); }
+
+.asi-main { display: grid; gap: 1px; min-width: 0; }
+
+.asi-name {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink, #1b1c14);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asi-where {
+  font-size: 12.5px;
+  color: var(--muted, rgba(27, 28, 20, .6));
+}
+
+.asi-reasons {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  max-width: 52%;
+}
+
+.asi-reason,
+.asi-pick {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel-2, #f4efe1);
+  border: 1px solid #e4dcc9;
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--muted, rgba(27, 28, 20, .6));
+  white-space: nowrap;
+}
+
+.asi-reason.is-open {
+  background: var(--mint-soft, #e9f3ea);
+  border-color: #c8e4d3;
+  color: #00674f;
+}
+
+/* The navigator's own picks say so, because a suggestion from a model and a
+   suggestion from the rules are not the same claim. */
+.asi-pick {
+  background: rgba(146, 7, 17, .08);
+  border-color: rgba(146, 7, 17, .2);
+  color: var(--green, #920711);
+}
+
+.ai-suggest-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 8px 10px 0;
+  border-top: 1px solid #efe8d5;
+}
+
+.ai-suggest-all {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--green);
+  text-align: left;
+  cursor: pointer;
+}
+.ai-suggest-all:hover { text-decoration: underline; }
+
+.ai-suggest-thinking {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-45, rgba(27, 28, 20, .45));
+}
+
+@media (max-width: 680px) {
+  .asi-reasons { display: none; }
+}
