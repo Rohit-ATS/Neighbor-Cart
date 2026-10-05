@@ -10,7 +10,6 @@ import { getSectionKnowledge } from '../lib/pageContext.js';
 import { classifyMessage, mergeNeeds } from '../lib/needs.js';
 import { getResidentProfile, RESIDENT_PROFILE_EVENT, residentProfileFacts, saveResidentProfile } from '../lib/residentProfile.js';
 import AiPlanLink from './AiPlanLink.jsx';
-import ScreenSnip from './ScreenSnip.jsx';
 import { buildRescuePlan, isFoodRescueIntent, rescueMessage } from '../lib/foodRescue.js';
 
 /* The conversation itself.
@@ -153,10 +152,6 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
   /* Reopened by hand after folding. It is not reset when a consent is
      withdrawn — the panel is already open in that case. */
   const [consentOpen, setConsentOpen] = useState(false);
-  /* A crop of the page, held here until the question that goes with it is
-     sent. It is never sent on its own and never without being shown first. */
-  const [snipping, setSnipping] = useState(false);
-  const [snapshot, setSnapshot] = useState(null);
   const allConsentGiven = bedrockProfileConsent && googleRoutesConsent;
 
   /* Granting the second consent folds the panel away; withdrawing either one
@@ -227,20 +222,13 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     const providerLabels = nextRememberedNeeds.map((need) => need.label);
     const nextLabels = nextNeeds.map((need) => need.label);
 
-    /* The crop belongs to this question only: it is cleared as the message is
-       sent, so a later question never silently re-sends an old picture. */
-    const attached = snapshot;
-    setSnapshot(null);
-
-    setMessages((prev) => [...prev, { sender: 'user', text: question, image: attached, timestamp: clockTime() }]);
+    setMessages((prev) => [...prev, { sender: 'user', text: question, timestamp: clockTime() }]);
     setRememberedNeeds(nextRememberedNeeds);
 
     // Nothing readable to send anywhere: ask for it again and keep the memory
     // untouched, rather than spending a model call on a keyboard slip.
     if (reading.kind === 'gibberish' || reading.kind === 'unclear') {
       setMessages((prev) => [...prev, unreadableReply(question, reading.kind)]);
-      // The picture survives: they still meant to ask about it.
-      if (attached) setSnapshot(attached);
       return;
     }
 
@@ -285,7 +273,6 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         // included after the resident explicitly opts into Bedrock tailoring.
         residentProfile: bedrockProfileConsent ? activeProfile : null,
         bedrockProfileConsent,
-        screenshot: attached,
       });
       const citations = (answer.placeIds || [])
         .map((placeId) => PLACES.find((place) => place.id === placeId))
@@ -313,12 +300,7 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
     } catch {
       // The verified local matcher keeps the navigator useful if Bedrock is
       // temporarily unavailable or the server has not yet received an IAM role.
-      const local = groundedAnswer(question, nextNeeds, reading, activeProfile);
-      setMessages((prev) => [...prev, attached
-        /* Only the hosted model can read a picture. Saying so is better than
-           answering the words and letting the image look considered. */
-        ? { ...local, text: `I can’t look at the image right now — I’m answering from the verified directory on this device. ${local.text}` }
-        : local]);
+      setMessages((prev) => [...prev, groundedAnswer(question, nextNeeds, reading, activeProfile)]);
     } finally {
       setIsThinking(false);
     }
@@ -675,11 +657,6 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         {messages.map((message, index) => (
           <div key={index} className={`ai-message-row ${message.sender === 'user' ? 'is-user' : 'is-ai'}`}>
             <div className="ai-message-bubble">
-              {/* The crop stays in the thread, so what was asked about is still
-                  visible when the answer is read back later. */}
-              {message.image && (
-                <img className="ai-message-snap" src={message.image} alt="The part of the page you asked about" />
-              )}
               <p className="ai-message-text">{message.text}</p>
 
               {message.warning && (
@@ -775,31 +752,9 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
         )}
       </div>
 
-      {snipping && (
-        <ScreenSnip
-          onCancel={() => setSnipping(false)}
-          onCapture={(dataUrl) => { setSnapshot(dataUrl); setSnipping(false); }}
-        />
-      )}
-
       <div className="ai-chat-composer">
         {/* What the navigator knows before it is asked anything: the plan, or
             the shortest way to give it one. */}
-        {snapshot && (
-          /* Shown before it is sent, and removable: the person sees exactly
-             what would leave the device, and can change their mind. */
-          <div className="ai-snap-preview">
-            <img src={snapshot} alt="The part of the page you selected" />
-            <div className="asp-copy">
-              <b>Attached to your next question</b>
-              <small>This image goes to Amazon Bedrock with whatever you ask.</small>
-            </div>
-            <button type="button" className="asp-drop" onClick={() => setSnapshot(null)} aria-label="Remove the attached image">
-              Remove
-            </button>
-          </div>
-        )}
-
         <AiPlanLink
           profile={residentProfile}
           active={usePlan}
@@ -889,31 +844,12 @@ export default function AiChat({ variant = 'section', sectionId = null, onClose,
           </AnimatePresence>
         </div>
         {/* Composer: springs open on focus, suggestions ride in its tray */}
-        <div className="ai-compose-row">
-          <AskBar
-            placeholder="Ask anything about food help near you…"
-            chips={section?.starters || SAMPLE_QUESTIONS}
-            onSubmit={handleAsk}
-            disabled={isThinking}
-          />
-          {/* Pointing is the alternative to describing. The button only offers
-              it where the browser can actually capture a tab. */}
-          {typeof navigator !== 'undefined' && navigator.mediaDevices?.getDisplayMedia && (
-            <button
-              type="button"
-              className="ai-snip-btn"
-              onClick={() => setSnipping(true)}
-              disabled={isThinking || Boolean(snapshot)}
-              title="Point at something on this page"
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 8V5.5A1.5 1.5 0 0 1 4.5 4H8M16 4h3.5A1.5 1.5 0 0 1 21 5.5V8M21 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H4.5A1.5 1.5 0 0 1 3 18.5V16" />
-                <circle cx="12" cy="12" r="2.6" />
-              </svg>
-              <span>Point at a spot</span>
-            </button>
-          )}
-        </div>
+        <AskBar
+          placeholder="Ask anything about food help near you…"
+          chips={section?.starters || SAMPLE_QUESTIONS}
+          onSubmit={handleAsk}
+          disabled={isThinking}
+        />
         {rememberedNeeds.length > 0 && (
           <div className="ai-memory-strip" aria-label="Remembered food access needs">
             <span>Remembering your needs</span>

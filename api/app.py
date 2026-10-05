@@ -7,8 +7,6 @@ and is proxied by Vite during development.
 
 from __future__ import annotations
 
-import base64
-import binascii
 import hashlib
 import hmac
 import json
@@ -80,10 +78,6 @@ PHOTO_SIGNATURE_RE = re.compile(r"^[0-9a-f]{64}$")
 HOUSEHOLD_SIZES = {"1 person", "2-3 people", "4-5 people", "6+ people"}
 DEFAULT_SLOT_CAPACITY = 12
 AI_MAX_MESSAGE = 2000
-# A cropped screenshot of one part of the page, as PNG bytes after decoding.
-# Generous enough for a legible crop of a card or a panel, small enough that a
-# full-screen capture at retina density cannot be forwarded by accident.
-AI_MAX_IMAGE_BYTES = 1_500_000
 SESSION_TTL_DAYS = 30
 BOOKING_HORIZON_DAYS = 30
 MAX_RESERVATIONS_PER_SESSION_PER_DAY = 1
@@ -804,37 +798,6 @@ def clean_ai_memory(value: object) -> list[str]:
     return [item.strip()[:AI_MAX_MESSAGE] for item in value[-12:] if isinstance(item, str) and item.strip()]
 
 
-def clean_ai_screenshot(value: object) -> bytes | None:
-    """A crop of the page the customer is pointing at, as a base64 PNG.
-
-    Absent is the normal case and never an error. Anything present has to be a
-    PNG we can decode and that is small enough to be a crop rather than a whole
-    screen: the bytes go straight to a model, so what is not recognisable here
-    does not travel.
-    """
-    if value is None:
-        return None
-    if not isinstance(value, str):
-        raise ApiError(HTTPStatus.BAD_REQUEST, "screenshot must be a base64 PNG string")
-
-    encoded = value.split(",", 1)[-1].strip()
-    # Base64 is 4 characters per 3 bytes; reject the obviously oversized before
-    # spending memory decoding it.
-    if len(encoded) > (AI_MAX_IMAGE_BYTES // 3 + 1) * 4 + 1024:
-        raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "screenshot is too large; crop a smaller area")
-    try:
-        raw = base64.b64decode(encoded, validate=True)
-    except (ValueError, binascii.Error) as error:
-        raise ApiError(HTTPStatus.BAD_REQUEST, "screenshot must be valid base64") from error
-
-    if len(raw) > AI_MAX_IMAGE_BYTES:
-        raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "screenshot is too large; crop a smaller area")
-    # The PNG signature, so the declared format and the bytes agree.
-    if not raw.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise ApiError(HTTPStatus.BAD_REQUEST, "screenshot must be a PNG")
-    return raw
-
-
 def clean_ai_context(value: object) -> str:
     """The page section the question was asked from; absent or unusable is fine."""
     if not isinstance(value, str):
@@ -873,7 +836,6 @@ def bedrock_chat(payload: dict) -> dict:
     catalog = clean_ai_catalog(payload.get("catalog"))
     memory = clean_ai_memory(payload.get("memory"))
     page_context = clean_ai_context(payload.get("context"))
-    screenshot = clean_ai_screenshot(payload.get("screenshot"))
     resident_profile = (
         clean_ai_resident_profile(payload.get("residentProfile"))
         if payload.get("bedrockProfileConsent") is True
@@ -914,17 +876,6 @@ def bedrock_chat(payload: dict) -> dict:
             "Do not claim an exact travel distance; use the city, ZIP, or neighborhood to guide matching instead:\n"
             + json.dumps(resident_profile, separators=(",", ":"))
         )
-    if screenshot:
-        # The crop is evidence of what the customer is looking at, not a new
-        # source of places: it may be read and explained, never mined for a
-        # location that the catalog does not already carry.
-        system += (
-            "\n\nThe customer has attached a screenshot of the part of the page they are asking about. "
-            "Read it to understand what they are pointing at and answer about that. "
-            "Describe only what is actually legible in it, never guess at text you cannot read, and "
-            "still recommend only VERIFIED_CATALOG locations — a name visible in the image is not a "
-            "licence to recommend a place that is not in the catalog."
-        )
     if page_context:
         # Where on the site the question came from. It answers "what is this?"
         # and nothing more: it never licenses a place that is not in the catalog.
@@ -939,16 +890,7 @@ def bedrock_chat(payload: dict) -> dict:
         response = client.converse(
             modelId=os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0"),
             system=[{"text": system}],
-            messages=[
-                *clean_ai_history(payload.get("history")),
-                {
-                    "role": "user",
-                    "content": [
-                        *([{"image": {"format": "png", "source": {"bytes": screenshot}}}] if screenshot else []),
-                        {"text": message},
-                    ],
-                },
-            ],
+            messages=[*clean_ai_history(payload.get("history")), {"role": "user", "content": [{"text": message}]}],
             inferenceConfig={"maxTokens": 500, "temperature": 0.25, "topP": 0.9},
         )
         raw = "".join(part.get("text", "") for part in response["output"]["message"]["content"]).strip()
