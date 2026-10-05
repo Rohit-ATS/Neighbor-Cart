@@ -1,27 +1,75 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PLACES } from '../data/places.js';
-import { IMPACT_METRICS } from '../data/communityData.js';
 
-export default function NonprofitDashboard({ onClose }) {
-  const [selectedOrgId, setSelectedOrgId] = useState('food-bank-iowa');
+export default function NonprofitDashboard({ onClose, onSelectPlace, variant = 'modal' }) {
+  const isPage = variant === 'page';
+  const defaultOrgId = PLACES[0]?.id || 'sf-marin-food-bank';
+  const [selectedOrgId, setSelectedOrgId] = useState(defaultOrgId);
   const [isOrgMenuOpen, setIsOrgMenuOpen] = useState(false);
   const orgMenuRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'services' | 'inventory' | 'urgent' | 'referrals' | 'export'
+  
+  // Clean operational tabs: inventory, urgent needs, referrals
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'urgent' | 'referrals'
   const [isServiceActive, setIsServiceActive] = useState(true);
+  const [lastVerifiedDate, setLastVerifiedDate] = useState('Today · Oct 1, 2026');
+  const [verifiedSuccessToast, setVerifiedSuccessToast] = useState(false);
+
+  // Urgent needs state
   const [urgentNeedInput, setUrgentNeedInput] = useState('');
   const [urgentNeedsList, setUrgentNeedsList] = useState([
     'Infant formula (Enfamil / Similac)',
-    'Canned tuna & chicken',
-    'Diapers (Sizes 4, 5, 6)'
-  ]);
-  const [lastVerifiedDate, setLastVerifiedDate] = useState('Today · Oct 1, 2026');
-  const [incomingReferrals, setIncomingReferrals] = useState([
-    { id: 'ref-1', resident: 'Family of 4 (ZIP 50316)', need: 'Emergency box with Halal & Dairy-Free items', date: 'Today 11:20 AM', status: 'Pending Contact' },
-    { id: 'ref-2', resident: 'Senior resident (ZIP 50309)', need: 'Home delivery requested - limited mobility', date: 'Today 9:45 AM', status: 'Assigned Driver' },
-    { id: 'ref-3', resident: 'Single parent (ZIP 50314)', need: 'Infant formula & diaper box', date: 'Yesterday', status: 'Completed' }
+    'Canned tuna & protein staples',
+    'Toddler diapers (Sizes 4, 5, 6)',
+    'Fresh California produce & greens'
   ]);
 
+  // Current organization
   const currentOrg = PLACES.find((p) => p.id === selectedOrgId) || PLACES[0];
+
+  // Dynamic inventory for current organization
+  const [orgInventory, setOrgInventory] = useState(currentOrg?.inventory || []);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('Fresh Produce');
+  const [newItemNote, setNewItemNote] = useState('');
+
+  // Update local inventory when switching organization
+  useEffect(() => {
+    if (currentOrg?.inventory) {
+      setOrgInventory(currentOrg.inventory);
+    }
+  }, [currentOrg]);
+
+  // Referrals list
+  const [incomingReferrals, setIncomingReferrals] = useState([
+    { 
+      id: 'ref-1', 
+      resident: 'Family of 4 (Potrero Hill, SF · 94107)', 
+      need: 'Emergency box with Halal & Dairy-Free staples', 
+      date: 'Today 11:20 AM', 
+      status: 'Pending Contact' 
+    },
+    { 
+      id: 'ref-2', 
+      resident: 'Senior resident (Oakland · 94621)', 
+      need: 'Home delivery requested - mobility limited', 
+      date: 'Today 9:45 AM', 
+      status: 'Assigned Driver' 
+    },
+    { 
+      id: 'ref-3', 
+      resident: 'Single parent (Fremont · 94538)', 
+      need: 'Infant formula & size 5 diapers', 
+      date: 'Yesterday 3:10 PM', 
+      status: 'Completed' 
+    },
+    { 
+      id: 'ref-4', 
+      resident: 'Family of 3 (Mission District, SF · 94110)', 
+      need: 'Gluten-free pantry goods & fresh vegetables', 
+      date: 'Today 8:30 AM', 
+      status: 'Pending Contact' 
+    }
+  ]);
 
   useEffect(() => {
     if (!isOrgMenuOpen) return undefined;
@@ -44,7 +92,34 @@ export default function NonprofitDashboard({ onClose }) {
   const handleVerifyNow = () => {
     const todayStr = 'Verified today · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     setLastVerifiedDate(todayStr);
-    alert(`Resource information for ${currentOrg.name} has been verified and stamped as accurate!`);
+    setVerifiedSuccessToast(true);
+    setTimeout(() => setVerifiedSuccessToast(false), 3000);
+  };
+
+  const handleCycleStock = (index) => {
+    const nextMap = {
+      high: 'medium',
+      medium: 'low',
+      low: 'high',
+      limited: 'high'
+    };
+    setOrgInventory((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, stock: nextMap[item.stock] || 'high' } : item))
+    );
+  };
+
+  const handleAddInventory = (e) => {
+    e.preventDefault();
+    if (!newItemName.trim()) return;
+    const newItem = {
+      item: newItemName.trim(),
+      category: newItemCategory,
+      stock: 'high',
+      note: newItemNote.trim() || 'Available now'
+    };
+    setOrgInventory([newItem, ...orgInventory]);
+    setNewItemName('');
+    setNewItemNote('');
   };
 
   const handleAddUrgentNeed = (e) => {
@@ -52,29 +127,45 @@ export default function NonprofitDashboard({ onClose }) {
     if (!urgentNeedInput.trim()) return;
     setUrgentNeedsList([urgentNeedInput.trim(), ...urgentNeedsList]);
     setUrgentNeedInput('');
-    alert('Urgent need posted to community feed and resident alerts!');
+  };
+
+  const handleUpdateReferralStatus = (refId, nextStatus) => {
+    setIncomingReferrals((prev) =>
+      prev.map((r) => (r.id === refId ? { ...r, status: nextStatus } : r))
+    );
   };
 
   const handleExportCSV = () => {
-    const headers = 'Organization,Date,ResidentsHelped,PoundsDistributed,ActiveVolunteers,VerifiedStatus\n';
-    const rows = `"${currentOrg.name}","Oct 1 2026",412,4850,18,"Verified"\n"${currentOrg.name}","Sep 30 2026",390,4600,16,"Verified"\n"${currentOrg.name}","Sep 29 2026",435,5100,20,"Verified"`;
+    const headers = 'Organization,City,State,ServiceStatus,LastVerified,Item,Category,StockLevel\n';
+    const rows = orgInventory
+      .map(
+        (inv) =>
+          `"${currentOrg.name}","${currentOrg.city}","${currentOrg.state}","${isServiceActive ? 'Active' : 'Paused'}","${lastVerifiedDate}","${inv.item}","${inv.category}","${inv.stock}"`
+      )
+      .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${currentOrg.id}_impact_report.csv`);
+    link.setAttribute('download', `${currentOrg.id}_inventory_summary.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="nonprofit-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'nonprofit' : undefined}
+    >
+      <div className="nonprofit-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Header */}
         <div className="np-header">
           <div className="np-header-left">
-            <span className="np-badge">🏢 Nonprofit Portal</span>
+            <span className="np-badge">🏢 Nonprofit &amp; Pantry Portal</span>
             <div className="np-title-row">
               <h2 className="np-title">{currentOrg.name}</h2>
               <div className="np-org-picker" ref={orgMenuRef}>
@@ -84,13 +175,16 @@ export default function NonprofitDashboard({ onClose }) {
                   aria-haspopup="listbox"
                   aria-expanded={isOrgMenuOpen}
                   onClick={() => setIsOrgMenuOpen((open) => !open)}
+                  title="Switch organization"
                 >
-                  <span className="np-org-select-label">{currentOrg.name} · {currentOrg.city}, {currentOrg.state}</span>
+                  <span className="np-org-select-label">
+                    {currentOrg.name} · {currentOrg.city}, {currentOrg.state}
+                  </span>
                   <span className="np-org-chevron" aria-hidden="true">⌄</span>
                 </button>
                 {isOrgMenuOpen && (
                   <div className="np-org-options" role="listbox" aria-label="Choose organization">
-                    {PLACES.map((place, index) => (
+                    {PLACES.slice(0, 30).map((place, index) => (
                       <button
                         type="button"
                         role="option"
@@ -104,53 +198,72 @@ export default function NonprofitDashboard({ onClose }) {
                         }}
                       >
                         <span>{place.name}</span>
-                        <small>{place.city}, {place.state}</small>
+                        <small>{place.city}, {place.state} ({place.typeLabel?.split(' ')[0] || 'Relief'})</small>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
             </div>
-            <p className="np-sub">{currentOrg.address}, {currentOrg.cityStateZip} · Last verified: <b>{lastVerifiedDate}</b></p>
+            <p className="np-sub">
+              📍 {currentOrg.address}, {currentOrg.cityStateZip} · Last verified: <b>{lastVerifiedDate}</b>
+            </p>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close portal">×</button>
+          {!isPage && (
+            <button className="modal-close" onClick={onClose} aria-label="Close portal">
+              ×
+            </button>
+          )}
         </div>
 
         {/* Action Top Bar */}
         <div className="np-top-controls">
           <div className="np-status-toggle-wrap">
-            <span className="np-status-label">Service Distribution Status:</span>
+            <span className="np-status-label">Distribution Status:</span>
             <button
               type="button"
               className={`np-status-btn ${isServiceActive ? 'is-active' : 'is-paused'}`}
               onClick={() => setIsServiceActive(!isServiceActive)}
+              title="Click to toggle distribution status"
             >
-              {isServiceActive ? '🟢 Live & Accepting Residents' : '🔴 Marked Temporarily Unavailable'}
+              {isServiceActive ? '🟢 Live & Accepting Residents' : '🔴 Temporarily Paused / At Capacity'}
             </button>
           </div>
-          <button type="button" className="btn-verify-stamp" onClick={handleVerifyNow}>
-            ✓ Stamp Verified Today
-          </button>
-          <button type="button" className="btn-export-rep" onClick={handleExportCSV}>
-            📥 Export CSV Report
-          </button>
+          
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button type="button" className="btn-verify-stamp" onClick={handleVerifyNow}>
+              ✓ Stamp Verified Today
+            </button>
+            <button type="button" className="btn-export-rep" onClick={handleExportCSV}>
+              📥 Export CSV Report
+            </button>
+          </div>
         </div>
 
-        {/* Tab Navigation */}
+        {verifiedSuccessToast && (
+          <div style={{
+            background: 'rgba(29, 122, 68, 0.12)',
+            color: 'var(--d-ok, #1d7a44)',
+            padding: '8px 24px',
+            fontSize: '13px',
+            fontWeight: '600',
+            borderBottom: '1px solid rgba(29, 122, 68, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            ✓ Stamped {currentOrg.name} as verified and accurate for today!
+          </div>
+        )}
+
+        {/* Clean Operational Tabs */}
         <div className="np-tabs-nav">
-          <button 
-            type="button" 
-            className={`np-tab-btn ${activeTab === 'overview' ? 'is-active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            📊 Community Demand
-          </button>
           <button 
             type="button" 
             className={`np-tab-btn ${activeTab === 'inventory' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('inventory')}
           >
-            📦 Live Food Inventory ({currentOrg.inventory.length})
+            📦 Live Food Inventory ({orgInventory.length})
           </button>
           <button 
             type="button" 
@@ -164,64 +277,84 @@ export default function NonprofitDashboard({ onClose }) {
             className={`np-tab-btn ${activeTab === 'referrals' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('referrals')}
           >
-            📥 Referrals & Intakes ({incomingReferrals.length})
+            📥 Resident Referrals ({incomingReferrals.length})
           </button>
         </div>
 
-        {/* Tab 1: Overview & Community Demand */}
-        {activeTab === 'overview' && (
-          <div className="np-tab-content">
-            <div className="np-stat-grid">
-              <div className="np-stat-card">
-                <span className="np-sc-val">412</span>
-                <span className="np-sc-label">Residents Served This Week</span>
-                <span className="np-sc-sub">+14% vs previous week</span>
-              </div>
-              <div className="np-stat-card">
-                <span className="np-sc-val">4,850 lbs</span>
-                <span className="np-sc-label">Food Distributed</span>
-                <span className="np-sc-sub">~4,040 nutritious meals</span>
-              </div>
-              <div className="np-stat-card">
-                <span className="np-sc-val">18</span>
-                <span className="np-sc-label">Active Volunteers</span>
-                <span className="np-sc-sub">6 open shifts remaining</span>
-              </div>
-              <div className="np-stat-card">
-                <span className="np-sc-val">99.2%</span>
-                <span className="np-sc-label">Fulfillment Rate</span>
-                <span className="np-sc-sub">Zero resident turnaways</span>
-              </div>
-            </div>
-
-            <div className="np-demand-section">
-              <h3>Anonymized Local Demand Breakdown (ZIP {currentOrg.zip})</h3>
-              <p className="np-desc">Based on resident searches, intakes, and chat inquiries in your service radius.</p>
-              <div className="demand-bars-list">
-                {IMPACT_METRICS.categoryBreakdown.map((item, idx) => (
-                  <div key={idx} className="demand-bar-row">
-                    <span className="demand-bar-title">{item.category}</span>
-                    <div className="demand-bar-track">
-                      <div className="demand-bar-fill" style={{ width: `${item.percent * 2.2}%` }} />
-                    </div>
-                    <span className="demand-bar-pct">{item.percent}% requests</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Inventory Manager */}
+        {/* Tab 1: Live Food Inventory */}
         {activeTab === 'inventory' && (
           <div className="np-tab-content">
             <div className="np-inv-head">
-              <h3>Manage Published Food Categories & Stock</h3>
-              <p className="np-desc">Update availability in real-time so residents and volunteers see accurate supplies.</p>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px' }}>Manage Published Inventory &amp; Stock</h3>
+                <p className="np-desc" style={{ margin: '4px 0 0' }}>
+                  Update item stock in real time so neighbors and volunteers see what supplies are available.
+                </p>
+              </div>
             </div>
 
+            {/* Quick Add Form */}
+            <form onSubmit={handleAddInventory} style={{
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              margin: '16px 0 20px',
+              padding: '16px',
+              background: 'var(--d-surface, #fff)',
+              border: '1px solid var(--d-line-soft, #ece3cd)',
+              borderRadius: '12px'
+            }}>
+              <input
+                type="text"
+                placeholder="Item name (e.g. Fresh Apples, Brown Rice)"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                style={{
+                  flex: '2 1 200px',
+                  padding: '9px 14px',
+                  border: '1px solid #d4c8b2',
+                  borderRadius: '8px',
+                  fontSize: '13px'
+                }}
+              />
+              <select
+                value={newItemCategory}
+                onChange={(e) => setNewItemCategory(e.target.value)}
+                style={{
+                  flex: '1 1 140px',
+                  padding: '9px 12px',
+                  border: '1px solid #d4c8b2',
+                  borderRadius: '8px',
+                  fontSize: '13px'
+                }}
+              >
+                <option value="Fresh Produce">Fresh Produce</option>
+                <option value="Protein & Meat">Protein &amp; Meat</option>
+                <option value="Dairy & Eggs">Dairy &amp; Eggs</option>
+                <option value="Pantry Staples">Pantry Staples</option>
+                <option value="Baby & Infant">Baby &amp; Infant</option>
+                <option value="Prepared Meals">Prepared Meals</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Note / limit (e.g. 2 bags per family)"
+                value={newItemNote}
+                onChange={(e) => setNewItemNote(e.target.value)}
+                style={{
+                  flex: '2 1 180px',
+                  padding: '9px 14px',
+                  border: '1px solid #d4c8b2',
+                  borderRadius: '8px',
+                  fontSize: '13px'
+                }}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
+                + Add Item
+              </button>
+            </form>
+
             <div className="np-inventory-table">
-              {currentOrg.inventory.map((inv, idx) => (
+              {orgInventory.map((inv, idx) => (
                 <div key={idx} className="np-inv-row">
                   <div className="np-inv-info">
                     <span className="np-inv-cat">{inv.category}</span>
@@ -230,28 +363,37 @@ export default function NonprofitDashboard({ onClose }) {
                   </div>
                   <div className="np-inv-actions">
                     <span className={`stock-tag stock-${inv.stock}`}>
-                      {inv.stock === 'high' ? 'High Supply' : inv.stock === 'medium' ? 'Moderate' : 'Limited'}
+                      {inv.stock === 'high' ? 'High Supply' : inv.stock === 'medium' ? 'Moderate' : 'Low Stock'}
                     </span>
                     <button
                       type="button"
                       className="btn-stock-toggle"
-                      onClick={() => alert(`Updated stock status for ${inv.item}`)}
+                      onClick={() => handleCycleStock(idx)}
+                      title="Click to cycle stock status (High → Medium → Low)"
                     >
-                      Cycle Status
+                      Cycle Status ↻
                     </button>
                   </div>
                 </div>
               ))}
+
+              {orgInventory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '36px', color: 'var(--d-muted)' }}>
+                  <p>No inventory items listed for this location yet.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Tab 3: Urgent Needs Manager */}
+        {/* Tab 2: Urgent Needs Manager */}
         {activeTab === 'urgent' && (
           <div className="np-tab-content">
             <div className="np-urgent-manager">
-              <h3>Broadcast Urgent Needs to Community & Donors</h3>
-              <p className="np-desc">Post critical shortages so food rescue partners and local donors can mobilize immediately.</p>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Broadcast Urgent Shortages</h3>
+              <p className="np-desc" style={{ margin: '4px 0 16px' }}>
+                Broadcast critical shortages directly to donors, volunteers, and food rescue partners.
+              </p>
 
               <form onSubmit={handleAddUrgentNeed} className="urgent-form">
                 <input
@@ -261,11 +403,15 @@ export default function NonprofitDashboard({ onClose }) {
                   value={urgentNeedInput}
                   onChange={(e) => setUrgentNeedInput(e.target.value)}
                 />
-                <button type="submit" className="btn-primary">Post Urgent Need</button>
+                <button type="submit" className="btn-primary">
+                  Post Urgent Need
+                </button>
               </form>
 
-              <div className="urgent-active-list">
-                <h4>Active Broadcasted Needs:</h4>
+              <div className="urgent-active-list" style={{ marginTop: '24px' }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: 'var(--d-brown)' }}>
+                  Active Broadcasted Needs ({urgentNeedsList.length}):
+                </h4>
                 {urgentNeedsList.map((need, idx) => (
                   <div key={idx} className="urgent-item-badge">
                     <span>🚨 {need}</span>
@@ -273,22 +419,31 @@ export default function NonprofitDashboard({ onClose }) {
                       type="button"
                       className="urgent-del-btn"
                       onClick={() => setUrgentNeedsList(urgentNeedsList.filter((_, i) => i !== idx))}
+                      title="Mark resolved and remove"
                     >
-                      Resolve / Remove
+                      Resolve / Remove ✕
                     </button>
                   </div>
                 ))}
+
+                {urgentNeedsList.length === 0 && (
+                  <p style={{ color: 'var(--d-muted)', fontStyle: 'italic', padding: '16px 0' }}>
+                    No urgent shortages broadcasted. All shelves currently stocked!
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 4: Referrals & Intakes */}
+        {/* Tab 3: Referrals & Intakes */}
         {activeTab === 'referrals' && (
           <div className="np-tab-content">
             <div className="np-referrals-head">
-              <h3>Incoming Resident Referrals & Assistance Requests</h3>
-              <p className="np-desc">Manage confidential intakes and refer residents to partner organizations.</p>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Incoming Resident Assistance Requests</h3>
+              <p className="np-desc" style={{ margin: '4px 0 16px' }}>
+                Review and coordinate confidential client intakes and requests submitted through the Navigator.
+              </p>
             </div>
 
             <div className="referrals-table">
@@ -296,7 +451,9 @@ export default function NonprofitDashboard({ onClose }) {
                 <div key={ref.id} className="referral-row-card">
                   <div className="ref-top">
                     <span className="ref-client">{ref.resident}</span>
-                    <span className="ref-status-tag">{ref.status}</span>
+                    <span className={`ref-status-tag ${ref.status === 'Completed' ? 'is-completed' : ''}`}>
+                      {ref.status}
+                    </span>
                   </div>
                   <p className="ref-need"><b>Request:</b> {ref.need}</p>
                   <p className="ref-time">⏱ Submitted: {ref.date}</p>
@@ -304,14 +461,21 @@ export default function NonprofitDashboard({ onClose }) {
                     <button 
                       type="button" 
                       className="btn-primary small"
-                      onClick={() => alert(`Marked referral ${ref.id} as contacted!`)}
+                      onClick={() => handleUpdateReferralStatus(ref.id, 'Contacted')}
                     >
-                      Contact Resident
+                      {ref.status === 'Pending Contact' ? 'Contact Resident' : 'Follow Up'}
                     </button>
                     <button 
                       type="button" 
                       className="btn-secondary small"
-                      onClick={() => alert(`Resident referred to regional partner pantry!`)}
+                      onClick={() => handleUpdateReferralStatus(ref.id, 'Completed')}
+                    >
+                      Mark Completed
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn-secondary small"
+                      onClick={() => handleUpdateReferralStatus(ref.id, 'Referred')}
                     >
                       Refer to Partner Org
                     </button>

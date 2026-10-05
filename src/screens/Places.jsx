@@ -158,6 +158,8 @@ const WORKSPACE_PATHS = {
   chat: appHash('places/navigator'),
   plan: appHash('places/plan'),
   community: appHash('places/community'),
+  volunteer: appHash('places/volunteer'),
+  nonprofit: appHash('places/nonprofit'),
 };
 
 const workspaceFromPath = () => {
@@ -264,8 +266,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   }, []);
 
   // Modals state
-  const [showNonprofit, setShowNonprofit] = useState(false);
-  const [showVolunteer, setShowVolunteer] = useState(false);
   const [showRescue, setShowRescue] = useState(false);
   const [showImpact, setShowImpact] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -275,11 +275,11 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const openPanel = showAdmin ? 'admin'
     : showImpact ? 'impact'
     : showRescue ? 'rescue'
-    : showVolunteer ? 'volunteer'
-    : showNonprofit ? 'nonprofit'
     : showMyPasses ? 'passes'
     : placeToReserve ? 'reservation'
     : activePlace ? 'place-detail'
+    : workspaceView === 'nonprofit' ? 'nonprofit'
+    : workspaceView === 'volunteer' ? 'volunteer'
     : workspaceView === 'community' ? 'community'
     : workspaceView === 'plan' ? 'intake'
     : 'directory';
@@ -292,9 +292,9 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       directory: () => showWorkspace('directory'),
       intake: () => showWorkspace('plan'),
       community: () => showWorkspace('community'),
-      volunteer: () => setShowVolunteer(true),
+      volunteer: () => showWorkspace('volunteer'),
       rescue: () => setShowRescue(true),
-      nonprofit: () => setShowNonprofit(true),
+      nonprofit: () => showWorkspace('nonprofit'),
       impact: () => setShowImpact(true),
       admin: () => setShowAdmin(true),
     })[panel]?.();
@@ -885,8 +885,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowVolunteer(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'volunteer' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('volunteer'); setMobileMenuOpen(false); }}
                 title="Volunteer Hub & Shifts"
               >
                 <span className="ln-icon">
@@ -898,7 +898,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
                   </svg>
                 </span>
                 <span className="ln-label">Volunteer Shifts</span>
-                <em className="ln-badge">4 open</em>
+                <em className="ln-badge">5 open</em>
               </button>
 
               <button 
@@ -920,8 +920,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowNonprofit(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'nonprofit' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('nonprofit'); setMobileMenuOpen(false); }}
                 title="Nonprofit Portal"
               >
                 <span className="ln-icon">
@@ -1004,6 +1004,28 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           <CommunityFeed
             variant="page"
             onOpenReport={() => alert('Report submitted to directory administrators for verification.')}
+          />
+        </section>
+      ) : workspaceView === 'volunteer' ? (
+        /* The volunteer hub, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Volunteer Hub">
+          <VolunteerHub
+            variant="page"
+            onSelectPlace={(place) => {
+              setActivePlace(place);
+              showWorkspace('directory');
+            }}
+          />
+        </section>
+      ) : workspaceView === 'nonprofit' ? (
+        /* The nonprofit portal, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Nonprofit Portal">
+          <NonprofitDashboard
+            variant="page"
+            onSelectPlace={(place) => {
+              setActivePlace(place);
+              showWorkspace('directory');
+            }}
           />
         </section>
       ) : workspaceView === 'chat' ? (
@@ -1550,20 +1572,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           onReservationConfirmed={() => {
             refreshReservations();
           }}
-        />
-      )}
-
-      {/* Nonprofit Dashboard Modal */}
-      {showNonprofit && (
-        <NonprofitDashboard
-          onClose={() => setShowNonprofit(false)}
-        />
-      )}
-
-      {/* Volunteer Hub Modal */}
-      {showVolunteer && (
-        <VolunteerHub
-          onClose={() => setShowVolunteer(false)}
         />
       )}
 

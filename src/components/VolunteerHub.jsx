@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { VOLUNTEER_SHIFTS } from '../data/communityData.js';
 
-export default function VolunteerHub({ onClose }) {
+export default function VolunteerHub({ onClose, onSelectPlace, variant = 'modal' }) {
+  const isPage = variant === 'page';
   const [shifts, setShifts] = useState(VOLUNTEER_SHIFTS);
   const [selectedTaskType, setSelectedTaskType] = useState('all');
-  const [hoursLogged, setHoursLogged] = useState(14.5);
   const [claimedShiftModal, setClaimedShiftModal] = useState(null);
 
   const filteredShifts = shifts.filter((s) => {
@@ -13,43 +13,45 @@ export default function VolunteerHub({ onClose }) {
   });
 
   const handleClaimShift = (shift) => {
-    setShifts(shifts.map((s) => s.id === shift.id ? { ...s, claimed: true, spotsAvailable: s.spotsAvailable - 1 } : s));
+    setShifts(
+      shifts.map((s) =>
+        s.id === shift.id
+          ? { ...s, claimed: true, spotsAvailable: Math.max(0, s.spotsAvailable - 1) }
+          : s
+      )
+    );
     setClaimedShiftModal(shift);
-    setHoursLogged((prev) => prev + shift.hoursGranted);
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="volunteer-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'volunteer' : undefined}
+    >
+      <div className="volunteer-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Header */}
         <div className="vol-header">
           <div>
-            <span className="np-badge">🤝 Volunteer & Driver Network</span>
-            <h2 className="np-title">Community Volunteer Opportunities</h2>
-            <p className="np-sub">Claim food rescue pickups, warehouse sorting shifts, and mobile distribution routes.</p>
+            <span className="np-badge">🤝 Volunteer &amp; Relief Network</span>
+            <h2 className="np-title">Community Volunteer Shifts</h2>
+            <p className="np-sub">
+              Support local food relief across San Francisco, Oakland, San Jose, and Fremont. 
+              Claim open shifts for food sorting, mobile food distributions, and pantry grocery support.
+            </p>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close volunteer hub">×</button>
-        </div>
-
-        {/* Impact Bar */}
-        <div className="vol-impact-summary">
-          <div className="vol-impact-item">
-            <span className="vii-val">{hoursLogged} hrs</span>
-            <span className="vii-label">Your Logged Hours</span>
-          </div>
-          <div className="vol-impact-item">
-            <span className="vii-val">~1,820 lbs</span>
-            <span className="vii-label">Pounds Food Moved</span>
-          </div>
-          <div className="vol-impact-item">
-            <span className="vii-val">1,516</span>
-            <span className="vii-label">Estimated Meals Delivered</span>
-          </div>
+          {!isPage && (
+            <button className="modal-close" onClick={onClose} aria-label="Close volunteer hub">
+              ×
+            </button>
+          )}
         </div>
 
         {/* Filter Bar */}
         <div className="vol-filter-strip">
-          <span className="filter-label">Filter Task:</span>
+          <span className="filter-label">Filter Role:</span>
           {['all', 'Warehouse Sorting', 'Mobile Distribution', 'Food Rescue Pickup', 'Home Delivery Route'].map((type) => (
             <button
               key={type}
@@ -68,29 +70,54 @@ export default function VolunteerHub({ onClose }) {
             <div key={shift.id} className="vol-shift-card">
               <div className="vsc-top">
                 <span className="vsc-type-tag">{shift.taskType}</span>
-                <span className="vsc-spots">{shift.spotsAvailable} spots remaining</span>
+                <span className="vsc-spots">
+                  {shift.spotsAvailable > 0 ? `${shift.spotsAvailable} spots remaining` : 'Full'}
+                </span>
               </div>
               <h3 className="vsc-title">{shift.title}</h3>
-              <p className="vsc-org">🏢 <b>{shift.orgName}</b> · 📍 {shift.location}</p>
-              <p className="vsc-date">⏱ {shift.date} ({shift.hoursGranted} hrs volunteer credit)</p>
-              <p className="vsc-skills">💡 <b>Skills / Requirements:</b> {shift.skillsNeeded}</p>
-              <p className="vsc-impact">🌟 <b>Impact:</b> {shift.impactEstimate}</p>
+              <p className="vsc-org">
+                🏢 <b>{shift.orgName}</b> · 📍 {shift.location}
+              </p>
+              <p className="vsc-date">
+                ⏱ {shift.date} · <b>{shift.hoursGranted} hrs</b> volunteer credit
+              </p>
+              <p className="vsc-skills">
+                💡 <b>Requirements:</b> {shift.skillsNeeded}
+              </p>
+              <p className="vsc-impact">
+                🌟 <b>Impact:</b> {shift.impactEstimate}
+              </p>
 
               <div className="vsc-actions">
                 {shift.claimed ? (
-                  <span className="vsc-claimed-badge">✓ You are registered for this shift!</span>
+                  <span className="vsc-claimed-badge">✓ Registered for this shift</span>
                 ) : (
                   <button
                     type="button"
                     className="btn-primary small"
                     onClick={() => handleClaimShift(shift)}
+                    disabled={shift.spotsAvailable <= 0}
                   >
-                    Sign Up / Claim Shift
+                    {shift.spotsAvailable > 0 ? 'Sign Up / Claim Shift' : 'Shift Full'}
                   </button>
                 )}
               </div>
             </div>
           ))}
+
+          {filteredShifts.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--d-muted)' }}>
+              <p>No volunteer shifts match the selected role filter.</p>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ marginTop: '12px' }}
+                onClick={() => setSelectedTaskType('all')}
+              >
+                Show All Volunteer Shifts
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Claim modal / confirmation */}
@@ -99,18 +126,20 @@ export default function VolunteerHub({ onClose }) {
             <div className="claim-confirm-box" onClick={(e) => e.stopPropagation()}>
               <span className="conf-icon">✓</span>
               <h3>Shift Confirmed!</h3>
-              <p>You’re registered for <b>{claimedShiftModal.title}</b> at {claimedShiftModal.orgName}.</p>
+              <p>
+                You’re registered for <b>{claimedShiftModal.title}</b> with <b>{claimedShiftModal.orgName}</b>.
+              </p>
               <div className="claim-details-box">
                 <p>📍 <b>Location:</b> {claimedShiftModal.location}</p>
                 <p>⏱ <b>Time:</b> {claimedShiftModal.date}</p>
-                <p>📝 <b>Instructions:</b> Wear closed-toe shoes. Meet at loading dock B. A coordinator will greet you.</p>
+                <p>📝 <b>Instructions:</b> Wear comfortable closed-toe shoes. Check in with the site lead upon arrival.</p>
               </div>
               <button 
                 type="button" 
                 className="btn-primary" 
                 onClick={() => setClaimedShiftModal(null)}
               >
-                Done / Add to Calendar
+                Got It / Close
               </button>
             </div>
           </div>
