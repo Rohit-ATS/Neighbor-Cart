@@ -1,39 +1,46 @@
 import React, { useState } from 'react';
 import { PLACES } from '../data/places.js';
 
-export default function AdminPortal({ onClose }) {
-  const [activeAdminTab, setActiveAdminTab] = useState('approvals'); // 'approvals' | 'stale' | 'flags' | 'categories'
+export default function AdminPortal({ onClose, variant = 'modal' }) {
+  const isPage = variant === 'page';
+  const [activeAdminTab, setActiveAdminTab] = useState('approvals'); // 'approvals' | 'flags' | 'stale'
   const [pendingApprovals, setPendingApprovals] = useState([
-    { id: 'app-1', name: 'South Bronx Mutual Fridge Alliance', city: 'Bronx, NY', submitted: '2 days ago', status: 'Pending Review' },
-    { id: 'app-2', name: 'Oakland Community Bread Project', city: 'Oakland, CA', submitted: 'Yesterday', status: 'Pending Review' },
-    { id: 'app-3', name: 'Austin Mobile Food Ministry', city: 'Austin, TX', submitted: 'Today', status: 'Pending Review' }
+    { id: 'app-1', name: 'Mission Community Food Hub', city: 'San Francisco, CA', submitted: 'Yesterday', status: 'Pending Review' },
+    { id: 'app-2', name: 'East Oakland Bread & Produce Collective', city: 'Oakland, CA', submitted: '2 days ago', status: 'Pending Review' },
+    { id: 'app-3', name: 'South Bay Mutual Aid Pantry', city: 'San Jose, CA', submitted: 'Today', status: 'Pending Review' }
   ]);
   const [flaggedReports, setFlaggedReports] = useState([
-    { id: 'flag-1', placeName: 'Food Bank of Iowa', issue: 'Holiday hours schedule change reported', reportedBy: 'Resident', date: 'Today' },
-    { id: 'flag-2', placeName: 'City Harvest Mobile', issue: 'New entrance location for wheelchair access', reportedBy: 'Volunteer', date: 'Yesterday' }
+    { id: 'flag-1', placeName: 'San Francisco-Marin Food Bank', issue: 'Holiday weekend hours schedule change', reportedBy: 'Pantry Lead', date: 'Today' },
+    { id: 'flag-2', placeName: 'Second Harvest Silicon Valley (Fremont Hub)', issue: 'Updated drive-thru entrance location', reportedBy: 'Driver', date: 'Yesterday' }
   ]);
 
   const handleApprove = (id) => {
     setPendingApprovals(pendingApprovals.filter((a) => a.id !== id));
-    alert('Organization approved and published to verified live directory!');
   };
 
   const handleResolveFlag = (id) => {
     setFlaggedReports(flaggedReports.filter((f) => f.id !== id));
-    alert('Report marked as investigated and verified updated.');
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'admin' : undefined}
+    >
+      <div className="admin-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Header */}
         <div className="admin-header">
           <div>
-            <span className="np-badge">⚙️ National Directory Admin</span>
-            <h2 className="np-title">Verification & Resource Governance</h2>
-            <p className="np-sub">Audit resource submissions, resolve community flags, and monitor stale data alerts.</p>
+            <span className="np-badge">⚙️ Directory Verification &amp; Admin</span>
+            <h2 className="np-title">Verification &amp; Resource Governance</h2>
+            <p className="np-sub">Audit resource submissions, review community flags, and monitor directory staleness.</p>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close admin">×</button>
+          {!isPage && (
+            <button className="modal-close" onClick={onClose} aria-label="Close admin">×</button>
+          )}
         </div>
 
         {/* Tab Controls */}
@@ -43,31 +50,33 @@ export default function AdminPortal({ onClose }) {
             className={`admin-tab-btn ${activeAdminTab === 'approvals' ? 'is-active' : ''}`}
             onClick={() => setActiveAdminTab('approvals')}
           >
-            📋 Pending Org Approvals ({pendingApprovals.length})
+            📋 Pending Partner Approvals ({pendingApprovals.length})
           </button>
           <button
             type="button"
             className={`admin-tab-btn ${activeAdminTab === 'flags' ? 'is-active' : ''}`}
             onClick={() => setActiveAdminTab('flags')}
           >
-            ⚠️ Flagged Reports ({flaggedReports.length})
+            ⚠️ Accuracy Reports ({flaggedReports.length})
           </button>
           <button
             type="button"
             className={`admin-tab-btn ${activeAdminTab === 'stale' ? 'is-active' : ''}`}
             onClick={() => setActiveAdminTab('stale')}
           >
-            🔄 Stale Data Monitor (0 Critical)
+            🔄 Automated Data Quality Monitor
           </button>
         </div>
 
         {/* Approvals tab */}
         {activeAdminTab === 'approvals' && (
           <div className="admin-content-pane">
-            <h3>Nonprofit & Pantry Partner Submissions</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: '16px' }}>Bay Area Nonprofit &amp; Pantry Partner Applications</h3>
             <div className="admin-items-list">
               {pendingApprovals.length === 0 ? (
-                <p className="admin-empty">✓ All organization submissions have been reviewed.</p>
+                <p className="admin-empty" style={{ padding: '32px 0', textAlign: 'center', color: 'var(--d-ok)' }}>
+                  ✓ All partner submissions have been reviewed and approved!
+                </p>
               ) : (
                 pendingApprovals.map((org) => (
                   <div key={org.id} className="admin-item-card">
@@ -81,7 +90,7 @@ export default function AdminPortal({ onClose }) {
                         className="btn-primary small"
                         onClick={() => handleApprove(org.id)}
                       >
-                        ✓ Approve & Issue Verified Badge
+                        ✓ Approve &amp; Issue Verified Badge
                       </button>
                     </div>
                   </div>
@@ -94,10 +103,12 @@ export default function AdminPortal({ onClose }) {
         {/* Flagged Reports tab */}
         {activeAdminTab === 'flags' && (
           <div className="admin-content-pane">
-            <h3>Community Accuracy Reports</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: '16px' }}>Community Accuracy &amp; Hours Reports</h3>
             <div className="admin-items-list">
               {flaggedReports.length === 0 ? (
-                <p className="admin-empty">✓ Zero unresolved accuracy reports.</p>
+                <p className="admin-empty" style={{ padding: '32px 0', textAlign: 'center', color: 'var(--d-ok)' }}>
+                  ✓ Zero unresolved accuracy reports.
+                </p>
               ) : (
                 flaggedReports.map((flag) => (
                   <div key={flag.id} className="admin-item-card">
@@ -111,7 +122,7 @@ export default function AdminPortal({ onClose }) {
                         className="btn-secondary small"
                         onClick={() => handleResolveFlag(flag.id)}
                       >
-                        Resolve & Mark Verified
+                        Mark Investigated &amp; Resolved
                       </button>
                     </div>
                   </div>
@@ -124,16 +135,22 @@ export default function AdminPortal({ onClose }) {
         {/* Stale data tab */}
         {activeAdminTab === 'stale' && (
           <div className="admin-content-pane">
-            <h3>Stale-Data Automated Auditor</h3>
-            <p className="np-desc">Resources older than 30 days trigger automated ping notifications to organization staff.</p>
+            <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>Automated Verification Health</h3>
+            <p className="np-desc" style={{ margin: '0 0 20px' }}>
+              Locations unverified for over 30 days trigger automated ping notifications to pantry leads.
+            </p>
             <div className="stale-summary-box">
               <div className="ssb-row">
-                <span>Verified in last 7 days:</span>
-                <b>100% of live directory (12/12 flagship locations)</b>
+                <span>Verified Bay Area Locations:</span>
+                <b>100% of flagship directory</b>
               </div>
               <div className="ssb-row">
                 <span>Stale records flagged:</span>
-                <b style={{ color: '#176834' }}>0 records out of date</b>
+                <b style={{ color: '#176834' }}>0 records overdue</b>
+              </div>
+              <div className="ssb-row">
+                <span>Last automated audit run:</span>
+                <b>Today · 6:00 AM PST</b>
               </div>
             </div>
           </div>

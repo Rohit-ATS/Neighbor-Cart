@@ -6019,6 +6019,9 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
 .modal-backdrop.is-page > .community-modal-card,
 .modal-backdrop.is-page > .intake-modal-card.lexis-modal,
 .modal-backdrop.is-page > .volunteer-modal-card,
+.modal-backdrop.is-page > .rescue-modal-card,
+.modal-backdrop.is-page > .admin-modal-card,
+.modal-backdrop.is-page > .impact-modal-card,
 .modal-backdrop.is-page > .nonprofit-modal-card {
   width: 100%;
   max-width: none;
@@ -6036,6 +6039,9 @@ p, li, label, input, textarea, select { font-family: Inter, system-ui, sans-seri
   .modal-backdrop.is-page > .community-modal-card,
   .modal-backdrop.is-page > .intake-modal-card.lexis-modal,
   .modal-backdrop.is-page > .volunteer-modal-card,
+  .modal-backdrop.is-page > .rescue-modal-card,
+  .modal-backdrop.is-page > .admin-modal-card,
+  .modal-backdrop.is-page > .impact-modal-card,
   .modal-backdrop.is-page > .nonprofit-modal-card {
     height: auto;
     min-height: calc(100vh - 64px);

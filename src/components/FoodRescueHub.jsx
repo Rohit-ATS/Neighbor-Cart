@@ -21,7 +21,7 @@ export default function FoodRescueHub({ onClose, variant = 'modal' }) {
   const [quantityLbs, setQuantityLbs] = useState('');
   const [storageReq, setStorageReq] = useState('Refrigerated');
   const [expirationDays, setExpirationDays] = useState('3 days');
-  const [donorCity, setDonorCity] = useState('Des Moines, IA');
+  const [donorCity, setDonorCity] = useState('San Francisco, CA');
   const [dispatchNotice, setDispatchNotice] = useState(null);
 
   useEffect(() => {

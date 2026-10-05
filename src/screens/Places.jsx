@@ -161,6 +161,8 @@ const WORKSPACE_PATHS = {
   volunteer: appHash('places/volunteer'),
   rescue: appHash('places/rescue'),
   nonprofit: appHash('places/nonprofit'),
+  admin: appHash('places/admin'),
+  impact: appHash('places/impact'),
 };
 
 const workspaceFromPath = () => {
@@ -267,17 +269,13 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
     topbarTimer.current = setTimeout(() => setTopbarOpen(false), TOPBAR_HOLD_MS);
   }, []);
 
-  // Modals state
-  const [showImpact, setShowImpact] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
-
   /* Whichever panel is open is what the person is working in; a click inside a
      tagged region refines it further (a place card, the passes drawer). */
-  const openPanel = showAdmin ? 'admin'
-    : showImpact ? 'impact'
-    : showMyPasses ? 'passes'
+  const openPanel = showMyPasses ? 'passes'
     : placeToReserve ? 'reservation'
     : activePlace ? 'place-detail'
+    : workspaceView === 'admin' ? 'admin'
+    : workspaceView === 'impact' ? 'impact'
     : workspaceView === 'nonprofit' ? 'nonprofit'
     : workspaceView === 'volunteer' ? 'volunteer'
     : workspaceView === 'community' ? 'community'
@@ -296,8 +294,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       volunteer: () => showWorkspace('volunteer'),
       rescue: () => showWorkspace('rescue'),
       nonprofit: () => showWorkspace('nonprofit'),
-      impact: () => setShowImpact(true),
-      admin: () => setShowAdmin(true),
+      impact: () => showWorkspace('impact'),
+      admin: () => showWorkspace('admin'),
     })[panel]?.();
   }, [showWorkspace]);
 
@@ -944,8 +942,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowAdmin(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'admin' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('admin'); setMobileMenuOpen(false); }}
                 title="Admin Verification Portal"
               >
                 <span className="ln-icon">
@@ -955,6 +953,22 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
                   </svg>
                 </span>
                 <span className="ln-label">Admin Verification</span>
+              </button>
+
+              <button 
+                type="button" 
+                className={`lexis-nav-btn${workspaceView === 'impact' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('impact'); setMobileMenuOpen(false); }}
+                title="Network Impact Analytics"
+              >
+                <span className="ln-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                </span>
+                <span className="ln-label">Network Impact</span>
               </button>
 
             </div>
@@ -1028,6 +1042,16 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               showWorkspace('directory');
             }}
           />
+        </section>
+      ) : workspaceView === 'admin' ? (
+        /* The admin portal, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Admin Verification">
+          <AdminPortal variant="page" />
+        </section>
+      ) : workspaceView === 'impact' ? (
+        /* The impact dashboard, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Network Impact">
+          <ImpactDashboard variant="page" />
         </section>
       ) : workspaceView === 'chat' ? (
         /* The navigator, as a full section of the workspace rather than a
@@ -1575,20 +1599,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           onReservationConfirmed={() => {
             refreshReservations();
           }}
-        />
-      )}
-
-      {/* Impact Dashboard Modal */}
-      {showImpact && (
-        <ImpactDashboard
-          onClose={() => setShowImpact(false)}
-        />
-      )}
-
-      {/* Admin Portal Modal */}
-      {showAdmin && (
-        <AdminPortal
-          onClose={() => setShowAdmin(false)}
         />
       )}
 

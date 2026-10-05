@@ -203,7 +203,8 @@ function ChannelSplit({ channels, scale }) {
 
 /* ------------------------------------------------------------------- page */
 
-export default function ImpactDashboard({ onClose }) {
+export default function ImpactDashboard({ onClose, variant = 'modal' }) {
+  const isPage = variant === 'page';
   const m = IMPACT_METRICS;
   const a = USER_ACTIVITY;
 
@@ -319,8 +320,15 @@ export default function ImpactDashboard({ onClose }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Impact and activity report">
-      <div className="impact-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      aria-label="Impact and activity report"
+      data-ai-section={isPage ? 'impact' : undefined}
+    >
+      <div className="impact-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
 
         {/* ---------------------------------------------------------- header */}
         <div className="impact-header">
@@ -356,7 +364,9 @@ export default function ImpactDashboard({ onClose }) {
               </svg>
               Export CSV
             </button>
-            <button className="modal-close" onClick={onClose} aria-label="Close impact dashboard">×</button>
+            {!isPage && (
+              <button className="modal-close" onClick={onClose} aria-label="Close impact dashboard">×</button>
+            )}
           </div>
         </div>
 
