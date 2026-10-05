@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { PLACES } from '../data/places.js';
 import { saveResidentProfile } from '../lib/residentProfile.js';
 
-export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en' }) {
+/* The navigator renders either as a workspace page (`variant="page"`) or as the
+   modal it has always been. On a page there is nothing to dismiss, so the close
+   button is dropped and the steps that used to close the modal on their way out
+   — opening a place, submitting a referral — simply leave the page standing. */
+export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en', variant = 'modal' }) {
+  const isPage = variant === 'page';
+  const dismiss = () => { if (!isPage) onClose?.(); };
   const [step, setStep] = useState('questions'); // 'questions' | 'plan' | 'referral'
   const [zip, setZip] = useState('50309');
   const [address, setAddress] = useState('');
@@ -161,8 +167,14 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="intake-modal-card lexis-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'intake' : undefined}
+    >
+      <div className="intake-modal-card lexis-modal" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="lexis-modal-header">
           <div className="lmh-copy">
@@ -175,18 +187,20 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
             </p>
           </div>
 
-          <button 
-            type="button" 
-            className="lexis-modal-close" 
-            onClick={onClose} 
-            aria-label="Close navigator"
-            title="Close"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {!isPage && (
+            <button 
+              type="button" 
+              className="lexis-modal-close" 
+              onClick={onClose} 
+              aria-label="Close navigator"
+              title="Close"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Modal Scrollable Body */}
@@ -393,7 +407,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
                     type="button"
                     className="btn-primary small"
                     onClick={() => {
-                      onClose();
+                      dismiss();
                       onSelectPlace?.(planResult.immediatePlace);
                     }}
                   >
@@ -417,7 +431,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
                     type="button"
                     className="btn-primary small"
                     onClick={() => {
-                      onClose();
+                      dismiss();
                       onSelectPlace?.(planResult.pantryPlace);
                     }}
                   >
@@ -441,7 +455,7 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
                     type="button"
                     className="btn-primary small"
                     onClick={() => {
-                      onClose();
+                      dismiss();
                       onSelectPlace?.(planResult.bulkPlace);
                     }}
                   >
@@ -476,7 +490,9 @@ export default function ResidentIntakeModal({ onClose, onSelectPlace, lang = 'en
               onSubmit={(e) => {
                 e.preventDefault();
                 alert('Thank you. A confidential community referral has been submitted. A team coordinator will contact you shortly.');
-                onClose();
+                // A modal closes on its way out; a page has nowhere to go, so it
+                // returns to the plan the referral was requested from.
+                if (isPage) setStep('plan'); else dismiss();
               }}
               className="intake-form"
             >

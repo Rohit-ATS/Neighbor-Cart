@@ -2341,3 +2341,68 @@
 @media (max-width: 760px) {
   .modal-backdrop .ir-health-panel .ir-health { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ==========================================================================
+   THE RETRACTING TOP BAR
+   The pill is parked above the screen and comes back on demand: a thin strip
+   along the top edge catches the pointer and slides it down, and it retracts
+   again once nothing has been pointing at it or focused inside it for a
+   moment. Out of flow while it does, so the workspace gets the whole height
+   rather than a band of empty page where the bar used to sit.
+
+   Hover-capable pointers only — the `.has-floating-topbar` class is set from
+   the same media query in JS, so a touch screen keeps the sticky bar it has
+   always had.
+   ========================================================================== */
+
+.topbar-hover-zone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  z-index: 99;
+}
+
+.places-topbar.is-auto-hide {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Clears the pill's own drop shadow as well as its box. */
+  transform: translateY(-130%);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+  transition: transform .44s var(--d-ease), opacity .22s ease;
+}
+
+.places-topbar.is-auto-hide.is-revealed {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* With the bar out of flow, everything that was measured against its 64px
+   band gets that height back. */
+.places-workspace.has-floating-topbar .places-workspace-frame {
+  min-height: 100vh;
+}
+
+.places-workspace.has-floating-topbar .lexis-workspace-sidebar {
+  top: 0;
+  height: 100vh;
+}
+
+.places-workspace.has-floating-topbar .ai-chat--section,
+.places-workspace.has-floating-topbar .modal-backdrop.is-page > .intake-modal-card,
+.places-workspace.has-floating-topbar .modal-backdrop.is-page > .community-modal-card,
+.places-workspace.has-floating-topbar .modal-backdrop.is-page > .intake-modal-card.lexis-modal {
+  height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .places-topbar.is-auto-hide {
+    transition: opacity .01s linear;
+  }
+}

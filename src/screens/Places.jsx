@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { PLACES, PLACE_CATEGORIES, DIETARY_OPTIONS, LANGUAGE_OPTIONS, ELIGIBILITY_OPTIONS, getIsOpenNow } from '../data/places.js';
 import MapView from '../components/MapView.jsx';
@@ -87,6 +87,28 @@ const matchesNeeds = (place, selected) => {
   return Object.values(facets).every((group) => group.some((need) => need.test(place)));
 };
 
+/* How long the top bar stays down once the pointer has left it. Long enough to
+   cross the gap between the bar and a control just under it, short enough that
+   it is gone again before anyone wonders why. */
+const TOPBAR_HOLD_MS = 1400;
+
+/* The workspace sections that are pages in their own right, and the path each
+   one answers to. They are sub-paths of /places, so App's own landing/places
+   split still reads them as the workspace. */
+const WORKSPACE_PATHS = {
+  directory: '/places',
+  chat: '/places/navigator',
+  plan: '/places/plan',
+  community: '/places/community',
+};
+
+const workspaceFromPath = () => {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  return Object.keys(WORKSPACE_PATHS).find(
+    (view) => view !== 'directory' && WORKSPACE_PATHS[view] === path,
+  ) || 'directory';
+};
+
 export default function Places({ onNavigateHome, initialPanel = null, onPanelOpened }) {
   const reduceMotion = useReducedMotion();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -119,16 +141,61 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   const [showMyPasses, setShowMyPasses] = useState(false);
   const [language, setLanguage] = useState('en'); // 'en' | 'es'
 
-  // The navigator is a section of the workspace, not a modal, so a
-  // conversation survives opening a place's details beside it.
-  const [workspaceView, setWorkspaceView] = useState('directory'); // 'directory' | 'chat'
+  /* The navigator, the personalized plan and the community feed are sections of
+     the workspace rather than modals, so a conversation or a half-filled intake
+     survives opening a place's details beside it — and each one has a URL that
+     can be linked to and reloaded. */
+  const [workspaceView, setWorkspaceView] = useState(workspaceFromPath); // 'directory' | 'chat' | 'plan' | 'community'
+
+  const showWorkspace = useCallback((view) => {
+    setWorkspaceView(view);
+    const path = WORKSPACE_PATHS[view] || WORKSPACE_PATHS.directory;
+    if (window.location.pathname !== path) window.history.pushState(null, '', path);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
+  // Back and forward move between the workspace pages, not just off the page.
+  useEffect(() => {
+    const onPopState = () => setWorkspaceView(workspaceFromPath());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  /* The top bar is out of the way until it is wanted: it rides up off the
+     screen and slides back down when the pointer reaches the top edge, then
+     retracts on its own once nothing is pointing at it. Only on devices that
+     can hover — on a touch screen there is no way to ask for it back, so there
+     the bar stays where it has always been. */
+  const [topbarHoverable, setTopbarHoverable] = useState(false);
+  const [topbarOpen, setTopbarOpen] = useState(false);
+  const topbarTimer = useRef(null);
+
+  useEffect(() => {
+    const query = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const sync = () => setTopbarHoverable(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
+
+  useEffect(() => () => clearTimeout(topbarTimer.current), []);
+
+  const holdTopbar = useCallback(() => {
+    clearTimeout(topbarTimer.current);
+    setTopbarOpen(true);
+  }, []);
+
+  /* Focus leaving the bar and the pointer leaving it both run this, so tabbing
+     through the search dock keeps the bar down for as long as it is in use. */
+  const releaseTopbar = useCallback(() => {
+    clearTimeout(topbarTimer.current);
+    topbarTimer.current = setTimeout(() => setTopbarOpen(false), TOPBAR_HOLD_MS);
+  }, []);
 
   // Modals state
-  const [showIntake, setShowIntake] = useState(false);
   const [showNonprofit, setShowNonprofit] = useState(false);
   const [showVolunteer, setShowVolunteer] = useState(false);
   const [showRescue, setShowRescue] = useState(false);
-  const [showCommunity, setShowCommunity] = useState(false);
   const [showImpact, setShowImpact] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
@@ -136,14 +203,14 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
      tagged region refines it further (a place card, the passes drawer). */
   const openPanel = showAdmin ? 'admin'
     : showImpact ? 'impact'
-    : showCommunity ? 'community'
     : showRescue ? 'rescue'
     : showVolunteer ? 'volunteer'
     : showNonprofit ? 'nonprofit'
-    : showIntake ? 'intake'
     : showMyPasses ? 'passes'
     : placeToReserve ? 'reservation'
     : activePlace ? 'place-detail'
+    : workspaceView === 'community' ? 'community'
+    : workspaceView === 'plan' ? 'intake'
     : 'directory';
   const aiSection = useSectionContext(openPanel);
 
@@ -151,16 +218,16 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
      app so a later visit here does not reopen it unasked. */
   const openWorkspacePanel = useCallback((panel) => {
     ({
-      directory: () => setWorkspaceView('directory'),
-      intake: () => setShowIntake(true),
-      community: () => setShowCommunity(true),
+      directory: () => showWorkspace('directory'),
+      intake: () => showWorkspace('plan'),
+      community: () => showWorkspace('community'),
       volunteer: () => setShowVolunteer(true),
       rescue: () => setShowRescue(true),
       nonprofit: () => setShowNonprofit(true),
       impact: () => setShowImpact(true),
       admin: () => setShowAdmin(true),
     })[panel]?.();
-  }, []);
+  }, [showWorkspace]);
 
   useEffect(() => {
     if (!initialPanel) return;
@@ -425,7 +492,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
   }, [filteredPlaces]);
 
   return (
-    <div className={`places-workspace ${sidebarCollapsed ? 'is-collapsed' : ''} ${mobileMenuOpen ? 'has-mobile-drawer' : ''}`}>
+    <div className={`places-workspace ${sidebarCollapsed ? 'is-collapsed' : ''} ${mobileMenuOpen ? 'has-mobile-drawer' : ''} ${topbarHoverable ? 'has-floating-topbar' : ''}`}>
       {/* Mobile Drawer Backdrop */}
       {mobileMenuOpen && (
         <div 
@@ -435,8 +502,24 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         />
       )}
 
+      {/* The strip of screen that calls the bar back down. */}
+      {topbarHoverable && (
+        <div
+          className="topbar-hover-zone"
+          aria-hidden="true"
+          onMouseEnter={holdTopbar}
+          onMouseLeave={releaseTopbar}
+        />
+      )}
+
       {/* Top Header Bar */}
-      <header className="places-topbar">
+      <header
+        className={`places-topbar${topbarHoverable ? ' is-auto-hide' : ''}${topbarHoverable && topbarOpen ? ' is-revealed' : ''}`}
+        onMouseEnter={holdTopbar}
+        onMouseLeave={releaseTopbar}
+        onFocus={holdTopbar}
+        onBlur={releaseTopbar}
+      >
         <div className="places-topbar-inner">
           <div className="topbar-brand-group">
             {/* Mobile Drawer Trigger (Mobile only) */}
@@ -545,7 +628,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
           <button 
             type="button" 
             className={`lexis-new-btn${workspaceView === 'chat' ? ' is-active' : ''}`}
-            onClick={() => { setWorkspaceView('chat'); setMobileMenuOpen(false); }}
+            onClick={() => { showWorkspace('chat'); setMobileMenuOpen(false); }}
             title="Ask the Navigator"
           >
             <span className="lexis-new-icon">
@@ -567,7 +650,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
               <button 
                 type="button" 
                 className={`lexis-nav-btn${workspaceView === 'directory' ? ' is-active' : ''}`}
-                onClick={() => { setWorkspaceView('directory'); setMobileMenuOpen(false); }}
+                onClick={() => { showWorkspace('directory'); setMobileMenuOpen(false); }}
                 title="Map & Directory"
               >
                 <span className="ln-icon">
@@ -583,8 +666,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowIntake(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'plan' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('plan'); setMobileMenuOpen(false); }}
                 title="Personalized Food Plan"
               >
                 <span className="ln-icon">
@@ -601,8 +684,8 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
 
               <button 
                 type="button" 
-                className="lexis-nav-btn" 
-                onClick={() => { setShowCommunity(true); setMobileMenuOpen(false); }}
+                className={`lexis-nav-btn${workspaceView === 'community' ? ' is-active' : ''}`}
+                onClick={() => { showWorkspace('community'); setMobileMenuOpen(false); }}
                 title="Community Feed & Updates"
               >
                 <span className="ln-icon">
@@ -740,7 +823,24 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         {/* Workspace Main View Area */}
         <div className="places-workspace-main">
 
-      {workspaceView === 'chat' ? (
+      {workspaceView === 'plan' ? (
+        /* The personalized plan, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Personalized food plan">
+          <ResidentIntakeModal
+            variant="page"
+            lang={language}
+            onSelectPlace={(place) => setActivePlace(place)}
+          />
+        </section>
+      ) : workspaceView === 'community' ? (
+        /* The community feed, as its own page of the workspace. */
+        <section className="workspace-page" aria-label="Community feed">
+          <CommunityFeed
+            variant="page"
+            onOpenReport={() => alert('Report submitted to directory administrators for verification.')}
+          />
+        </section>
+      ) : workspaceView === 'chat' ? (
         /* The navigator, as a full section of the workspace rather than a
            modal, so the thread stays put while places open beside it. */
         <section className="ai-chat-section">
@@ -750,7 +850,7 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
             onShowMatches={(matches) => {
               // Narrow the directory to the navigator's matches and show them.
               setAiMatchIds(matches.map((match) => match.id));
-              setWorkspaceView('directory');
+              showWorkspace('directory');
             }}
           />
         </section>
@@ -1238,15 +1338,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         />
       )}
 
-      {/* Intake / Recommendation Plan Modal */}
-      {showIntake && (
-        <ResidentIntakeModal
-          lang={language}
-          onClose={() => setShowIntake(false)}
-          onSelectPlace={(p) => setActivePlace(p)}
-        />
-      )}
-
       {/* Nonprofit Dashboard Modal */}
       {showNonprofit && (
         <NonprofitDashboard
@@ -1265,14 +1356,6 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
       {showRescue && (
         <FoodRescueHub
           onClose={() => setShowRescue(false)}
-        />
-      )}
-
-      {/* Community Feed Modal */}
-      {showCommunity && (
-        <CommunityFeed
-          onClose={() => setShowCommunity(false)}
-          onOpenReport={() => alert('Report submitted to directory administrators for verification.')}
         />
       )}
 
@@ -1331,11 +1414,11 @@ export default function Places({ onNavigateHome, initialPanel = null, onPanelOpe
         <AiLauncher
           sectionId={aiSection}
           hidden={workspaceView === 'chat'}
-          onOpenTextBoard={() => setWorkspaceView('chat')}
+          onOpenTextBoard={() => showWorkspace('chat')}
           onSelectPlace={(place) => setActivePlace(place)}
           onShowMatches={(matches) => {
             setAiMatchIds(matches.map((match) => match.id));
-            setWorkspaceView('directory');
+            showWorkspace('directory');
           }}
         />
       </div> {/* /.places-workspace-frame */}

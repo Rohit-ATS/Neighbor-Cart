@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { COMMUNITY_ANNOUNCEMENTS } from '../data/communityData.js';
 
-export default function CommunityFeed({ onClose, onOpenReport }) {
+/* The feed is a workspace page by default (`variant="page"`), and the same
+   markup still works inside a modal — the page wrapper only drops the
+   backdrop's dismiss behaviour and its close button. */
+export default function CommunityFeed({ onClose, onOpenReport, variant = 'modal' }) {
+  const isPage = variant === 'page';
   const [announcements, setAnnouncements] = useState(COMMUNITY_ANNOUNCEMENTS);
   const [filterType, setFilterType] = useState('all');
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
@@ -12,8 +16,14 @@ export default function CommunityFeed({ onClose, onOpenReport }) {
   });
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="community-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-backdrop${isPage ? ' is-page' : ''}`}
+      onClick={isPage ? undefined : onClose}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : 'true'}
+      data-ai-section={isPage ? 'community' : undefined}
+    >
+      <div className="community-modal-card" onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Header */}
         <div className="comm-header">
           <div>
@@ -21,7 +31,9 @@ export default function CommunityFeed({ onClose, onOpenReport }) {
             <h2 className="np-title">Food Distribution Events & Urgent Needs</h2>
             <p className="np-sub">Live updates published directly by verified hunger relief partners across the network.</p>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close community feed">×</button>
+          {!isPage && (
+            <button className="modal-close" onClick={onClose} aria-label="Close community feed">×</button>
+          )}
         </div>
 
         {/* Filter Pills */}
